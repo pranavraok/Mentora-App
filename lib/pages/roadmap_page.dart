@@ -1129,7 +1129,7 @@ class RoadCheckpoint extends ConsumerWidget {
   }
 }
 
-// ============= DETAIL SHEET =============
+// ============= DETAIL SHEET ===========
 class RoadmapDetailSheet extends ConsumerWidget {
   final RoadmapNode node;
 

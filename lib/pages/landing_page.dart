@@ -56,13 +56,49 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     return Scaffold(
       body: Stack(
         children: [
-          // Animated gradient background with depth
-          AnimatedGradientBackground(rotationController: _rotationController),
+          // ✅ UPDATED BACKGROUND - SAME AS PROFILE/PROJECTS
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF0F0C29),
+                  Color(0xFF302b63),
+                  Color(0xFF24243e),
+                ],
+              ),
+            ),
+          ),
 
-          // Floating particles
-          FloatingParticles(scrollOffset: _scrollOffset),
+          // Floating particles (SAME AS PROFILE)
+          ...List.generate(8, (index) {
+            return AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                final offset = math.sin((_floatingController.value + index * 0.2) * 2 * math.pi);
+                return Positioned(
+                  left: (index * 50.0) + offset * 20,
+                  top: (index * 80.0) + offset * 30,
+                  child: Container(
+                    width: 60 + (index * 10.0),
+                    height: 60 + (index * 10.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.1),
+                          Colors.white.withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
 
-          // ✅ ANIMATED ROCKET WITH SCROLL - NEW!
+          // ✅ ANIMATED ROCKET WITH SCROLL
           AnimatedRocket(
             floatingController: _floatingController,
             scrollOffset: _scrollOffset,
@@ -160,7 +196,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   }
 }
 
-// ============= ANIMATED ROCKET WITH SCROLL - NEW! =============
+// ============= ANIMATED ROCKET WITH SCROLL =============
 class AnimatedRocket extends StatelessWidget {
   final AnimationController floatingController;
   final double scrollOffset;
@@ -177,14 +213,13 @@ class AnimatedRocket extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     // Calculate rocket position based on scroll
-    // Moves from right side down and to the left as user scrolls
     final double rightPosition = math.max(-50, 20 - (scrollOffset * 0.15));
     final double topPosition = math.max(
-        -200,
-        80 + (scrollOffset * 0.3) // Moves down slower than scroll
+      -200,
+      80 + (scrollOffset * 0.3),
     );
 
-    // Calculate rotation based on scroll (slight tilt)
+    // Calculate rotation based on scroll
     final double rotation = math.min(0.3, scrollOffset * 0.0005);
 
     // Calculate opacity - fades out after scrolling past hero section
@@ -210,8 +245,8 @@ class AnimatedRocket extends StatelessWidget {
             );
           },
           child: Container(
-            width: 180, // ✅ Smaller size (was 400)
-            height: 180, // ✅ Smaller size (was 400)
+            width: 180,
+            height: 180,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
@@ -221,10 +256,10 @@ class AnimatedRocket extends StatelessWidget {
                 ],
               ),
             ),
-            child: Center(
+            child: const Center(
               child: Text(
                 '🚀',
-                style: TextStyle(fontSize: 100), // ✅ Smaller emoji (was 200)
+                style: TextStyle(fontSize: 100),
               ),
             ),
           ).animate().fadeIn(duration: 800.ms).scale(delay: 200.ms),
@@ -232,79 +267,6 @@ class AnimatedRocket extends StatelessWidget {
       ),
     );
   }
-}
-
-// ============= ANIMATED GRADIENT BACKGROUND =============
-class AnimatedGradientBackground extends StatelessWidget {
-  final AnimationController rotationController;
-
-  const AnimatedGradientBackground({super.key, required this.rotationController});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: rotationController,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.gradientBlue.withOpacity(0.8),
-                AppColors.gradientCyan.withOpacity(0.6),
-                const Color(0xFF6366F1).withOpacity(0.8),
-                const Color(0xFF8B5CF6).withOpacity(0.7),
-              ],
-              transform: GradientRotation(rotationController.value * 2 * math.pi),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ============= FLOATING PARTICLES =============
-class FloatingParticles extends StatelessWidget {
-  final double scrollOffset;
-
-  const FloatingParticles({super.key, required this.scrollOffset});
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: CustomPaint(
-        painter: ParticlePainter(scrollOffset),
-      ),
-    );
-  }
-}
-
-class ParticlePainter extends CustomPainter {
-  final double scrollOffset;
-
-  ParticlePainter(this.scrollOffset);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
-      ..style = PaintingStyle.fill;
-
-    for (int i = 0; i < 50; i++) {
-      final x = (size.width * (i % 10) / 10) + math.sin(scrollOffset * 0.01 + i) * 20;
-      final y = (size.height * (i / 10).floor() / 5) + scrollOffset * 0.5;
-      final radius = 2.0 + (i % 3);
-
-      if (y < size.height + 50) {
-        canvas.drawCircle(Offset(x, y % size.height), radius, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 // ============= HERO SECTION WITH 3D CHARACTER =============
@@ -385,9 +347,7 @@ class HeroSection3D extends StatelessWidget {
                 ),
               ],
             ),
-          ).animate()
-              .fadeIn(delay: 100.ms, duration: 800.ms)
-              .slideY(begin: 0.3, end: 0),
+          ).animate().fadeIn(delay: 100.ms, duration: 800.ms).slideY(begin: 0.3, end: 0),
 
           const SizedBox(height: 24),
 
@@ -402,9 +362,7 @@ class HeroSection3D extends StatelessWidget {
                 height: 1.6,
               ),
             ),
-          ).animate()
-              .fadeIn(delay: 300.ms, duration: 800.ms)
-              .slideY(begin: 0.2, end: 0),
+          ).animate().fadeIn(delay: 300.ms, duration: 800.ms).slideY(begin: 0.2, end: 0),
 
           const SizedBox(height: 40),
 
@@ -458,7 +416,8 @@ class HeroSection3D extends StatelessWidget {
                       ),
                     ),
                   ),
-                ).animate()
+                )
+                    .animate()
                     .fadeIn(delay: 500.ms)
                     .slideY(begin: 0.2, end: 0)
                     .shimmer(delay: 500.ms, duration: 1200.ms),
@@ -497,9 +456,7 @@ class HeroSection3D extends StatelessWidget {
                     ),
                   ),
                 ),
-              ).animate()
-                  .fadeIn(delay: 600.ms)
-                  .scale(delay: 600.ms),
+              ).animate().fadeIn(delay: 600.ms).scale(delay: 600.ms),
             ],
           ),
 
@@ -565,7 +522,6 @@ class HeroSection3D extends StatelessWidget {
     );
   }
 }
-
 
 // ============= BENTO GRID FEATURES =============
 class BentoFeaturesSection extends StatelessWidget {
@@ -821,7 +777,6 @@ class RoadmapPreviewSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-
           GlassmorphicContainer(
             width: double.infinity,
             height: 300,
@@ -886,7 +841,6 @@ class GamificationStatsSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-
           Row(
             children: [
               Expanded(
@@ -1011,7 +965,6 @@ class HowItWorks3DSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 40),
-
           ...List.generate(steps.length, (i) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
@@ -1108,7 +1061,8 @@ class HowItWorks3DSection extends StatelessWidget {
                     ],
                   ),
                 ),
-              ).animate()
+              )
+                  .animate()
                   .fadeIn(delay: Duration(milliseconds: i * 100))
                   .slideX(begin: 0.3, end: 0),
             );
@@ -1119,7 +1073,7 @@ class HowItWorks3DSection extends StatelessWidget {
   }
 }
 
-// ============= TEAM SECTION - NEW! =============
+// ============= TEAM SECTION =============
 class TeamSection extends StatelessWidget {
   final AnimationController floatingController;
 
@@ -1131,13 +1085,13 @@ class TeamSection extends StatelessWidget {
       {
         'name': 'Pranav Rao K',
         'role': 'Frontend Developer',
-        'emoji': '👨‍💼',
+        'emoji': '👨💼',
         'gradient': const LinearGradient(colors: [Color(0xFF667eea), Color(0xFF764ba2)]),
       },
       {
         'name': 'Tushar P',
         'role': 'Backend Developer',
-        'emoji': '👨‍💼',
+        'emoji': '👨💼',
         'gradient': const LinearGradient(colors: [Color(0xFFf093fb), Color(0xFFf5576c)]),
       },
     ];
@@ -1163,7 +1117,6 @@ class TeamSection extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
-
           Row(
             children: team.map((member) {
               final index = team.indexOf(member);
@@ -1281,7 +1234,8 @@ class TeamSection extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ).animate()
+                    )
+                        .animate()
                         .fadeIn(delay: Duration(milliseconds: 200 + (index * 200)))
                         .slideY(begin: 0.3, end: 0),
                   ),
@@ -1325,7 +1279,6 @@ class SocialProofSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-
           SizedBox(
             height: 200,
             child: ListView(

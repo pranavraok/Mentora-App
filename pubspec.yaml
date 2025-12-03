@@ -28,6 +28,11 @@ dependencies:
   animations: ^2.0.0
   lottie: ^3.0.0
   confetti: 0.8.0
+  rive: ^0.13.0  # For 3D character animations
+  flutter_animate: ^4.5.0  # For advanced effects
+  glassmorphism: ^3.0.0  # For glass effects
+  flutter_staggered_grid_view: ^0.7.0  # For bento layouts
+  shimmer: ^3.0.0  # For premium loading effects
 
 dev_dependencies:
   flutter_test:

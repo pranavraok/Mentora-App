@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/models/roadmap_node.dart';
 import 'package:mentora_app/providers/app_providers.dart';
+import 'dart:math' as math;
+import 'dart:ui';
 
 class RoadmapPage extends ConsumerStatefulWidget {
   const RoadmapPage({super.key});
@@ -11,8 +14,32 @@ class RoadmapPage extends ConsumerStatefulWidget {
   ConsumerState<RoadmapPage> createState() => _RoadmapPageState();
 }
 
-class _RoadmapPageState extends ConsumerState<RoadmapPage> {
-  NodeStatus? _filterStatus;
+class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  late AnimationController _pulseController;
+  late AnimationController _backgroundController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _backgroundController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _pulseController.dispose();
+    _backgroundController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,81 +52,242 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> {
         final nodesAsync = ref.watch(roadmapNodesProvider(user.id));
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('My Roadmap'),
-            actions: [
-              PopupMenuButton<NodeStatus?>(
-                icon: const Icon(Icons.filter_list),
-                onSelected: (status) => setState(() => _filterStatus = status),
-                itemBuilder: (_) => [
-                  const PopupMenuItem(value: null, child: Text('All')),
-                  const PopupMenuItem(value: NodeStatus.unlocked, child: Text('Unlocked')),
-                  const PopupMenuItem(value: NodeStatus.inProgress, child: Text('In Progress')),
-                  const PopupMenuItem(value: NodeStatus.completed, child: Text('Completed')),
-                  const PopupMenuItem(value: NodeStatus.locked, child: Text('Locked')),
-                ],
+          body: Stack(
+            children: [
+              // ============= MAGICAL ANIMATED BACKGROUND =============
+              AnimatedBuilder(
+                animation: _backgroundController,
+                builder: (context, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color.lerp(
+                            const Color(0xFF0F0C29),
+                            const Color(0xFF1a1438),
+                            _backgroundController.value,
+                          )!,
+                          const Color(0xFF302b63),
+                          Color.lerp(
+                            const Color(0xFF24243e),
+                            const Color(0xFF1f1c3a),
+                            _backgroundController.value,
+                          )!,
+                        ],
+                      ),
+                    ),
+                    child: CustomPaint(
+                      painter: Roadmap3DBackgroundPainter(
+                        animation: _backgroundController,
+                      ),
+                      size: Size.infinite,
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
-          body: nodesAsync.when(
-            data: (nodes) {
-              final filteredNodes = _filterStatus == null
-                  ? nodes
-                  : nodes.where((n) => n.status == _filterStatus).toList();
 
-              if (filteredNodes.isEmpty) {
-                return const Center(child: Text('No nodes found'));
-              }
-
-              final regions = <String, List<RoadmapNode>>{};
-              for (final node in filteredNodes) {
-                regions.putIfAbsent(node.region, () => []).add(node);
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: regions.length,
-                itemBuilder: (context, index) {
-                  final region = regions.keys.elementAt(index);
-                  final regionNodes = regions[region]!;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+              // ============= CONTENT LAYER =============
+              Column(
+                children: [
+                  // ============= PREMIUM HEADER =============
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF0F0C29).withOpacity(0.95),
+                          const Color(0xFF302b63).withOpacity(0.9),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          blurRadius: 25,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
                         child: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                gradient: AppGradients.primaryGradient,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                _getRegionEmoji(region),
-                                style: const TextStyle(fontSize: 24),
+                            // Animated Icon
+                            AnimatedBuilder(
+                              animation: _pulseController,
+                              builder: (context, child) {
+                                return Transform.scale(
+                                  scale: 1.0 + (_pulseController.value * 0.08),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Color.lerp(const Color(0xFFFFD700), const Color(0xFFFFA500), _pulseController.value)!,
+                                          const Color(0xFFFFA500),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFFFD700).withOpacity(0.6),
+                                          blurRadius: 20 + (_pulseController.value * 5),
+                                          spreadRadius: 2 + (_pulseController.value * 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.map_rounded,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 14),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ShaderMask(
+                                  shaderCallback: (bounds) => const LinearGradient(
+                                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                  ).createShader(bounds),
+                                  child: const Text(
+                                    'Learning Roadmap',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  'Your journey to mastery',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2, end: 0),
+                  ),
+
+                  // Scrollable Content
+                  Expanded(
+                    child: nodesAsync.when(
+                      data: (nodes) {
+                        if (nodes.isEmpty) {
+                          return _buildEmptyState();
+                        }
+
+                        return CustomScrollView(
+                          controller: _scrollController,
+                          physics: const BouncingScrollPhysics(),
+                          slivers: [
+                            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                            // Progress Summary
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                child: _buildProgressSummary(nodes),
                               ),
                             ),
-                            const SizedBox(width: 12),
+
+                            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+                            // 3D Roadmap
+                            SliverToBoxAdapter(
+                              child: ThreeDRoadmap(nodes: nodes),
+                            ),
+
+                            const SliverToBoxAdapter(child: SizedBox(height: 60)),
+                          ],
+                        );
+                      },
+                      loading: () => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700).withOpacity(0.5),
+                                    blurRadius: 30,
+                                    spreadRadius: 10,
+                                  ),
+                                ],
+                              ),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            ).animate(onPlay: (controller) => controller.repeat()).rotate(duration: 2.seconds),
+                            const SizedBox(height: 24),
                             Text(
-                              region,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
+                              'Loading your roadmap...',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      ...regionNodes.map((node) => RoadmapNodeCard(node: node)),
-                      const SizedBox(height: 16),
-                    ],
-                  );
-                },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+                      error: (e, _) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              size: 80,
+                              color: Colors.red.withOpacity(0.7),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Something went wrong',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              e.toString(),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.6),
+                                fontSize: 13,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },
@@ -108,144 +296,879 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> {
     );
   }
 
-  String _getRegionEmoji(String region) {
-    switch (region) {
-      case 'Grasslands':
-        return '🌱';
-      case 'Forest':
-        return '🌲';
-      case 'Mountains':
-        return '⛰️';
-      case 'City':
-        return '🏙️';
-      case 'Futuristic':
-        return '🚀';
-      default:
-        return '📍';
-    }
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.2),
+                  const Color(0xFFFFA500).withOpacity(0.2),
+                ],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.map_rounded,
+              size: 70,
+              color: Colors.white54,
+            ),
+          ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 2.seconds),
+          const SizedBox(height: 32),
+          const Text(
+            'No Roadmap Yet',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your learning journey awaits',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressSummary(List<RoadmapNode> nodes) {
+    final completed = nodes.where((n) => n.status == NodeStatus.completed).length;
+    final inProgress = nodes.where((n) => n.status == NodeStatus.inProgress).length;
+    final total = nodes.length;
+    final progress = total > 0 ? completed / total : 0.0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.25),
+                Colors.white.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 15),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Journey Progress',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$completed of $total completed',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFD700).withOpacity(0.5),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '${(progress * 100).toInt()}%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Stack(
+                children: [
+                  Container(
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: progress,
+                    child: Container(
+                      height: 14,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD700).withOpacity(0.5),
+                            blurRadius: 15,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatChip('✅ $completed', 'Done', const Color(0xFF43e97b)),
+                  _buildStatChip('🔄 $inProgress', 'Active', const Color(0xFF4facfe)),
+                  _buildStatChip('📚 ${total - completed - inProgress}', 'Locked', const Color(0xFF6c757d)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0).then().shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.1));
+  }
+
+  Widget _buildStatChip(String value, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.3),
+            color.withOpacity(0.15),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-class RoadmapNodeCard extends ConsumerWidget {
+// ============= 3D ANIMATED BACKGROUND PAINTER =============
+class Roadmap3DBackgroundPainter extends CustomPainter {
+  final Animation<double> animation;
+
+  Roadmap3DBackgroundPainter({
+    required this.animation,
+  }) : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Floating particles
+    for (int i = 0; i < 30; i++) {
+      final progress = (animation.value + (i * 0.033)) % 1.0;
+      final x = (size.width * 0.1) + (i % 6) * (size.width * 0.16);
+      final y = size.height * progress;
+      final opacity = (1.0 - progress) * 0.35;
+      final radius = 2.0 + (i % 3) * 1.5;
+
+      paint.color = Colors.white.withOpacity(opacity);
+      canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+
+    // Glowing orbs with 3D effect
+    final orbs = [
+      {'x': 0.2, 'y': 0.25, 'color': const Color(0xFFFFD700), 'size': 200.0},
+      {'x': 0.8, 'y': 0.45, 'color': const Color(0xFFFFA500), 'size': 170.0},
+      {'x': 0.5, 'y': 0.65, 'color': const Color(0xFFFFD700), 'size': 150.0},
+      {'x': 0.3, 'y': 0.8, 'color': const Color(0xFFFFA500), 'size': 130.0},
+    ];
+
+    for (var i = 0; i < orbs.length; i++) {
+      final orb = orbs[i];
+      final angle = animation.value * 2 * math.pi + (i * math.pi / 2);
+      final offsetX = math.cos(angle) * 35;
+      final offsetY = math.sin(angle) * 25;
+
+      final gradient = RadialGradient(
+        colors: [
+          (orb['color'] as Color).withOpacity(0.2),
+          (orb['color'] as Color).withOpacity(0.08),
+          (orb['color'] as Color).withOpacity(0.0),
+        ],
+      );
+
+      final center = Offset(
+        size.width * (orb['x'] as double) + offsetX,
+        size.height * (orb['y'] as double) + offsetY,
+      );
+
+      paint.shader = gradient.createShader(
+        Rect.fromCircle(center: center, radius: orb['size'] as double),
+      );
+      canvas.drawCircle(center, orb['size'] as double, paint);
+    }
+
+    // Animated grid pattern
+    final gridPaint = Paint()
+      ..color = Colors.white.withOpacity(0.035)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    const gridSize = 55.0;
+    final gridOffset = (animation.value * gridSize) % gridSize;
+
+    for (double x = -gridOffset; x < size.width; x += gridSize) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = -gridOffset; y < size.height; y += gridSize) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // 3D hexagons floating
+    for (int i = 0; i < 12; i++) {
+      final hexX = (size.width * 0.15) + (i % 4) * (size.width * 0.25);
+      final hexY = (size.height * 0.2) + (i ~/ 4) * (size.height * 0.3);
+      final hexProgress = (animation.value + (i * 0.083)) % 1.0;
+      final opacity = (math.sin(hexProgress * math.pi) * 0.12);
+
+      _drawHexagon(
+        canvas,
+        Offset(hexX, hexY + hexProgress * 80),
+        15 + (i % 3) * 4,
+        Colors.white.withOpacity(opacity),
+        animation.value * 2 * math.pi + i,
+      );
+    }
+  }
+
+  void _drawHexagon(Canvas canvas, Offset center, double size, Color color, double rotation) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final path = Path();
+    for (int i = 0; i < 6; i++) {
+      final angle = (math.pi / 3) * i + rotation;
+      final x = center.dx + size * math.cos(angle);
+      final y = center.dy + size * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(Roadmap3DBackgroundPainter oldDelegate) => true;
+}
+
+// ============= 3D ROADMAP (Keep all existing implementations) =============
+class ThreeDRoadmap extends ConsumerWidget {
+  final List<RoadmapNode> nodes;
+
+  const ThreeDRoadmap({super.key, required this.nodes});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SizedBox(
+      height: nodes.length * 280.0,
+      child: Stack(
+        children: [
+          // 3D Road
+          CustomPaint(
+            size: Size(
+              MediaQuery.of(context).size.width,
+              nodes.length * 280.0,
+            ),
+            painter: ThreeDRoadPainter(nodeCount: nodes.length),
+          ),
+
+          // Checkpoints
+          ...nodes.asMap().entries.map((entry) {
+            final index = entry.key;
+            final node = entry.value;
+            final isLeft = index % 2 == 0;
+
+            return Positioned(
+              top: index * 280.0 + 80,
+              left: isLeft ? 30 : null,
+              right: isLeft ? null : 30,
+              width: MediaQuery.of(context).size.width * 0.4,
+              child: RoadCheckpoint(
+                node: node,
+                index: index,
+                isLeft: isLeft,
+              )
+                  .animate(delay: Duration(milliseconds: 150 * index))
+                  .fadeIn(duration: 600.ms)
+                  .slideX(begin: isLeft ? -0.5 : 0.5, end: 0)
+                  .then()
+                  .shimmer(duration: 1500.ms, color: Colors.white.withOpacity(0.1)),
+            );
+          }),
+
+          // Numbered markers on road
+          ...nodes.asMap().entries.map((entry) {
+            final index = entry.key;
+            final node = entry.value;
+            final isLeft = index % 2 == 0;
+
+            return Positioned(
+              top: index * 280.0 + 100,
+              left: isLeft
+                  ? MediaQuery.of(context).size.width * 0.4 + 50
+                  : MediaQuery.of(context).size.width * 0.3,
+              child: RoadMarker(
+                number: index + 1,
+                node: node,
+              )
+                  .animate(delay: Duration(milliseconds: 150 * index + 300))
+                  .fadeIn(duration: 600.ms)
+                  .scale(begin: const Offset(0, 0), end: const Offset(1, 1)),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// Keep ALL existing classes exactly as they are:
+// - ThreeDRoadPainter
+// - RoadMarker
+// - _RoadMarkerState
+// - RoadCheckpoint
+// - RoadmapDetailSheet
+// (Continue with the exact same implementation from your original file)
+
+// ============= 3D ROAD PAINTER =============
+class ThreeDRoadPainter extends CustomPainter {
+  final int nodeCount;
+
+  ThreeDRoadPainter({required this.nodeCount});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final segmentHeight = 280.0;
+
+    for (int i = 0; i < nodeCount; i++) {
+      final y = i * segmentHeight;
+
+      // Road segment path
+      final path = Path();
+      path.moveTo(size.width * 0.3, y);
+      path.lineTo(size.width * 0.7, y);
+      path.quadraticBezierTo(
+        size.width * 0.85,
+        y + segmentHeight / 2,
+        size.width * 0.7,
+        y + segmentHeight,
+      );
+      path.lineTo(size.width * 0.3, y + segmentHeight);
+      path.quadraticBezierTo(
+        size.width * 0.15,
+        y + segmentHeight / 2,
+        size.width * 0.3,
+        y,
+      );
+
+      // Road gradient with enhanced 3D effect
+      final gradient = LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [
+          const Color(0xFF2c3e50).withOpacity(0.95),
+          const Color(0xFF4a5568).withOpacity(0.95),
+          const Color(0xFF5a6678).withOpacity(0.95),
+          const Color(0xFF4a5568).withOpacity(0.95),
+          const Color(0xFF2c3e50).withOpacity(0.95),
+        ],
+      );
+
+      final paint = Paint()
+        ..shader = gradient.createShader(Rect.fromLTWH(0, y, size.width, segmentHeight))
+        ..style = PaintingStyle.fill;
+
+      canvas.drawPath(path, paint);
+
+      // Road edges
+      final edgePaint = Paint()
+        ..color = const Color(0xFF1a202c)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4;
+
+      canvas.drawPath(path, edgePaint);
+
+      // Inner shadow effect
+      final shadowPaint = Paint()
+        ..color = Colors.black.withOpacity(0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+
+      canvas.drawPath(path, shadowPaint);
+
+      // Center dashed line
+      _drawDashedLine(
+        canvas,
+        Offset(size.width * 0.5, y),
+        Offset(size.width * 0.5, y + segmentHeight),
+      );
+
+      // Side lines
+      _drawSideLine(
+        canvas,
+        Offset(size.width * 0.32, y),
+        Offset(size.width * 0.32, y + segmentHeight),
+        true,
+      );
+      _drawSideLine(
+        canvas,
+        Offset(size.width * 0.68, y),
+        Offset(size.width * 0.68, y + segmentHeight),
+        true,
+      );
+    }
+  }
+
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end) {
+    final paint = Paint()
+      ..color = const Color(0xFFFFD700)
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 18.0;
+    const dashSpace = 14.0;
+    double distance = 0.0;
+    final totalDistance = (end - start).distance;
+
+    while (distance < totalDistance) {
+      final startOffset = Offset.lerp(start, end, distance / totalDistance)!;
+      distance += dashWidth;
+      final endOffset = Offset.lerp(start, end, distance / totalDistance)!;
+      canvas.drawLine(startOffset, endOffset, paint);
+      distance += dashSpace;
+    }
+  }
+
+  void _drawSideLine(Canvas canvas, Offset start, Offset end, bool isDashed) {
+    if (isDashed) {
+      final paint = Paint()
+        ..color = Colors.white.withOpacity(0.5)
+        ..strokeWidth = 3;
+
+      const dashWidth = 12.0;
+      const dashSpace = 10.0;
+      double distance = 0.0;
+      final totalDistance = (end - start).distance;
+
+      while (distance < totalDistance) {
+        final startOffset = Offset.lerp(start, end, distance / totalDistance)!;
+        distance += dashWidth;
+        final endOffset = Offset.lerp(start, end, distance / totalDistance)!;
+        canvas.drawLine(startOffset, endOffset, paint);
+        distance += dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ============= ROAD MARKER =============
+class RoadMarker extends ConsumerStatefulWidget {
+  final int number;
   final RoadmapNode node;
 
-  const RoadmapNodeCard({super.key, required this.node});
+  const RoadMarker({
+    super.key,
+    required this.number,
+    required this.node,
+  });
+
+  @override
+  ConsumerState<RoadMarker> createState() => _RoadMarkerState();
+}
+
+class _RoadMarkerState extends ConsumerState<RoadMarker> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getNodeColor(widget.node.status);
+    final gradient = _getNodeGradient(widget.node.status);
+
+    return GestureDetector(
+      onTap: () => _showNodeDetails(context, ref),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: widget.node.status == NodeStatus.inProgress
+                ? 1.0 + (_controller.value * 0.1)
+                : 1.0,
+            child: Container(
+              width: 75,
+              height: 75,
+              decoration: BoxDecoration(
+                gradient: gradient,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 4),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.7),
+                    blurRadius: 25 + (_controller.value * 10),
+                    spreadRadius: 5,
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Text(
+                      widget.number.toString().padLeft(2, '0'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black45,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (widget.node.status == NodeStatus.completed)
+                    const Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 26,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black45,
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (widget.node.status == NodeStatus.locked)
+                    Positioned(
+                      bottom: -2,
+                      right: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.lock_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getNodeColor(NodeStatus status) {
+    switch (status) {
+      case NodeStatus.completed:
+        return const Color(0xFF43e97b);
+      case NodeStatus.inProgress:
+        return const Color(0xFF4facfe);
+      case NodeStatus.unlocked:
+        return const Color(0xFFFFD700);
+      case NodeStatus.locked:
+        return const Color(0xFF6c757d);
+    }
+  }
+
+  LinearGradient _getNodeGradient(NodeStatus status) {
+    switch (status) {
+      case NodeStatus.completed:
+        return const LinearGradient(
+          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+        );
+      case NodeStatus.inProgress:
+        return const LinearGradient(
+          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+        );
+      case NodeStatus.unlocked:
+        return const LinearGradient(
+          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+        );
+      case NodeStatus.locked:
+        return const LinearGradient(
+          colors: [Color(0xFF6c757d), Color(0xFF495057)],
+        );
+    }
+  }
+
+  void _showNodeDetails(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => RoadmapDetailSheet(node: widget.node),
+    );
+  }
+}
+
+// ============= ROAD CHECKPOINT =============
+class RoadCheckpoint extends ConsumerWidget {
+  final RoadmapNode node;
+  final int index;
+  final bool isLeft;
+
+  const RoadCheckpoint({
+    super.key,
+    required this.node,
+    required this.index,
+    required this.isLeft,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = _getNodeColor(node.status);
-    final icon = _getNodeIcon(node.type);
+    final gradient = _getNodeGradient(node.status);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showNodeDetails(context, ref),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.5), width: 2),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, color: color, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          node.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          _getStatusText(node.status),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.xpGold.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.star, color: AppColors.xpGold, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${node.xpReward} XP',
-                          style: const TextStyle(
-                            color: AppColors.xpGold,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return GestureDetector(
+      onTap: () => _showNodeDetails(context, ref),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 120, maxHeight: 160),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.3),
+                  Colors.white.withOpacity(0.15),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                node.description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMuted,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: color.withOpacity(0.7),
+                width: 2.5,
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: AppColors.textMuted),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${node.estimatedHours}h',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.5),
+                  blurRadius: 25,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: gradient,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withOpacity(0.5),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: _getNodeIcon(node.type),
                     ),
-                  ),
-                  if (node.providerName != null) ...[
-                    const SizedBox(width: 16),
-                    Icon(Icons.school, size: 16, color: AppColors.textMuted),
-                    const SizedBox(width: 4),
-                    Text(
-                      node.providerName!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        node.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
-                ],
-              ),
-              if (node.status == NodeStatus.inProgress && node.progress > 0) ...[
-                const SizedBox(height: 12),
-                LinearProgressIndicator(
-                  value: node.progress,
-                  backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  node.description,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${node.estimatedHours}h',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD700).withOpacity(0.5),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star, color: Colors.white, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${node.xpReward}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -255,44 +1178,61 @@ class RoadmapNodeCard extends ConsumerWidget {
   Color _getNodeColor(NodeStatus status) {
     switch (status) {
       case NodeStatus.completed:
-        return AppColors.nodeCompleted;
+        return const Color(0xFF43e97b);
       case NodeStatus.inProgress:
-        return AppColors.nodeInProgress;
+        return const Color(0xFF4facfe);
       case NodeStatus.unlocked:
-        return AppColors.nodeUnlocked;
+        return const Color(0xFFFFD700);
       case NodeStatus.locked:
-        return AppColors.nodeLocked;
+        return const Color(0xFF6c757d);
     }
   }
 
-  IconData _getNodeIcon(NodeType type) {
-    switch (type) {
-      case NodeType.course:
-        return Icons.school;
-      case NodeType.project:
-        return Icons.construction;
-      case NodeType.skillCheck:
-        return Icons.quiz;
-      case NodeType.bossChallenge:
-        return Icons.shield;
-      case NodeType.restStop:
-        return Icons.local_cafe;
-      case NodeType.bonus:
-        return Icons.card_giftcard;
-    }
-  }
-
-  String _getStatusText(NodeStatus status) {
+  LinearGradient _getNodeGradient(NodeStatus status) {
     switch (status) {
       case NodeStatus.completed:
-        return 'Completed ✓';
+        return const LinearGradient(
+          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+        );
       case NodeStatus.inProgress:
-        return 'In Progress...';
+        return const LinearGradient(
+          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+        );
       case NodeStatus.unlocked:
-        return 'Available';
+        return const LinearGradient(
+          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+        );
       case NodeStatus.locked:
-        return 'Locked 🔒';
+        return const LinearGradient(
+          colors: [Color(0xFF6c757d), Color(0xFF495057)],
+        );
     }
+  }
+
+  Widget _getNodeIcon(NodeType type) {
+    IconData iconData;
+    switch (type) {
+      case NodeType.course:
+        iconData = Icons.school_rounded;
+        break;
+      case NodeType.project:
+        iconData = Icons.construction_rounded;
+        break;
+      case NodeType.skillCheck:
+        iconData = Icons.quiz_rounded;
+        break;
+      case NodeType.bossChallenge:
+        iconData = Icons.shield_rounded;
+        break;
+      case NodeType.restStop:
+        iconData = Icons.local_cafe_rounded;
+        break;
+      case NodeType.bonus:
+        iconData = Icons.card_giftcard_rounded;
+        break;
+    }
+
+    return Icon(iconData, color: Colors.white, size: 20);
   }
 
   void _showNodeDetails(BuildContext context, WidgetRef ref) {
@@ -300,113 +1240,415 @@ class RoadmapNodeCard extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    node.title,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      node.description,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 24),
-                    _buildDetailRow(context, 'XP Reward', '${node.xpReward} XP', Icons.star),
-                    _buildDetailRow(context, 'Estimated Time', '${node.estimatedHours} hours', Icons.access_time),
-                    if (node.providerName != null)
-                      _buildDetailRow(context, 'Provider', node.providerName!, Icons.school),
-                    if (node.skills.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Skills',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: node.skills.map((skill) => Chip(
-                          label: Text(skill),
-                          backgroundColor: AppColors.gradientBlue.withValues(alpha: 0.15),
-                        )).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            if (node.status == NodeStatus.unlocked)
-              ElevatedButton(
-                onPressed: () async {
-                  final roadmapService = ref.read(roadmapServiceProvider);
-                  await roadmapService.updateNode(
-                    node.copyWith(status: NodeStatus.inProgress, startedAt: DateTime.now()),
-                  );
-                  ref.invalidate(roadmapNodesProvider);
-                  if (context.mounted) Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gradientBlue,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  minimumSize: const Size(double.infinity, 56),
-                ),
-                child: const Text('Start Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
-          ],
-        ),
-      ),
+      builder: (_) => RoadmapDetailSheet(node: node),
     );
   }
+}
 
-  Widget _buildDetailRow(BuildContext context, String label, String value, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+// ============= DETAIL SHEET =============
+class RoadmapDetailSheet extends ConsumerWidget {
+  final RoadmapNode node;
+
+  const RoadmapDetailSheet({super.key, required this.node});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final color = _getNodeColor(node.status);
+    final gradient = _getNodeGradient(node.status);
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF1A1B2E),
+            Color(0xFF0F0C29),
+          ],
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 30,
+            offset: const Offset(0, -10),
+          ),
+        ],
+      ),
+      child: Column(
         children: [
-          Icon(icon, size: 20, color: AppColors.gradientBlue),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 50,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMuted,
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 85,
+                        height: 85,
+                        decoration: BoxDecoration(
+                          gradient: gradient,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withOpacity(0.7),
+                              blurRadius: 30,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: _getNodeIcon(node.type, node.status),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              node.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    color.withOpacity(0.4),
+                                    color.withOpacity(0.2),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: color, width: 2),
+                              ),
+                              child: Text(
+                                _getStatusText(node.status),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          node.description,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: 15,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildDetailRow(
+                    Icons.star_rounded,
+                    'XP Reward',
+                    '${node.xpReward} XP',
+                    const Color(0xFFFFD700),
+                  ),
+                  _buildDetailRow(
+                    Icons.access_time_rounded,
+                    'Duration',
+                    '${node.estimatedHours} hours',
+                    const Color(0xFF4facfe),
+                  ),
+                  if (node.providerName != null)
+                    _buildDetailRow(
+                      Icons.school_rounded,
+                      'Provider',
+                      node.providerName!,
+                      const Color(0xFF667eea),
+                    ),
+                  if (node.skills.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      '💡 Skills You\'ll Learn',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: node.skills.map((skill) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF667eea).withOpacity(0.5),
+                                const Color(0xFF764ba2).withOpacity(0.5),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFF667eea),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF667eea).withOpacity(0.3),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            skill,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+                  if (node.status == NodeStatus.unlocked ||
+                      node.status == NodeStatus.inProgress)
+                    Container(
+                      width: double.infinity,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        gradient: gradient,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withOpacity(0.6),
+                            blurRadius: 30,
+                            offset: const Offset(0, 12),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            final roadmapService = ref.read(roadmapServiceProvider);
+                            await roadmapService.updateNode(
+                              node.copyWith(
+                                status: NodeStatus.inProgress,
+                                startedAt: DateTime.now(),
+                              ),
+                            );
+                            ref.invalidate(roadmapNodesProvider);
+                            if (context.mounted) Navigator.pop(context);
+                          },
+                          borderRadius: BorderRadius.circular(18),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  node.status == NodeStatus.unlocked
+                                      ? Icons.play_circle_rounded
+                                      : Icons.arrow_forward_rounded,
+                                  color: Colors.white,
+                                  size: 26,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  node.status == NodeStatus.unlocked
+                                      ? 'Start Learning'
+                                      : 'Continue',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  Color _getNodeColor(NodeStatus status) {
+    switch (status) {
+      case NodeStatus.completed:
+        return const Color(0xFF43e97b);
+      case NodeStatus.inProgress:
+        return const Color(0xFF4facfe);
+      case NodeStatus.unlocked:
+        return const Color(0xFFFFD700);
+      case NodeStatus.locked:
+        return const Color(0xFF6c757d);
+    }
+  }
+
+  LinearGradient _getNodeGradient(NodeStatus status) {
+    switch (status) {
+      case NodeStatus.completed:
+        return const LinearGradient(
+          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+        );
+      case NodeStatus.inProgress:
+        return const LinearGradient(
+          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+        );
+      case NodeStatus.unlocked:
+        return const LinearGradient(
+          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+        );
+      case NodeStatus.locked:
+        return const LinearGradient(
+          colors: [Color(0xFF6c757d), Color(0xFF495057)],
+        );
+    }
+  }
+
+  Widget _getNodeIcon(NodeType type, NodeStatus status) {
+    if (status == NodeStatus.completed) {
+      return const Icon(Icons.check_circle, color: Colors.white, size: 42);
+    } else if (status == NodeStatus.locked) {
+      return const Icon(Icons.lock_rounded, color: Colors.white, size: 38);
+    }
+
+    IconData iconData;
+    switch (type) {
+      case NodeType.course:
+        iconData = Icons.school_rounded;
+        break;
+      case NodeType.project:
+        iconData = Icons.construction_rounded;
+        break;
+      case NodeType.skillCheck:
+        iconData = Icons.quiz_rounded;
+        break;
+      case NodeType.bossChallenge:
+        iconData = Icons.shield_rounded;
+        break;
+      case NodeType.restStop:
+        iconData = Icons.local_cafe_rounded;
+        break;
+      case NodeType.bonus:
+        iconData = Icons.card_giftcard_rounded;
+        break;
+    }
+
+    return Icon(iconData, color: Colors.white, size: 38);
+  }
+
+  String _getStatusText(NodeStatus status) {
+    switch (status) {
+      case NodeStatus.completed:
+        return 'Completed ✓';
+      case NodeStatus.inProgress:
+        return 'In Progress';
+      case NodeStatus.unlocked:
+        return 'Available';
+      case NodeStatus.locked:
+        return 'Locked 🔒';
+    }
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  color.withOpacity(0.3),
+                  color.withOpacity(0.15),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color, width: 2),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
+

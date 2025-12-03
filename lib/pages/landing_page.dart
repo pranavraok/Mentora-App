@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:rive/rive.dart' as rive;
+import 'package:glassmorphism/glassmorphism.dart';
+import 'package:confetti/confetti.dart';
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/widgets/gradient_button.dart';
 import 'package:mentora_app/pages/auth_page.dart';
+import 'dart:math' as math;
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -10,129 +15,143 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
+class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin {
+  late AnimationController _floatingController;
+  late AnimationController _rotationController;
+  late ConfettiController _confettiController;
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+    _floatingController = AnimationController(
+      duration: const Duration(seconds: 3),
       vsync: this,
-    );
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-    _controller.forward();
+    )..repeat(reverse: true);
+
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 20),
+      vsync: this,
+    )..repeat();
+
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+
+    _scrollController.addListener(() {
+      setState(() => _scrollOffset = _scrollController.offset);
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _floatingController.dispose();
+    _rotationController.dispose();
+    _confettiController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.heroGradient),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 60),
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: HeroSection(
-                    onGetStarted: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AuthPage(isLogin: false)),
-                    ),
-                    onLogin: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AuthPage(isLogin: true)),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 80),
-                const FeaturesSection(),
-                const SizedBox(height: 60),
-                const HowItWorksSection(),
-                const SizedBox(height: 60),
-                const FooterSection(),
+      body: Stack(
+        children: [
+          // Animated gradient background with depth
+          AnimatedGradientBackground(rotationController: _rotationController),
+
+          // Floating particles
+          FloatingParticles(scrollOffset: _scrollOffset),
+
+          // ✅ ANIMATED ROCKET WITH SCROLL - NEW!
+          AnimatedRocket(
+            floatingController: _floatingController,
+            scrollOffset: _scrollOffset,
+          ),
+
+          // Confetti
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: math.pi / 2,
+              emissionFrequency: 0.05,
+              numberOfParticles: 20,
+              gravity: 0.1,
+              colors: const [
+                AppColors.xpGold,
+                AppColors.gradientBlue,
+                AppColors.gradientCyan,
+                Colors.purple,
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
 
-class HeroSection extends StatelessWidget {
-  final VoidCallback onGetStarted;
-  final VoidCallback onLogin;
-
-  const HeroSection({
-    super.key,
-    required this.onGetStarted,
-    required this.onLogin,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          const Icon(Icons.rocket_launch, color: Colors.white, size: 80),
-          const SizedBox(height: 24),
-          Text(
-            'Your Career Journey,\nGamified',
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Transform your professional development into an epic adventure with personalized roadmaps, skill-building projects, and AI-powered guidance.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 40),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: GradientButton(
-                  text: 'Get Started',
-                  onPressed: onGetStarted,
-                  gradient: const LinearGradient(
-                    colors: [Colors.white, Colors.white],
+          // Main content
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Hero Section
+              SliverToBoxAdapter(
+                child: HeroSection3D(
+                  floatingController: _floatingController,
+                  onGetStarted: () {
+                    _confettiController.play();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AuthPage(isLogin: false)),
+                    );
+                  },
+                  onLogin: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AuthPage(isLogin: true)),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onLogin,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white, width: 2),
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
+
+              // Bento Grid Features
+              SliverToBoxAdapter(
+                child: BentoFeaturesSection(scrollOffset: _scrollOffset)
+                    .animate()
+                    .fadeIn(delay: 200.ms, duration: 600.ms)
+                    .slideY(begin: 0.3, end: 0),
               ),
+
+              // Interactive Roadmap Preview
+              SliverToBoxAdapter(
+                child: RoadmapPreviewSection()
+                    .animate()
+                    .fadeIn(delay: 400.ms, duration: 600.ms)
+                    .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1)),
+              ),
+
+              // Gamification Stats
+              SliverToBoxAdapter(
+                child: GamificationStatsSection()
+                    .animate()
+                    .fadeIn(delay: 600.ms, duration: 600.ms),
+              ),
+
+              // 3D How It Works
+              SliverToBoxAdapter(
+                child: HowItWorks3DSection(floatingController: _floatingController),
+              ),
+
+              // Team Section
+              SliverToBoxAdapter(
+                child: TeamSection(floatingController: _floatingController)
+                    .animate()
+                    .fadeIn(delay: 800.ms),
+              ),
+
+              // Social Proof
+              SliverToBoxAdapter(
+                child: SocialProofSection()
+                    .animate()
+                    .fadeIn(delay: 900.ms),
+              ),
+
+              // Footer
+              const SliverToBoxAdapter(child: ModernFooter()),
             ],
           ),
         ],
@@ -141,92 +160,405 @@ class HeroSection extends StatelessWidget {
   }
 }
 
-class FeaturesSection extends StatelessWidget {
-  const FeaturesSection({super.key});
+// ============= ANIMATED ROCKET WITH SCROLL - NEW! =============
+class AnimatedRocket extends StatelessWidget {
+  final AnimationController floatingController;
+  final double scrollOffset;
+
+  const AnimatedRocket({
+    super.key,
+    required this.floatingController,
+    required this.scrollOffset,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final features = [
-      {'icon': Icons.map, 'title': 'Interactive Roadmap', 'desc': 'Visual career path with themed regions'},
-      {'icon': Icons.emoji_events, 'title': 'Gamification', 'desc': 'XP, levels, achievements, and rewards'},
-      {'icon': Icons.auto_graph, 'title': 'Skills Analysis', 'desc': 'AI-powered gap analysis and recommendations'},
-      {'icon': Icons.construction, 'title': 'Real Projects', 'desc': 'Build portfolio-worthy applications'},
-      {'icon': Icons.description, 'title': 'AI Resume Checker', 'desc': 'Get instant feedback and ATS optimization'},
-      {'icon': Icons.leaderboard, 'title': 'Community', 'desc': 'Compete and learn with peers'},
-    ];
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Text(
-            'Features',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.textLight,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 32),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: features.map((f) => SizedBox(
-              width: MediaQuery.of(context).size.width < 600
-                  ? double.infinity
-                  : (MediaQuery.of(context).size.width - 80) / 2,
-              child: FeatureCard(
-                icon: f['icon'] as IconData,
-                title: f['title'] as String,
-                description: f['desc'] as String,
+    // Calculate rocket position based on scroll
+    // Moves from right side down and to the left as user scrolls
+    final double rightPosition = math.max(-50, 20 - (scrollOffset * 0.15));
+    final double topPosition = math.max(
+        -200,
+        80 + (scrollOffset * 0.3) // Moves down slower than scroll
+    );
+
+    // Calculate rotation based on scroll (slight tilt)
+    final double rotation = math.min(0.3, scrollOffset * 0.0005);
+
+    // Calculate opacity - fades out after scrolling past hero section
+    final double opacity = math.max(0.0, math.min(1.0, 1.0 - (scrollOffset / 800)));
+
+    return Positioned(
+      right: rightPosition,
+      top: topPosition,
+      child: Opacity(
+        opacity: opacity,
+        child: AnimatedBuilder(
+          animation: floatingController,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(
+                0,
+                math.sin(floatingController.value * 2 * math.pi) * 15,
               ),
-            )).toList(),
-          ),
-        ],
+              child: Transform.rotate(
+                angle: rotation,
+                child: child,
+              ),
+            );
+          },
+          child: Container(
+            width: 180, // ✅ Smaller size (was 400)
+            height: 180, // ✅ Smaller size (was 400)
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppColors.xpGold.withOpacity(0.3),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+            child: Center(
+              child: Text(
+                '🚀',
+                style: TextStyle(fontSize: 100), // ✅ Smaller emoji (was 200)
+              ),
+            ),
+          ).animate().fadeIn(duration: 800.ms).scale(delay: 200.ms),
+        ),
       ),
     );
   }
 }
 
-class FeatureCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
+// ============= ANIMATED GRADIENT BACKGROUND =============
+class AnimatedGradientBackground extends StatelessWidget {
+  final AnimationController rotationController;
 
-  const FeatureCard({
+  const AnimatedGradientBackground({super.key, required this.rotationController});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: rotationController,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.gradientBlue.withOpacity(0.8),
+                AppColors.gradientCyan.withOpacity(0.6),
+                const Color(0xFF6366F1).withOpacity(0.8),
+                const Color(0xFF8B5CF6).withOpacity(0.7),
+              ],
+              transform: GradientRotation(rotationController.value * 2 * math.pi),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ============= FLOATING PARTICLES =============
+class FloatingParticles extends StatelessWidget {
+  final double scrollOffset;
+
+  const FloatingParticles({super.key, required this.scrollOffset});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: CustomPaint(
+        painter: ParticlePainter(scrollOffset),
+      ),
+    );
+  }
+}
+
+class ParticlePainter extends CustomPainter {
+  final double scrollOffset;
+
+  ParticlePainter(this.scrollOffset);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 50; i++) {
+      final x = (size.width * (i % 10) / 10) + math.sin(scrollOffset * 0.01 + i) * 20;
+      final y = (size.height * (i / 10).floor() / 5) + scrollOffset * 0.5;
+      final radius = 2.0 + (i % 3);
+
+      if (y < size.height + 50) {
+        canvas.drawCircle(Offset(x, y % size.height), radius, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// ============= HERO SECTION WITH 3D CHARACTER =============
+class HeroSection3D extends StatelessWidget {
+  final AnimationController floatingController;
+  final VoidCallback onGetStarted;
+  final VoidCallback onLogin;
+
+  const HeroSection3D({
     super.key,
-    required this.icon,
-    required this.title,
-    required this.description,
+    required this.floatingController,
+    required this.onGetStarted,
+    required this.onLogin,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.lightBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gradientCyan.withValues(alpha: 0.3)),
+      height: MediaQuery.of(context).size.height * 0.95,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Badge
+          GlassmorphicContainer(
+            width: 180,
+            height: 40,
+            borderRadius: 20,
+            blur: 20,
+            alignment: Alignment.center,
+            border: 2,
+            linearGradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.2),
+                Colors.white.withOpacity(0.1),
+              ],
+            ),
+            borderGradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.5),
+                Colors.white.withOpacity(0.2),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.rocket_launch, color: AppColors.xpGold, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  '🎮 Level Up Your Career',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().slideX(begin: -0.2, duration: 600.ms),
+
+          const SizedBox(height: 32),
+
+          // Main Heading
+          Text(
+            'Transform Your\nCareer Into An\nEpic Adventure',
+            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              height: 1.1,
+              fontSize: 56,
+              letterSpacing: -2,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.3),
+                  offset: const Offset(0, 4),
+                  blurRadius: 20,
+                ),
+              ],
+            ),
+          ).animate()
+              .fadeIn(delay: 100.ms, duration: 800.ms)
+              .slideY(begin: 0.3, end: 0),
+
+          const SizedBox(height: 24),
+
+          // Subtitle
+          Container(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Text(
+              'Master skills through gamified learning paths, unlock achievements, and compete with peers while building real-world projects.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Colors.white.withOpacity(0.95),
+                fontSize: 18,
+                height: 1.6,
+              ),
+            ),
+          ).animate()
+              .fadeIn(delay: 300.ms, duration: 800.ms)
+              .slideY(begin: 0.2, end: 0),
+
+          const SizedBox(height: 40),
+
+          // CTA Buttons
+          Row(
+            children: [
+              Expanded(
+                child: GlassmorphicContainer(
+                  width: double.infinity,
+                  height: 60,
+                  borderRadius: 16,
+                  blur: 20,
+                  alignment: Alignment.center,
+                  border: 0,
+                  linearGradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFFFFFF),
+                      Color(0xFFF0F0F0),
+                    ],
+                  ),
+                  borderGradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.5),
+                      Colors.white.withOpacity(0.2),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onGetStarted,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Start Your Quest',
+                              style: TextStyle(
+                                color: AppColors.gradientBlue,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: AppColors.gradientBlue,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ).animate()
+                    .fadeIn(delay: 500.ms)
+                    .slideY(begin: 0.2, end: 0)
+                    .shimmer(delay: 500.ms, duration: 1200.ms),
+              ),
+              const SizedBox(width: 16),
+              GlassmorphicContainer(
+                width: 60,
+                height: 60,
+                borderRadius: 16,
+                blur: 20,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.05),
+                  ],
+                ),
+                borderGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0.2),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onLogin,
+                    borderRadius: BorderRadius.circular(16),
+                    child: const Center(
+                      child: Icon(
+                        Icons.login_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ).animate()
+                  .fadeIn(delay: 600.ms)
+                  .scale(delay: 600.ms),
+            ],
+          ),
+
+          const SizedBox(height: 40),
+
+          // Stats Row
+          Row(
+            children: [
+              _buildStatChip('10K+', 'Active Learners'),
+              const SizedBox(width: 16),
+              _buildStatChip('500+', 'Skills'),
+              const SizedBox(width: 16),
+              _buildStatChip('4.9⭐', 'Rating'),
+            ],
+          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatChip(String value, String label) {
+    return GlassmorphicContainer(
+      width: 100,
+      height: 70,
+      borderRadius: 12,
+      blur: 15,
+      alignment: Alignment.center,
+      border: 1.5,
+      linearGradient: LinearGradient(
+        colors: [
+          Colors.white.withOpacity(0.15),
+          Colors.white.withOpacity(0.05),
+        ],
+      ),
+      borderGradient: LinearGradient(
+        colors: [
+          Colors.white.withOpacity(0.4),
+          Colors.white.withOpacity(0.1),
+        ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 40, color: AppColors.gradientBlue),
-          const SizedBox(height: 12),
           Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
-            description,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMuted,
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -234,11 +566,439 @@ class FeatureCard extends StatelessWidget {
   }
 }
 
-class HowItWorksSection extends StatelessWidget {
-  const HowItWorksSection({super.key});
+
+// ============= BENTO GRID FEATURES =============
+class BentoFeaturesSection extends StatelessWidget {
+  final double scrollOffset;
+
+  const BentoFeaturesSection({super.key, required this.scrollOffset});
 
   @override
   Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Text(
+            '✨ Superpowers Unlocked',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          // Bento Grid Layout
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 0.9,
+            children: [
+              _buildBentoCard(
+                icon: Icons.map,
+                title: 'Interactive\nRoadmap',
+                description: 'Visual journey with themed regions',
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                ),
+                delay: 0,
+              ),
+              _buildBentoCard(
+                icon: Icons.emoji_events,
+                title: 'Epic\nRewards',
+                description: 'XP, badges & leaderboards',
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                ),
+                delay: 100,
+              ),
+              _buildBentoCard(
+                icon: Icons.auto_graph,
+                title: 'AI Skills\nAnalysis',
+                description: 'Gap detection & recommendations',
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                ),
+                delay: 200,
+              ),
+              _buildBentoCard(
+                icon: Icons.construction,
+                title: 'Build Real\nProjects',
+                description: 'Portfolio-worthy work',
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                ),
+                delay: 300,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Wide bento card
+          _buildWideBentoCard(
+            icon: Icons.description,
+            title: 'AI Resume Optimizer',
+            description: 'ATS-friendly feedback in seconds',
+            gradient: const LinearGradient(
+              colors: [Color(0xFFfa709a), Color(0xFFfee140)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBentoCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Gradient gradient,
+    required int delay,
+  }) {
+    return GlassmorphicContainer(
+      width: double.infinity,
+      height: double.infinity,
+      borderRadius: 24,
+      blur: 20,
+      alignment: Alignment.center,
+      border: 2,
+      linearGradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withOpacity(0.2),
+          Colors.white.withOpacity(0.05),
+        ],
+      ),
+      borderGradient: LinearGradient(
+        colors: [
+          Colors.white.withOpacity(0.6),
+          Colors.white.withOpacity(0.2),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: gradient.scale(0.3),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: Colors.white, size: 28),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  description,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: Duration(milliseconds: delay)).scale();
+  }
+
+  Widget _buildWideBentoCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Gradient gradient,
+  }) {
+    return GlassmorphicContainer(
+      width: double.infinity,
+      height: 120,
+      borderRadius: 24,
+      blur: 20,
+      alignment: Alignment.center,
+      border: 2,
+      linearGradient: LinearGradient(
+        colors: [
+          Colors.white.withOpacity(0.2),
+          Colors.white.withOpacity(0.05),
+        ],
+      ),
+      borderGradient: LinearGradient(
+        colors: [
+          Colors.white.withOpacity(0.6),
+          Colors.white.withOpacity(0.2),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: gradient.scale(0.3),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(icon, color: Colors.white, size: 36),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.2, end: 0);
+  }
+}
+
+// ============= ROADMAP PREVIEW =============
+class RoadmapPreviewSection extends StatelessWidget {
+  const RoadmapPreviewSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Text(
+            '🗺️ Your Journey Visualized',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          GlassmorphicContainer(
+            width: double.infinity,
+            height: 300,
+            borderRadius: 32,
+            blur: 20,
+            alignment: Alignment.center,
+            border: 2,
+            linearGradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.15),
+                Colors.white.withOpacity(0.05),
+              ],
+            ),
+            borderGradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.5),
+                Colors.white.withOpacity(0.2),
+              ],
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '🎯',
+                    style: TextStyle(fontSize: 80),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Interactive Learning Paths',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============= GAMIFICATION STATS =============
+class GamificationStatsSection extends StatelessWidget {
+  const GamificationStatsSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Text(
+            '🎮 Level Up System',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  '1000+',
+                  'XP Points',
+                  Icons.stars,
+                  const Color(0xFFFFD700),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  '50+',
+                  'Achievements',
+                  Icons.emoji_events,
+                  const Color(0xFFFF6B6B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Top 10%',
+                  'Leaderboard',
+                  Icons.leaderboard,
+                  const Color(0xFF4ECDC4),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  'Level 25',
+                  'Current Rank',
+                  Icons.workspace_premium,
+                  const Color(0xFF9B59B6),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String value, String label, IconData icon, Color color) {
+    return GlassmorphicContainer(
+      width: double.infinity,
+      height: 120,
+      borderRadius: 20,
+      blur: 20,
+      alignment: Alignment.center,
+      border: 2,
+      linearGradient: LinearGradient(
+        colors: [
+          color.withOpacity(0.3),
+          color.withOpacity(0.1),
+        ],
+      ),
+      borderGradient: LinearGradient(
+        colors: [
+          color.withOpacity(0.6),
+          color.withOpacity(0.2),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 32),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn().scale();
+  }
+}
+
+// ============= HOW IT WORKS 3D =============
+class HowItWorks3DSection extends StatelessWidget {
+  final AnimationController floatingController;
+
+  const HowItWorks3DSection({super.key, required this.floatingController});
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = [
+      {'emoji': '👋', 'title': 'Create Account', 'desc': 'Join in 30 seconds'},
+      {'emoji': '🎯', 'title': 'Choose Path', 'desc': 'AI suggests your roadmap'},
+      {'emoji': '🚀', 'title': 'Start Learning', 'desc': 'Complete quests & projects'},
+      {'emoji': '🏆', 'title': 'Earn Rewards', 'desc': 'Unlock badges & certificates'},
+      {'emoji': '💼', 'title': 'Get Hired', 'desc': 'Land your dream job'},
+    ];
+
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -247,57 +1007,110 @@ class HowItWorksSection extends StatelessWidget {
             'How It Works',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: Colors.white,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 32),
-          ...List.generate(5, (i) {
-            final steps = [
-              '📝 Complete onboarding',
-              '🗺️ Get AI-generated roadmap',
-              '🎯 Complete courses & projects',
-              '🏆 Earn XP, levels & badges',
-              '🚀 Launch your career',
-            ];
+          const SizedBox(height: 40),
+
+          ...List.generate(steps.length, (i) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+              child: GlassmorphicContainer(
+                width: double.infinity,
+                height: 90,
+                borderRadius: 20,
+                blur: 20,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.15),
+                    Colors.white.withOpacity(0.05),
+                  ],
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: AppColors.xpGold,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${i + 1}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                borderGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0.2),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF667eea).withOpacity(0.5),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            steps[i]['emoji']!,
+                            style: const TextStyle(fontSize: 28),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      steps[i],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              steps[i]['title']!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              steps[i]['desc']!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${i + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ).animate()
+                  .fadeIn(delay: Duration(milliseconds: i * 100))
+                  .slideX(begin: 0.3, end: 0),
             );
           }),
         ],
@@ -306,40 +1119,419 @@ class HowItWorksSection extends StatelessWidget {
   }
 }
 
-class FooterSection extends StatelessWidget {
-  const FooterSection({super.key});
+// ============= TEAM SECTION - NEW! =============
+class TeamSection extends StatelessWidget {
+  final AnimationController floatingController;
+
+  const TeamSection({super.key, required this.floatingController});
+
+  @override
+  Widget build(BuildContext context) {
+    final team = [
+      {
+        'name': 'Pranav Rao K',
+        'role': 'Frontend Developer',
+        'emoji': '👨‍💼',
+        'gradient': const LinearGradient(colors: [Color(0xFF667eea), Color(0xFF764ba2)]),
+      },
+      {
+        'name': 'Tushar P',
+        'role': 'Backend Developer',
+        'emoji': '👨‍💼',
+        'gradient': const LinearGradient(colors: [Color(0xFFf093fb), Color(0xFFf5576c)]),
+      },
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Text(
+            '👥 Meet The Builders',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Passionate about transforming careers through gamification',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 16,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 40),
+
+          Row(
+            children: team.map((member) {
+              final index = team.indexOf(member);
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: index == 0 ? 0 : 8,
+                    right: index == team.length - 1 ? 0 : 8,
+                  ),
+                  child: AnimatedBuilder(
+                    animation: floatingController,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(
+                          0,
+                          math.sin((floatingController.value + index * 0.5) * 2 * math.pi) * 10,
+                        ),
+                        child: child,
+                      );
+                    },
+                    child: GlassmorphicContainer(
+                      width: double.infinity,
+                      height: 280,
+                      borderRadius: 24,
+                      blur: 20,
+                      alignment: Alignment.center,
+                      border: 2,
+                      linearGradient: LinearGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.2),
+                          Colors.white.withOpacity(0.05),
+                        ],
+                      ),
+                      borderGradient: LinearGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.5),
+                          Colors.white.withOpacity(0.2),
+                        ],
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: member['gradient'] as Gradient,
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.0),
+                                Colors.black.withOpacity(0.4),
+                              ],
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withOpacity(0.2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    member['emoji'] as String,
+                                    style: const TextStyle(fontSize: 50),
+                                  ),
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Text(
+                                    member['name'] as String,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    member['role'] as String,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      _buildSocialIcon(Icons.link),
+                                      const SizedBox(width: 8),
+                                      _buildSocialIcon(Icons.mail),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ).animate()
+                        .fadeIn(delay: Duration(milliseconds: 200 + (index * 200)))
+                        .slideY(begin: 0.3, end: 0),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSocialIcon(IconData icon) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: Colors.white, size: 18),
+    );
+  }
+}
+
+// ============= SOCIAL PROOF =============
+class SocialProofSection extends StatelessWidget {
+  const SocialProofSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.darkBg,
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Text(
-            '© 2024 Ascent. All rights reserved.',
-            style: TextStyle(color: Colors.white70),
+          Text(
+            '💬 What Our Heroes Say',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
+
+          SizedBox(
+            height: 200,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: List.generate(3, (i) {
+                final testimonials = [
+                  {'name': 'Sarah K.', 'role': 'Full Stack Dev', 'text': 'Landed my dream job in 3 months!'},
+                  {'name': 'Mike R.', 'role': 'Data Scientist', 'text': 'The gamification kept me motivated'},
+                  {'name': 'Emma L.', 'role': 'UX Designer', 'text': 'Best learning experience ever!'},
+                ];
+
+                return Container(
+                  width: 280,
+                  margin: const EdgeInsets.only(right: 16),
+                  child: GlassmorphicContainer(
+                    width: double.infinity,
+                    height: double.infinity,
+                    borderRadius: 24,
+                    blur: 20,
+                    alignment: Alignment.center,
+                    border: 2,
+                    linearGradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.15),
+                        Colors.white.withOpacity(0.05),
+                      ],
+                    ),
+                    borderGradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.5),
+                        Colors.white.withOpacity(0.2),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: List.generate(
+                              5,
+                                  (index) => const Icon(Icons.star, color: AppColors.xpGold, size: 16),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            '"${testimonials[i]['text']}"',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              height: 1.5,
+                            ),
+                          ),
+                          const Spacer(),
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: AppColors.gradientBlue,
+                                child: Text(
+                                  testimonials[i]['name']![0],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    testimonials[i]['name']!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    testimonials[i]['role']!,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============= MODERN FOOTER =============
+class ModernFooter extends StatelessWidget {
+  const ModernFooter({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0E27).withOpacity(0.8),
+      ),
+      child: Column(
+        children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextButton(
-                onPressed: () {},
-                child: const Text('Privacy', style: TextStyle(color: Colors.white)),
+              const Icon(Icons.rocket_launch, color: AppColors.xpGold, size: 32),
+              const SizedBox(width: 12),
+              const Text(
+                'Mentora',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('Terms', style: TextStyle(color: Colors.white)),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('Contact', style: TextStyle(color: Colors.white)),
-              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            '© 2025 Mentora. All rights reserved.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildFooterLink('Privacy'),
+              _buildFooterLink('Terms'),
+              _buildFooterLink('Contact'),
+              _buildFooterLink('Careers'),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildSocialIcon(Icons.facebook),
+              _buildSocialIcon(Icons.camera_alt),
+              const Icon(Icons.close, color: Colors.white, size: 20),
+              _buildSocialIcon(Icons.play_arrow),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildFooterLink(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialIcon(IconData icon) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: Colors.white, size: 20),
+    );
+  }
+}
+
+// Extension for gradient scaling
+extension GradientScale on Gradient {
+  Gradient scale(double opacity) {
+    if (this is LinearGradient) {
+      final lg = this as LinearGradient;
+      return LinearGradient(
+        begin: lg.begin,
+        end: lg.end,
+        colors: lg.colors.map((c) => c.withOpacity(opacity)).toList(),
+      );
+    }
+    return this;
   }
 }

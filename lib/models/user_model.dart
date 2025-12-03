@@ -16,6 +16,7 @@ class UserModel {
 
   // Onboarding Data
   final String? education;
+  final String? currentRole;
   final List<String> skills;
   final Map<String, int> skillProficiency;
   final String? careerGoal;
@@ -23,7 +24,18 @@ class UserModel {
   final int weeklyHours;
   final List<String> interests;
   final String? experienceLevel;
+  final String? learningStyle;
+  final String? motivation;
   final Map<String, String> socialLinks;
+
+  // Gamification
+  final List<String> achievements;
+  final List<String> badges;
+  final Map<String, dynamic> statistics;
+  final int totalLessonsCompleted;
+  final int totalProjectsCompleted;
+  final int currentStreak;
+  final int longestStreak;
 
   UserModel({
     required this.id,
@@ -39,6 +51,7 @@ class UserModel {
     required this.createdAt,
     required this.updatedAt,
     this.education,
+    this.currentRole,
     this.skills = const [],
     this.skillProficiency = const {},
     this.careerGoal,
@@ -46,7 +59,16 @@ class UserModel {
     this.weeklyHours = 10,
     this.interests = const [],
     this.experienceLevel,
+    this.learningStyle,
+    this.motivation,
     this.socialLinks = const {},
+    this.achievements = const [],
+    this.badges = const [],
+    this.statistics = const {},
+    this.totalLessonsCompleted = 0,
+    this.totalProjectsCompleted = 0,
+    this.currentStreak = 0,
+    this.longestStreak = 0,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -72,18 +94,30 @@ class UserModel {
           ? (json['updatedAt'] as Timestamp).toDate()
           : DateTime.parse(json['updatedAt'] as String),
       education: json['education'] as String?,
+      currentRole: json['currentRole'] as String?,
       skills: (json['skills'] as List<dynamic>?)?.cast<String>() ?? [],
       skillProficiency: (json['skillProficiency'] as Map<String, dynamic>?)?.map(
             (key, value) => MapEntry(key, value as int),
-      ) ?? {},
+      ) ??
+          {},
       careerGoal: json['careerGoal'] as String?,
       careerTimeline: json['careerTimeline'] as String?,
       weeklyHours: json['weeklyHours'] as int? ?? 10,
       interests: (json['interests'] as List<dynamic>?)?.cast<String>() ?? [],
       experienceLevel: json['experienceLevel'] as String?,
+      learningStyle: json['learningStyle'] as String?,
+      motivation: json['motivation'] as String?,
       socialLinks: (json['socialLinks'] as Map<String, dynamic>?)?.map(
             (key, value) => MapEntry(key, value as String),
-      ) ?? {},
+      ) ??
+          {},
+      achievements: (json['achievements'] as List<dynamic>?)?.cast<String>() ?? [],
+      badges: (json['badges'] as List<dynamic>?)?.cast<String>() ?? [],
+      statistics: (json['statistics'] as Map<String, dynamic>?) ?? {},
+      totalLessonsCompleted: json['totalLessonsCompleted'] as int? ?? 0,
+      totalProjectsCompleted: json['totalProjectsCompleted'] as int? ?? 0,
+      currentStreak: json['currentStreak'] as int? ?? 0,
+      longestStreak: json['longestStreak'] as int? ?? 0,
     );
   }
 
@@ -101,6 +135,7 @@ class UserModel {
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
     'education': education,
+    'currentRole': currentRole,
     'skills': skills,
     'skillProficiency': skillProficiency,
     'careerGoal': careerGoal,
@@ -108,7 +143,16 @@ class UserModel {
     'weeklyHours': weeklyHours,
     'interests': interests,
     'experienceLevel': experienceLevel,
+    'learningStyle': learningStyle,
+    'motivation': motivation,
     'socialLinks': socialLinks,
+    'achievements': achievements,
+    'badges': badges,
+    'statistics': statistics,
+    'totalLessonsCompleted': totalLessonsCompleted,
+    'totalProjectsCompleted': totalProjectsCompleted,
+    'currentStreak': currentStreak,
+    'longestStreak': longestStreak,
   };
 
   UserModel copyWith({
@@ -125,6 +169,7 @@ class UserModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? education,
+    String? currentRole,
     List<String>? skills,
     Map<String, int>? skillProficiency,
     String? careerGoal,
@@ -132,7 +177,16 @@ class UserModel {
     int? weeklyHours,
     List<String>? interests,
     String? experienceLevel,
+    String? learningStyle,
+    String? motivation,
     Map<String, String>? socialLinks,
+    List<String>? achievements,
+    List<String>? badges,
+    Map<String, dynamic>? statistics,
+    int? totalLessonsCompleted,
+    int? totalProjectsCompleted,
+    int? currentStreak,
+    int? longestStreak,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -148,6 +202,7 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       education: education ?? this.education,
+      currentRole: currentRole ?? this.currentRole,
       skills: skills ?? this.skills,
       skillProficiency: skillProficiency ?? this.skillProficiency,
       careerGoal: careerGoal ?? this.careerGoal,
@@ -155,19 +210,142 @@ class UserModel {
       weeklyHours: weeklyHours ?? this.weeklyHours,
       interests: interests ?? this.interests,
       experienceLevel: experienceLevel ?? this.experienceLevel,
+      learningStyle: learningStyle ?? this.learningStyle,
+      motivation: motivation ?? this.motivation,
       socialLinks: socialLinks ?? this.socialLinks,
+      achievements: achievements ?? this.achievements,
+      badges: badges ?? this.badges,
+      statistics: statistics ?? this.statistics,
+      totalLessonsCompleted: totalLessonsCompleted ?? this.totalLessonsCompleted,
+      totalProjectsCompleted: totalProjectsCompleted ?? this.totalProjectsCompleted,
+      currentStreak: currentStreak ?? this.currentStreak,
+      longestStreak: longestStreak ?? this.longestStreak,
     );
   }
 
+  // XP and Level Calculations
   int get xpForNextLevel => (level * 100 * (1 + level * 0.5)).toInt();
   double get levelProgress => xp / xpForNextLevel;
 
+  // Level Title System
   String get levelTitle {
-    if (level >= 15) return 'Legend';
-    if (level >= 13) return 'Master';
-    if (level >= 10) return 'Expert';
+    if (level >= 50) return 'Legendary Hero';
+    if (level >= 40) return 'Grand Master';
+    if (level >= 30) return 'Champion';
+    if (level >= 25) return 'Legend';
+    if (level >= 20) return 'Master';
+    if (level >= 15) return 'Expert';
+    if (level >= 10) return 'Professional';
     if (level >= 7) return 'Skilled';
-    if (level >= 4) return 'Apprentice';
+    if (level >= 5) return 'Apprentice';
+    if (level >= 3) return 'Student';
     return 'Novice';
   }
+
+  // Achievement Tracking
+  bool hasAchievement(String achievementId) => achievements.contains(achievementId);
+  bool hasBadge(String badgeId) => badges.contains(badgeId);
+
+  // Statistics Helpers
+  int get totalActiveDays => statistics['totalActiveDays'] as int? ?? 0;
+  int get totalTimeSpentMinutes => statistics['totalTimeSpent'] as int? ?? 0;
+  double get averageSessionTime {
+    final sessions = statistics['totalSessions'] as int? ?? 1;
+    return totalTimeSpentMinutes / sessions;
+  }
+
+  // Streak Calculations
+  bool get isOnStreak => currentStreak > 0;
+  bool get hasStreakRecord => longestStreak > 0;
+  String get streakEmoji {
+    if (currentStreak >= 30) return '🔥🔥🔥';
+    if (currentStreak >= 14) return '🔥🔥';
+    if (currentStreak >= 7) return '🔥';
+    return '⚡';
+  }
+
+  // Completion Stats
+  double get completionRate {
+    final total = totalLessonsCompleted + totalProjectsCompleted;
+    if (total == 0) return 0.0;
+    return totalProjectsCompleted / total;
+  }
+
+  // User Status
+  bool get isNewUser => level == 1 && xp < 100;
+  bool get isActiveUser => currentStreak >= 3;
+  bool get isPowerUser => level >= 10 && currentStreak >= 7;
+
+  // Profile Completeness
+  int get profileCompleteness {
+    int score = 0;
+    if (education != null && education!.isNotEmpty) score += 10;
+    if (currentRole != null && currentRole!.isNotEmpty) score += 10;
+    if (skills.length >= 3) score += 15;
+    if (careerGoal != null && careerGoal!.isNotEmpty) score += 15;
+    if (interests.length >= 3) score += 10;
+    if (experienceLevel != null) score += 10;
+    if (learningStyle != null) score += 10;
+    if (motivation != null) score += 10;
+    if (bio != null && bio!.isNotEmpty) score += 10;
+    return score;
+  }
+
+  bool get isProfileComplete => profileCompleteness == 100;
+
+  // Skill Level Helpers
+  String getSkillLevel(String skill) {
+    final proficiency = skillProficiency[skill] ?? 0;
+    if (proficiency >= 80) return 'Expert';
+    if (proficiency >= 60) return 'Advanced';
+    if (proficiency >= 40) return 'Intermediate';
+    if (proficiency >= 20) return 'Beginner';
+    return 'Novice';
+  }
+
+  // Next Level Info
+  int get xpNeededForNextLevel => xpForNextLevel - xp;
+  String get nextLevelTitle {
+    final nextLevel = level + 1;
+    if (nextLevel >= 50) return 'Legendary Hero';
+    if (nextLevel >= 40) return 'Grand Master';
+    if (nextLevel >= 30) return 'Champion';
+    if (nextLevel >= 25) return 'Legend';
+    if (nextLevel >= 20) return 'Master';
+    if (nextLevel >= 15) return 'Expert';
+    if (nextLevel >= 10) return 'Professional';
+    if (nextLevel >= 7) return 'Skilled';
+    if (nextLevel >= 5) return 'Apprentice';
+    if (nextLevel >= 3) return 'Student';
+    return 'Novice';
+  }
+
+  // Rank Calculation (for leaderboard)
+  String get rank {
+    if (xp >= 50000) return 'S+';
+    if (xp >= 30000) return 'S';
+    if (xp >= 20000) return 'A+';
+    if (xp >= 15000) return 'A';
+    if (xp >= 10000) return 'B+';
+    if (xp >= 7000) return 'B';
+    if (xp >= 5000) return 'C+';
+    if (xp >= 3000) return 'C';
+    if (xp >= 1000) return 'D';
+    return 'E';
+  }
+
+  @override
+  String toString() {
+    return 'UserModel(id: $id, name: $name, level: $level, xp: $xp)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is UserModel && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
+

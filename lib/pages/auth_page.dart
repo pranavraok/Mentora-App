@@ -11,7 +11,6 @@ import 'dart:math' as math;
 
 class AuthPage extends ConsumerStatefulWidget {
   final bool isLogin;
-
   const AuthPage({super.key, this.isLogin = true});
 
   @override
@@ -80,9 +79,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
 
   Future<void> _handleAuth() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     await Future.delayed(const Duration(seconds: 2));
 
     final now = DateTime.now();
@@ -118,7 +115,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     return Scaffold(
       body: Stack(
         children: [
-          // Animated gradient background
+          // ✅ ONLY COLOR CHANGED - SAME AS OTHER PAGES
           AnimatedBuilder(
             animation: _rotationController,
             builder: (context, child) {
@@ -128,10 +125,10 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF667eea),
-                      const Color(0xFF764ba2),
-                      const Color(0xFF6366F1),
-                      const Color(0xFF8B5CF6),
+                      const Color(0xFF0F0C29),
+                      const Color(0xFF302b63),
+                      const Color(0xFF24243e),
+                      const Color(0xFF302b63),
                     ],
                     transform: GradientRotation(_rotationController.value * 2 * math.pi),
                   ),
@@ -167,13 +164,13 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
             );
           }),
 
-          // Main content - ✅ FIXED: Added SingleChildScrollView properly
+          // Main content - ✅ EVERYTHING ELSE KEPT SAME
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const SizedBox(height: 20), // ✅ Top spacing
+                  const SizedBox(height: 20),
 
                   // Animated hero icon
                   AnimatedBuilder(
@@ -245,9 +242,9 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                     ),
                   ).animate().fadeIn(delay: 300.ms),
 
-                  const SizedBox(height: 32), // ✅ Reduced from 40
+                  const SizedBox(height: 32),
 
-                  // Form card - ✅ FIXED: Using IntrinsicHeight instead of fixed height
+                  // Form card
                   IntrinsicHeight(
                     child: GlassmorphicContainer(
                       width: double.infinity,
@@ -273,11 +270,11 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                         ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(28), // ✅ Reduced from 32
+                        padding: const EdgeInsets.all(28),
                         child: Form(
                           key: _formKey,
                           child: Column(
-                            mainAxisSize: MainAxisSize.min, // ✅ Important!
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               // Social login buttons
                               Row(
@@ -300,7 +297,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                 ],
                               ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
 
-                              const SizedBox(height: 20), // ✅ Reduced from 24
+                              const SizedBox(height: 20),
 
                               // Divider
                               Row(
@@ -318,7 +315,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                       style: TextStyle(
                                         color: Colors.white.withOpacity(0.7),
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 12, // ✅ Reduced font size
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ),
@@ -331,7 +328,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                 ],
                               ).animate().fadeIn(delay: 500.ms),
 
-                              const SizedBox(height: 20), // ✅ Reduced from 24
+                              const SizedBox(height: 20),
 
                               // Name field (for signup)
                               if (!widget.isLogin) ...[
@@ -342,7 +339,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                   validator: (v) => v?.isEmpty ?? true ? 'Name required' : null,
                                   delay: 600,
                                 ).animate().fadeIn(delay: 600.ms).slideX(begin: -0.2, end: 0),
-                                const SizedBox(height: 14), // ✅ Reduced from 16
+                                const SizedBox(height: 14),
                               ],
 
                               // Email field
@@ -361,7 +358,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                   .fadeIn(delay: Duration(milliseconds: widget.isLogin ? 600 : 700))
                                   .slideX(begin: -0.2, end: 0),
 
-                              const SizedBox(height: 14), // ✅ Reduced from 16
+                              const SizedBox(height: 14),
 
                               // Password field
                               _buildTextField(
@@ -387,13 +384,13 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                   .slideX(begin: -0.2, end: 0),
 
                               if (widget.isLogin) ...[
-                                const SizedBox(height: 4), // ✅ Reduced from 8
+                                const SizedBox(height: 4),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
                                     onPressed: () {},
                                     style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 4), // ✅ Reduced padding
+                                      padding: const EdgeInsets.symmetric(vertical: 4),
                                     ),
                                     child: Text(
                                       'Forgot Password?',
@@ -407,7 +404,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                 ).animate().fadeIn(delay: 800.ms),
                               ],
 
-                              const SizedBox(height: 20), // ✅ Reduced from 24
+                              const SizedBox(height: 20),
 
                               // Submit button
                               _buildSubmitButton()
@@ -416,7 +413,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                   .slideY(begin: 0.2, end: 0)
                                   .shimmer(delay: 1000.ms, duration: 2000.ms),
 
-                              const SizedBox(height: 14), // ✅ Reduced from 16
+                              const SizedBox(height: 14),
 
                               // Toggle auth mode
                               Row(
@@ -428,7 +425,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                         : 'Already have an account? ',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.8),
-                                      fontSize: 13, // ✅ Reduced from 14
+                                      fontSize: 13,
                                     ),
                                   ),
                                   GestureDetector(
@@ -437,7 +434,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                                       widget.isLogin ? 'Sign Up' : 'Login',
                                       style: const TextStyle(
                                         color: AppColors.xpGold,
-                                        fontSize: 13, // ✅ Reduced from 14
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -452,21 +449,21 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                     ),
                   ).animate().fadeIn(delay: 400.ms).scale(begin: const Offset(0.95, 0.95)),
 
-                  const SizedBox(height: 20), // ✅ Reduced from 24
+                  const SizedBox(height: 20),
 
                   // Trust badges
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildTrustBadge(Icons.security, 'Secure'),
-                      const SizedBox(width: 20), // ✅ Reduced from 24
+                      const SizedBox(width: 20),
                       _buildTrustBadge(Icons.verified_user, 'Trusted'),
-                      const SizedBox(width: 20), // ✅ Reduced from 24
+                      const SizedBox(width: 20),
                       _buildTrustBadge(Icons.star, '4.9 Rating'),
                     ],
                   ).animate().fadeIn(delay: 1200.ms).slideY(begin: 0.3, end: 0),
 
-                  const SizedBox(height: 20), // ✅ Bottom spacing
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -572,7 +569,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
           color: Colors.yellowAccent,
           fontWeight: FontWeight.w600,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), // ✅ Reduced vertical padding
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       validator: validator,
     );
@@ -581,7 +578,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 54, // ✅ Reduced from 56
+      height: 54,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
@@ -620,7 +617,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                   widget.isLogin ? 'Login & Continue' : 'Create Account',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 17, // ✅ Reduced from 18
+                    fontSize: 17,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
                   ),
@@ -629,7 +626,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                 const Icon(
                   Icons.arrow_forward_rounded,
                   color: Colors.white,
-                  size: 22, // ✅ Reduced from 24
+                  size: 22,
                 ),
               ],
             ),
@@ -648,14 +645,14 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
             color: Colors.white.withOpacity(0.15),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: AppColors.xpGold, size: 14), // ✅ Reduced from 16
+          child: Icon(icon, color: AppColors.xpGold, size: 14),
         ),
         const SizedBox(width: 6),
         Text(
           label,
           style: TextStyle(
             color: Colors.white.withOpacity(0.9),
-            fontSize: 11, // ✅ Reduced from 12
+            fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -663,4 +660,5 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     );
   }
 }
+
 

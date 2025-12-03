@@ -48,45 +48,52 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
-
         final nodesAsync = ref.watch(roadmapNodesProvider(user.id));
 
         return Scaffold(
           body: Stack(
             children: [
-              // ============= MAGICAL ANIMATED BACKGROUND =============
-              AnimatedBuilder(
-                animation: _backgroundController,
-                builder: (context, child) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color.lerp(
-                            const Color(0xFF0F0C29),
-                            const Color(0xFF1a1438),
-                            _backgroundController.value,
-                          )!,
-                          const Color(0xFF302b63),
-                          Color.lerp(
-                            const Color(0xFF24243e),
-                            const Color(0xFF1f1c3a),
-                            _backgroundController.value,
-                          )!,
-                        ],
-                      ),
-                    ),
-                    child: CustomPaint(
-                      painter: Roadmap3DBackgroundPainter(
-                        animation: _backgroundController,
-                      ),
-                      size: Size.infinite,
-                    ),
-                  );
-                },
+              // ✅ BACKGROUND GRADIENT
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF0F0C29),
+                      Color(0xFF302b63),
+                      Color(0xFF24243e),
+                    ],
+                  ),
+                ),
               ),
+
+              // ✅ FLOATING BLUR CIRCLES (SIMPLE VERSION)
+              ...List.generate(8, (index) {
+                return AnimatedBuilder(
+                  animation: _backgroundController,
+                  builder: (context, child) {
+                    final offset = math.sin((_backgroundController.value + index * 0.2) * 2 * math.pi);
+                    return Positioned(
+                      left: (index * 50.0) + offset * 20,
+                      top: (index * 80.0) + offset * 30,
+                      child: Container(
+                        width: 60 + (index * 10.0),
+                        height: 60 + (index * 10.0),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.1),
+                              Colors.white.withOpacity(0.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
 
               // ============= CONTENT LAYER =============
               Column(
@@ -519,122 +526,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
   }
 }
 
-// ============= 3D ANIMATED BACKGROUND PAINTER =============
-class Roadmap3DBackgroundPainter extends CustomPainter {
-  final Animation<double> animation;
-
-  Roadmap3DBackgroundPainter({
-    required this.animation,
-  }) : super(repaint: animation);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    // Floating particles
-    for (int i = 0; i < 30; i++) {
-      final progress = (animation.value + (i * 0.033)) % 1.0;
-      final x = (size.width * 0.1) + (i % 6) * (size.width * 0.16);
-      final y = size.height * progress;
-      final opacity = (1.0 - progress) * 0.35;
-      final radius = 2.0 + (i % 3) * 1.5;
-
-      paint.color = Colors.white.withOpacity(opacity);
-      canvas.drawCircle(Offset(x, y), radius, paint);
-    }
-
-    // Glowing orbs with 3D effect
-    final orbs = [
-      {'x': 0.2, 'y': 0.25, 'color': const Color(0xFFFFD700), 'size': 200.0},
-      {'x': 0.8, 'y': 0.45, 'color': const Color(0xFFFFA500), 'size': 170.0},
-      {'x': 0.5, 'y': 0.65, 'color': const Color(0xFFFFD700), 'size': 150.0},
-      {'x': 0.3, 'y': 0.8, 'color': const Color(0xFFFFA500), 'size': 130.0},
-    ];
-
-    for (var i = 0; i < orbs.length; i++) {
-      final orb = orbs[i];
-      final angle = animation.value * 2 * math.pi + (i * math.pi / 2);
-      final offsetX = math.cos(angle) * 35;
-      final offsetY = math.sin(angle) * 25;
-
-      final gradient = RadialGradient(
-        colors: [
-          (orb['color'] as Color).withOpacity(0.2),
-          (orb['color'] as Color).withOpacity(0.08),
-          (orb['color'] as Color).withOpacity(0.0),
-        ],
-      );
-
-      final center = Offset(
-        size.width * (orb['x'] as double) + offsetX,
-        size.height * (orb['y'] as double) + offsetY,
-      );
-
-      paint.shader = gradient.createShader(
-        Rect.fromCircle(center: center, radius: orb['size'] as double),
-      );
-      canvas.drawCircle(center, orb['size'] as double, paint);
-    }
-
-    // Animated grid pattern
-    final gridPaint = Paint()
-      ..color = Colors.white.withOpacity(0.035)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    const gridSize = 55.0;
-    final gridOffset = (animation.value * gridSize) % gridSize;
-
-    for (double x = -gridOffset; x < size.width; x += gridSize) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = -gridOffset; y < size.height; y += gridSize) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    // 3D hexagons floating
-    for (int i = 0; i < 12; i++) {
-      final hexX = (size.width * 0.15) + (i % 4) * (size.width * 0.25);
-      final hexY = (size.height * 0.2) + (i ~/ 4) * (size.height * 0.3);
-      final hexProgress = (animation.value + (i * 0.083)) % 1.0;
-      final opacity = (math.sin(hexProgress * math.pi) * 0.12);
-
-      _drawHexagon(
-        canvas,
-        Offset(hexX, hexY + hexProgress * 80),
-        15 + (i % 3) * 4,
-        Colors.white.withOpacity(opacity),
-        animation.value * 2 * math.pi + i,
-      );
-    }
-  }
-
-  void _drawHexagon(Canvas canvas, Offset center, double size, Color color, double rotation) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final path = Path();
-    for (int i = 0; i < 6; i++) {
-      final angle = (math.pi / 3) * i + rotation;
-      final x = center.dx + size * math.cos(angle);
-      final y = center.dy + size * math.sin(angle);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(Roadmap3DBackgroundPainter oldDelegate) => true;
-}
-
-// ============= 3D ROADMAP (Keep all existing implementations) =============
+// ============= 3D ROADMAP =============
 class ThreeDRoadmap extends ConsumerWidget {
   final List<RoadmapNode> nodes;
 
@@ -704,14 +596,6 @@ class ThreeDRoadmap extends ConsumerWidget {
     );
   }
 }
-
-// Keep ALL existing classes exactly as they are:
-// - ThreeDRoadPainter
-// - RoadMarker
-// - _RoadMarkerState
-// - RoadCheckpoint
-// - RoadmapDetailSheet
-// (Continue with the exact same implementation from your original file)
 
 // ============= 3D ROAD PAINTER =============
 class ThreeDRoadPainter extends CustomPainter {
@@ -1258,8 +1142,8 @@ class RoadmapDetailSheet extends ConsumerWidget {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
@@ -1267,12 +1151,12 @@ class RoadmapDetailSheet extends ConsumerWidget {
             Color(0xFF0F0C29),
           ],
         ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black26,
             blurRadius: 30,
-            offset: const Offset(0, -10),
+            offset: Offset(0, -10),
           ),
         ],
       ),

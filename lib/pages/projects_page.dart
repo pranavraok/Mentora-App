@@ -41,7 +41,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
     return Scaffold(
       body: Stack(
         children: [
-          // ============= MAGICAL ANIMATED BACKGROUND (UPDATED) =============
+          // ✅ BACKGROUND GRADIENT
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -54,13 +54,34 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                 ],
               ),
             ),
-            child: CustomPaint(
-              painter: FloatingParticlesPainter(
-                animation: _animController,
-              ),
-              size: Size.infinite,
-            ),
           ),
+
+          // ✅ FLOATING BLUR CIRCLES (SIMPLE VERSION)
+          ...List.generate(8, (index) {
+            return AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) {
+                final offset = math.sin((_animController.value + index * 0.2) * 2 * math.pi);
+                return Positioned(
+                  left: (index * 50.0) + offset * 20,
+                  top: (index * 80.0) + offset * 30,
+                  child: Container(
+                    width: 60 + (index * 10.0),
+                    height: 60 + (index * 10.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.1),
+                          Colors.white.withOpacity(0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }),
 
           // ============= CONTENT LAYER =============
           Column(
@@ -93,7 +114,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const SizedBox(width: 48), // Spacer for alignment
+                            const SizedBox(width: 48),
                             Column(
                               children: [
                                 const Text(
@@ -402,78 +423,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
   }
 }
 
-// ============= FLOATING PARTICLES BACKGROUND PAINTER =============
-class FloatingParticlesPainter extends CustomPainter {
-  final Animation<double> animation;
-
-  FloatingParticlesPainter({required this.animation}) : super(repaint: animation);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    // Draw floating circles
-    for (int i = 0; i < 20; i++) {
-      final progress = (animation.value + (i * 0.05)) % 1.0;
-      final x = (size.width * 0.1) + (i % 5) * (size.width * 0.2);
-      final y = size.height * progress;
-      final opacity = (1.0 - progress) * 0.3;
-      final radius = 3.0 + (i % 3) * 2;
-
-      paint.color = Colors.white.withOpacity(opacity);
-      canvas.drawCircle(Offset(x, y), radius, paint);
-    }
-
-    // Draw gradient orbs
-    final orbs = [
-      {'x': 0.2, 'y': 0.3, 'color': const Color(0xFF667eea)},
-      {'x': 0.8, 'y': 0.5, 'color': const Color(0xFF764ba2)},
-      {'x': 0.5, 'y': 0.7, 'color': const Color(0xFF667eea)},
-    ];
-
-    for (var orb in orbs) {
-      final offsetX = math.sin(animation.value * 2 * math.pi) * 30;
-      final offsetY = math.cos(animation.value * 2 * math.pi) * 20;
-
-      final gradient = RadialGradient(
-        colors: [
-          (orb['color'] as Color).withOpacity(0.15),
-          (orb['color'] as Color).withOpacity(0.0),
-        ],
-      );
-
-      final center = Offset(
-        size.width * (orb['x'] as double) + offsetX,
-        size.height * (orb['y'] as double) + offsetY,
-      );
-
-      paint.shader = gradient.createShader(
-        Rect.fromCircle(center: center, radius: 150),
-      );
-      canvas.drawCircle(center, 150, paint);
-    }
-
-    // Draw grid pattern
-    final gridPaint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    const gridSize = 50.0;
-    for (double x = 0; x < size.width; x += gridSize) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-
-    for (double y = 0; y < size.height; y += gridSize) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(FloatingParticlesPainter oldDelegate) => true;
-}
-
-// ============= PROJECT CARD (Keep all existing code) =============
+// ============= PROJECT CARD =============
 class ProjectCard extends ConsumerWidget {
   final Project project;
   final int index;
@@ -880,7 +830,7 @@ class ProjectCard extends ConsumerWidget {
   }
 }
 
-// ============= HEXAGON PATTERN PAINTER (Keep existing) =============
+// ============= HEXAGON PATTERN PAINTER =============
 class HexagonPatternPainter extends CustomPainter {
   final Color color;
 
@@ -894,7 +844,6 @@ class HexagonPatternPainter extends CustomPainter {
       ..strokeWidth = 1.5;
 
     const spacing = 22.0;
-
     for (double y = -spacing; y < size.height + spacing; y += spacing) {
       for (double x = -spacing; x < size.width + spacing; x += spacing * 1.5) {
         final offset = (y / spacing).floor() % 2 == 0 ? 0.0 : spacing * 0.75;
@@ -923,7 +872,7 @@ class HexagonPatternPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ============= PROJECT DETAIL SHEET (Keep all existing code exactly as is) =============
+// ============= PROJECT DETAIL SHEET =============
 class ProjectDetailSheet extends ConsumerWidget {
   final Project project;
 

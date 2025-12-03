@@ -50,7 +50,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
     await userAsync.when(
       data: (user) async {
         if (user == null) return;
-
         final updatedUser = user.copyWith(
           education: _educationController.text,
           careerGoal: _careerGoalController.text,
@@ -58,10 +57,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           weeklyHours: _weeklyHours,
           updatedAt: DateTime.now(),
         );
-
         final userService = ref.read(userServiceProvider);
         await userService.updateUser(updatedUser);
-
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -95,34 +92,33 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
     return Scaffold(
       body: Stack(
         children: [
-          // Animated gradient background
+          // ✅ UPDATED BACKGROUND - SAME AS OTHER PAGES
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: [
-                  const Color(0xFF667eea),
-                  const Color(0xFF764ba2),
-                  const Color(0xFF6366F1),
-                  const Color(0xFF8B5CF6),
+                  Color(0xFF0F0C29),
+                  Color(0xFF302b63),
+                  Color(0xFF24243e),
                 ],
               ),
             ),
           ),
 
-          // Floating particles
-          ...List.generate(5, (index) {
+          // Floating particles (SAME AS OTHER PAGES)
+          ...List.generate(8, (index) {
             return AnimatedBuilder(
               animation: _floatingController,
               builder: (context, child) {
                 final offset = math.sin((_floatingController.value + index * 0.2) * 2 * math.pi);
                 return Positioned(
-                  left: (index * 80.0) + offset * 30,
-                  top: (index * 120.0) + offset * 40,
+                  left: (index * 50.0) + offset * 20,
+                  top: (index * 80.0) + offset * 30,
                   child: Container(
-                    width: 80 + (index * 15.0),
-                    height: 80 + (index * 15.0),
+                    width: 60 + (index * 10.0),
+                    height: 60 + (index * 10.0),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -174,7 +170,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                         child: LinearProgressIndicator(
                           value: (_currentStep + 1) / 5,
                           backgroundColor: Colors.white.withOpacity(0.2),
-                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.xpGold),
+                          valueColor: const AlwaysStoppedAnimation(AppColors.xpGold),
                           minHeight: 8,
                         ),
                       ),
@@ -343,7 +339,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 32),
-
         const Text(
           'Education Background',
           style: TextStyle(
@@ -361,7 +356,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 24),
-
         TextField(
           controller: _educationController,
           style: const TextStyle(color: Colors.white, fontSize: 16),
@@ -386,9 +380,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ),
           ),
         ),
-
         const SizedBox(height: 32),
-
         const Text(
           'Current Role (if any)',
           style: TextStyle(
@@ -398,7 +390,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 12),
-
         TextField(
           controller: _currentRoleController,
           style: const TextStyle(color: Colors.white, fontSize: 16),
@@ -422,9 +413,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ),
           ),
         ),
-
         const SizedBox(height: 32),
-
         const Text(
           'Experience Level',
           style: TextStyle(
@@ -434,7 +423,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 16),
-
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -521,7 +509,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 32),
-
         const Text(
           'Your Skills',
           style: TextStyle(
@@ -562,7 +549,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 24),
-
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -649,7 +635,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 32),
-
         const Text(
           'Career Goals',
           style: TextStyle(
@@ -667,7 +652,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 24),
-
         TextField(
           controller: _careerGoalController,
           style: const TextStyle(color: Colors.white, fontSize: 16),
@@ -692,9 +676,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ),
           ),
         ),
-
         const SizedBox(height: 32),
-
         const Text(
           'What\'s Your Main Motivation?',
           style: TextStyle(
@@ -704,7 +686,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 16),
-
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -806,7 +787,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 32),
-
         const Text(
           'Areas of Interest',
           style: TextStyle(
@@ -847,7 +827,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 24),
-
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -861,7 +840,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           itemBuilder: (context, index) {
             final interest = interests[index];
             final isSelected = _selectedInterests.contains(interest);
-
             return GestureDetector(
               onTap: () {
                 setState(() {
@@ -947,7 +925,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 32),
-
         const Text(
           'Learning Preferences',
           style: TextStyle(
@@ -1060,7 +1037,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ],
           ),
         ),
-
         const SizedBox(height: 32),
 
         // Learning style
@@ -1073,7 +1049,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           ),
         ),
         const SizedBox(height: 16),
-
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -1133,7 +1108,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             );
           }).toList(),
         ),
-
         const SizedBox(height: 40),
 
         // Final CTA
@@ -1179,7 +1153,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ],
           ),
         ),
-
         const SizedBox(height: 40),
       ],
     );

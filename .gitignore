@@ -1,0 +1,113 @@
+# -----------------------------
+# Flutter & Dart
+# -----------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# -----------------------------
+# Android
+# -----------------------------
+**/android/**/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+android/app/debug
+android/app/profile
+android/app/release
+
+# Ignore Android NDK + SDK temp files
+**/android/.gradle/
+**/android/.cxx/
+**/android/gradle.properties
+**/android/app/*.keystore
+
+# -----------------------------
+# iOS
+# -----------------------------
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework/
+**/ios/Flutter/Flutter.podspec
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# -----------------------------
+# macOS
+# -----------------------------
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+**/macos/.symlinks/
+**/macos/Runner/GeneratedPluginRegistrant.*
+
+# -----------------------------
+# Windows
+# -----------------------------
+**/windows/flutter/ephemeral/
+
+# -----------------------------
+# Linux
+# -----------------------------
+**/linux/flutter/ephemeral/
+
+# -----------------------------
+# Web
+# -----------------------------
+**/web/.dart_tool/
+
+# -----------------------------
+# VS Code
+# -----------------------------
+.vscode/
+
+# Uncomment this if you want VS Code settings ignored
+# .vscode/launch.json
+# .vscode/settings.json
+# .vscode/tasks.json
+
+# -----------------------------
+# IntelliJ / Android Studio
+# -----------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# -----------------------------
+# Swift / Objective-C / CocoaPods
+# -----------------------------
+migrate_working_dir/
+.swiftpm/
+*.xcworkspace
+*.xcuserdata
+*.xcuserstate
+
+# -----------------------------
+# Logs & Misc
+# -----------------------------
+*.log
+*.json.lock
+*.map.json
+*.class
+*.pyc
+*.swp
+.DS_Store
+atom/
+.history
+.svn/
+buildlog/
+
+# -----------------------------
+# Symbolication
+# -----------------------------
+app.*.symbols
+
+# -----------------------------
+# Obfuscation
+# -----------------------------
+app.*.map.json

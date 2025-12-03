@@ -1,0 +1,51 @@
+import 'package:mentora_app/models/project.dart';
+
+extension ProjectExtensions on Project {
+  Project copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? overview,
+    ProjectStatus? status,
+    ProjectDifficulty? difficulty,
+    int? xpReward,
+    int? coinReward,
+    int? estimatedHours,
+    List<String>? requiredSkills,
+    List<String>? learningOutcomes,
+    List<ProjectTask>? tasks,
+    List<String>? resources,
+    String? submissionUrl,
+    String? githubUrl,
+    int? unlockLevel,
+    List<String>? prerequisites,
+    DateTime? startedAt,
+    DateTime? completedAt,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Project(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      overview: overview ?? this.overview,
+      status: status ?? this.status,
+      difficulty: difficulty ?? this.difficulty,
+      xpReward: xpReward ?? this.xpReward,
+      coinReward: coinReward ?? this.coinReward,
+      estimatedHours: estimatedHours ?? this.estimatedHours,
+      requiredSkills: requiredSkills ?? this.requiredSkills,
+      learningOutcomes: learningOutcomes ?? this.learningOutcomes,
+      tasks: tasks ?? this.tasks,
+      resources: resources ?? this.resources,
+      submissionUrl: submissionUrl ?? this.submissionUrl,
+      githubUrl: githubUrl ?? this.githubUrl,
+      unlockLevel: unlockLevel ?? this.unlockLevel,
+      prerequisites: prerequisites ?? this.prerequisites,
+      startedAt: startedAt ?? this.startedAt,
+      completedAt: completedAt ?? this.completedAt,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+}

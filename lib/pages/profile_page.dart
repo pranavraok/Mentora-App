@@ -6,6 +6,7 @@ import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/widgets/level_badge.dart';
 import 'package:mentora_app/pages/landing_page.dart';
 import 'package:mentora_app/pages/settings_page.dart';
+import 'package:mentora_app/pages/notifications_page.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -139,13 +140,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                   children: [
                                     _buildGlassButton(
                                       icon: Icons.notifications_rounded,
-                                      onTap: () {},
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                        );
+                                      },
                                       hasNotification: true,
                                     ),
                                     const SizedBox(width: 12),
                                     _buildGlassButton(
                                       icon: Icons.settings_rounded,
-                                      onTap: () {},
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),

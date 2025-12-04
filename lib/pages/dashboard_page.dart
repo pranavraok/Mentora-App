@@ -8,6 +8,8 @@ import 'package:mentora_app/widgets/xp_progress_bar.dart';
 import 'package:mentora_app/pages/roadmap_page.dart';
 import 'package:mentora_app/pages/projects_page.dart';
 import 'package:mentora_app/pages/profile_page.dart';
+import 'package:mentora_app/pages/settings_page.dart';
+import 'package:mentora_app/pages/notifications_page.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -243,14 +245,24 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   // Notification Button
                                   _buildGlassButton(
                                     icon: Icons.notifications_rounded,
-                                    onTap: () {},
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                      );
+                                    },
                                     hasNotification: true,
                                   ),
                                   const SizedBox(width: 12),
                                   // Settings Button
                                   _buildGlassButton(
                                     icon: Icons.settings_rounded,
-                                    onTap: () {},
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                      );
+                                    },
                                   ),
                                 ],
                               ),

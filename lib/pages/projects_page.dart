@@ -5,6 +5,8 @@ import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/models/project.dart';
 import 'package:mentora_app/models/project_extensions.dart';
 import 'package:mentora_app/providers/app_providers.dart';
+import 'package:mentora_app/pages/settings_page.dart';
+import 'package:mentora_app/pages/notifications_page.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -134,13 +136,23 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                                   children: [
                                     _buildGlassButton(
                                       icon: Icons.notifications_rounded,
-                                      onTap: () {},
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                        );
+                                      },
                                       hasNotification: true,
                                     ),
                                     const SizedBox(width: 12),
                                     _buildGlassButton(
                                       icon: Icons.settings_rounded,
-                                      onTap: () {},
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
@@ -207,7 +219,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                                 ],
                               ).createShader(bounds),
                               child: const Text(
-                                'Build Projects',
+                                'BUILD PROJECTS',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 26,

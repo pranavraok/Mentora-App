@@ -130,7 +130,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                                   ),
                                 ),
 
-                                // ✅ GLASSMORPHIC ACTIONS
+
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [

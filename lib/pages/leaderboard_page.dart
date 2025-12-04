@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:glassmorphism/glassmorphism.dart';
+import 'package:mentora_app/pages/settings_page.dart';
+import 'package:mentora_app/pages/notifications_page.dart';
 
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
@@ -178,15 +180,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                                 _buildGlassButton(
                                   icon: Icons.notifications_rounded,
                                   onTap: () {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Leaderboard notifications coming soon 🔔',
-                                        ),
-                                        backgroundColor:
-                                        Color(0xFF4facfe),
-                                      ),
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const NotificationsPage()),
                                     );
                                   },
                                   hasNotification: true,
@@ -195,15 +191,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                                 _buildGlassButton(
                                   icon: Icons.settings_rounded,
                                   onTap: () {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Leaderboard filters coming soon ⚙️',
-                                        ),
-                                        backgroundColor:
-                                        Color(0xFF764ba2),
-                                      ),
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const SettingsPage()),
                                     );
                                   },
                                 ),

@@ -36,253 +36,398 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final projectsAsync = ref.watch(projectsProvider);
+    final userAsync = ref.watch(currentUserProvider);
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          // ✅ BACKGROUND GRADIENT
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF0F0C29),
-                  Color(0xFF302b63),
-                  Color(0xFF24243e),
-                ],
-              ),
-            ),
-          ),
+    return userAsync.when(
+      data: (user) {
+        if (user == null) return const SizedBox();
+        final projectsAsync = ref.watch(projectsProvider);
 
-          // ✅ FLOATING BLUR CIRCLES (SIMPLE VERSION)
-          ...List.generate(8, (index) {
-            return AnimatedBuilder(
-              animation: _animController,
-              builder: (context, child) {
-                final offset = math.sin((_animController.value + index * 0.2) * 2 * math.pi);
-                return Positioned(
-                  left: (index * 50.0) + offset * 20,
-                  top: (index * 80.0) + offset * 30,
-                  child: Container(
-                    width: 60 + (index * 10.0),
-                    height: 60 + (index * 10.0),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Colors.white.withOpacity(0.1),
-                          Colors.white.withOpacity(0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          }),
-
-          // ============= CONTENT LAYER =============
-          Column(
+        return Scaffold(
+          body: Stack(
             children: [
-              // ============= PREMIUM HEADER =============
+              // ✅ ORIGINAL BACKGROUND - Just gradient + blurred circles
               Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      const Color(0xFF0F0C29).withOpacity(0.95),
-                      const Color(0xFF302b63).withOpacity(0.9),
+                      Color(0xFF0F0C29),
+                      Color(0xFF302b63),
+                      Color(0xFF24243e),
                     ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 25,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
                 ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const SizedBox(width: 48),
-                            Column(
-                              children: [
-                                const Text(
-                                  'Build Projects',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Transform ideas into reality',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.7),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF667eea).withOpacity(0.4),
-                                    blurRadius: 15,
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.rocket_launch_rounded, color: Colors.white),
-                                onPressed: () {},
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Filter Chips
-                      SizedBox(
-                        height: 52,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            _buildFilterChip('All', Icons.apps_rounded),
-                            const SizedBox(width: 10),
-                            _buildFilterChip('In Progress', Icons.play_circle_outline),
-                            const SizedBox(width: 10),
-                            _buildFilterChip('Completed', Icons.check_circle_outline),
-                            const SizedBox(width: 10),
-                            _buildFilterChip('Unlocked', Icons.lock_open_rounded),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2, end: 0),
               ),
 
-              // Scrollable Content
-              Expanded(
-                child: projectsAsync.when(
-                  data: (projects) {
-                    if (projects.isEmpty) {
-                      return _buildEmptyState();
-                    }
-
-                    final filteredProjects = _filterProjects(projects);
-                    if (filteredProjects.isEmpty) {
-                      return _buildEmptyFilterState();
-                    }
-
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(20),
-                      physics: const BouncingScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
-                        childAspectRatio: 0.72,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                      ),
-                      itemCount: filteredProjects.length,
-                      itemBuilder: (context, index) => ProjectCard(
-                        project: filteredProjects[index],
-                        index: index,
+              // ✅ FLOATING BLUR CIRCLES (ORIGINAL)
+              ...List.generate(8, (index) {
+                return AnimatedBuilder(
+                  animation: _animController,
+                  builder: (context, child) {
+                    final offset = math.sin((_animController.value + index * 0.2) * 2 * math.pi);
+                    return Positioned(
+                      left: (index * 50.0) + offset * 20,
+                      top: (index * 80.0) + offset * 30,
+                      child: Container(
+                        width: 60 + (index * 10.0),
+                        height: 60 + (index * 10.0),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.1),
+                              Colors.white.withOpacity(0.0),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
-                  loading: () => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF667eea).withOpacity(0.5),
-                                blurRadius: 30,
-                                spreadRadius: 10,
-                              ),
+                );
+              }),
+
+              // ============= CONTENT LAYER =============
+              Column(
+                children: [
+                  // ============= MODERN GLASSMORPHIC HEADER =============
+                  ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withOpacity(0.15),
+                              Colors.white.withOpacity(0.05),
                             ],
                           ),
-                          child: const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.white.withOpacity(0.15),
+                              width: 1,
+                            ),
                           ),
-                        ).animate(onPlay: (controller) => controller.repeat()).rotate(duration: 2.seconds),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Loading Projects...',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                        ),
+                        child: SafeArea(
+                          bottom: false,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // ✅ LOGO
+                                SizedBox(
+                                  height: 60,
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+
+                                // ✅ GLASSMORPHIC ACTIONS
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildGlassButton(
+                                      icon: Icons.notifications_rounded,
+                                      onTap: () {},
+                                      hasNotification: true,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildGlassButton(
+                                      icon: Icons.settings_rounded,
+                                      onTap: () {},
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
+
+                  // ============= PAGE TITLE (BUILD PROJECTS - LEFT SIDE) =============
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                    child: Row(
+                      children: [
+                        // Animated Icon
+                        AnimatedBuilder(
+                          animation: _animController,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: 1.0 + (math.sin(_animController.value * 2 * math.pi) * 0.08),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Color.lerp(
+                                        const Color(0xFFFFD700),
+                                        const Color(0xFFFFA500),
+                                        _animController.value,
+                                      )!,
+                                      const Color(0xFFFFA500),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFFFD700).withOpacity(0.6),
+                                      blurRadius: 20 + (math.sin(_animController.value * 2 * math.pi) * 5),
+                                      spreadRadius: 3,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.rocket_launch_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFFFFD700),
+                                  Color(0xFFFFA500),
+                                ],
+                              ).createShader(bounds),
+                              child: const Text(
+                                'Build Projects',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'Transform ideas into reality',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
+
+                  // Filter Chips
+                  SizedBox(
+                    height: 52,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      physics: const BouncingScrollPhysics(),
                       children: [
-                        Icon(
-                          Icons.error_outline_rounded,
-                          size: 80,
-                          color: Colors.red.withOpacity(0.7),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Something went wrong',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                        _buildFilterChip('All', Icons.apps_rounded),
+                        const SizedBox(width: 10),
+                        _buildFilterChip('In Progress', Icons.play_circle_outline),
+                        const SizedBox(width: 10),
+                        _buildFilterChip('Completed', Icons.check_circle_outline),
+                        const SizedBox(width: 10),
+                        _buildFilterChip('Unlocked', Icons.lock_open_rounded),
+                      ],
+                    ),
+                  ),
+
+                  // Scrollable Content
+                  Expanded(
+                    child: projectsAsync.when(
+                      data: (projects) {
+                        if (projects.isEmpty) {
+                          return _buildEmptyState();
+                        }
+
+                        final filteredProjects = _filterProjects(projects);
+                        if (filteredProjects.isEmpty) {
+                          return _buildEmptyFilterState();
+                        }
+
+                        return GridView.builder(
+                          padding: const EdgeInsets.all(20),
+                          physics: const BouncingScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          e.toString(),
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
-                            fontSize: 13,
+                          itemCount: filteredProjects.length,
+                          itemBuilder: (context, index) => ProjectCard(
+                            project: filteredProjects[index],
+                            index: index,
                           ),
-                          textAlign: TextAlign.center,
+                        );
+                      },
+                      loading: () => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700).withOpacity(0.5),
+                                    blurRadius: 30,
+                                    spreadRadius: 10,
+                                  ),
+                                ],
+                              ),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            ).animate(onPlay: (controller) => controller.repeat()).rotate(duration: 2.seconds),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Loading Projects...',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      error: (e, _) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              size: 80,
+                              color: Colors.red.withOpacity(0.7),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'Something went wrong',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              e.toString(),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.6),
+                                fontSize: 13,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  Widget _buildGlassButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool hasNotification = false,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.25),
+                Colors.white.withOpacity(0.15),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Center(
+                    child: Icon(
+                      icon,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+              if (hasNotification)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6B6B),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B6B).withOpacity(0.5),
+                          blurRadius: 6,
+                          spreadRadius: 1,
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -298,8 +443,8 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF667eea).withOpacity(0.2),
-                  const Color(0xFF764ba2).withOpacity(0.2),
+                  const Color(0xFFFFD700).withOpacity(0.2),
+                  const Color(0xFFFFA500).withOpacity(0.2),
                 ],
               ),
               shape: BoxShape.circle,
@@ -367,7 +512,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
           )
               : null,
           color: isSelected ? null : Colors.white.withOpacity(0.08),
@@ -379,7 +524,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
           boxShadow: isSelected
               ? [
             BoxShadow(
-              color: const Color(0xFF667eea).withOpacity(0.5),
+              color: const Color(0xFFFFD700).withOpacity(0.5),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -423,7 +568,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
   }
 }
 
-// ============= PROJECT CARD =============
+// ============= PROJECT CARD (Enhanced with Glassmorphism) =============
 class ProjectCard extends ConsumerWidget {
   final Project project;
   final int index;
@@ -487,7 +632,6 @@ class ProjectCard extends ConsumerWidget {
                           painter: HexagonPatternPainter(color: Colors.white.withOpacity(0.15)),
                         ),
                       ),
-
                       // Icon
                       Center(
                         child: Container(
@@ -511,7 +655,6 @@ class ProjectCard extends ConsumerWidget {
                           ),
                         ),
                       ),
-
                       // Status Badge
                       if (project.status == ProjectStatus.completed)
                         Positioned(
@@ -614,7 +757,6 @@ class ProjectCard extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-
                         // Title
                         Text(
                           project.title,
@@ -628,7 +770,6 @@ class ProjectCard extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 5),
-
                         // Description
                         Flexible(
                           child: Text(
@@ -643,7 +784,6 @@ class ProjectCard extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-
                         // Progress Bar or Status
                         if (project.status == ProjectStatus.inProgress)
                           Column(
@@ -858,12 +998,14 @@ class HexagonPatternPainter extends CustomPainter {
       final angle = (math.pi / 3) * i;
       final x = center.dx + radius * math.cos(angle);
       final y = center.dy + radius * math.sin(angle);
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
         path.lineTo(x, y);
       }
     }
+
     path.close();
     canvas.drawPath(path, paint);
   }
@@ -872,7 +1014,7 @@ class HexagonPatternPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ============= PROJECT DETAIL SHEET =============
+// ============= PROJECT DETAIL SHEET (Enhanced) =============
 class ProjectDetailSheet extends ConsumerWidget {
   final Project project;
 
@@ -1162,18 +1304,18 @@ class ProjectDetailSheet extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    const Color(0xFF667eea).withOpacity(0.5),
-                                    const Color(0xFF764ba2).withOpacity(0.5),
+                                    const Color(0xFFFFD700).withOpacity(0.5),
+                                    const Color(0xFFFFA500).withOpacity(0.5),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFF667eea),
+                                  color: const Color(0xFFFFD700),
                                   width: 2,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF667eea).withOpacity(0.3),
+                                    color: const Color(0xFFFFD700).withOpacity(0.3),
                                     blurRadius: 10,
                                   ),
                                 ],
@@ -1418,4 +1560,5 @@ class ProjectDetailSheet extends ConsumerWidget {
     }
   }
 }
+
 

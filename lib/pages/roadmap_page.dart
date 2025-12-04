@@ -68,7 +68,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                 ),
               ),
 
-              // ✅ FLOATING BLUR CIRCLES (SIMPLE VERSION)
+              // ✅ FLOATING BLUR CIRCLES
               ...List.generate(8, (index) {
                 return AnimatedBuilder(
                   animation: _backgroundController,
@@ -95,102 +95,138 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                 );
               }),
 
-              // ============= CONTENT LAYER =============
+              // ✅ MAIN CONTENT
               Column(
                 children: [
-                  // ============= PREMIUM HEADER =============
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFF0F0C29).withOpacity(0.95),
-                          const Color(0xFF302b63).withOpacity(0.9),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
-                          blurRadius: 25,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                        child: Row(
-                          children: [
-                            // Animated Icon
-                            AnimatedBuilder(
-                              animation: _pulseController,
-                              builder: (context, child) {
-                                return Transform.scale(
-                                  scale: 1.0 + (_pulseController.value * 0.08),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Color.lerp(const Color(0xFFFFD700), const Color(0xFFFFA500), _pulseController.value)!,
-                                          const Color(0xFFFFA500),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFFFFD700).withOpacity(0.6),
-                                          blurRadius: 20 + (_pulseController.value * 5),
-                                          spreadRadius: 2 + (_pulseController.value * 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.map_rounded,
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                  ),
-                                );
-                              },
+                  // ============= MODERN GLASSMORPHIC HEADER =============
+                  ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withOpacity(0.15),
+                              Colors.white.withOpacity(0.05),
+                            ],
+                          ),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.white.withOpacity(0.15),
+                              width: 1,
                             ),
-                            const SizedBox(width: 14),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          ),
+                        ),
+                        child: SafeArea(
+                          bottom: false,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                ShaderMask(
-                                  shaderCallback: (bounds) => const LinearGradient(
-                                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                  ).createShader(bounds),
-                                  child: const Text(
-                                    'Learning Roadmap',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 0.5,
-                                    ),
+                                // ✅ LOGO
+                                SizedBox(
+                                  height: 60,
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
-                                Text(
-                                  'Your journey to mastery',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.7),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+
+                                // ✅ GLASSMORPHIC ACTIONS
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildGlassButton(
+                                      icon: Icons.notifications_rounded,
+                                      onTap: () {},
+                                      hasNotification: true,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildGlassButton(
+                                      icon: Icons.settings_rounded,
+                                      onTap: () {},
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2, end: 0),
-                  ),
+                    ),
+                  ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
 
-                  // Scrollable Content
+                  // ============= PAGE TITLE SECTION =============
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700).withOpacity(0.5),
+                                    blurRadius: 20,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.map_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (bounds) => const LinearGradient(
+                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                    ).createShader(bounds),
+                                    child: const Text(
+                                      'LEARNING ROADMAP',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Your journey to mastery starts now!',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
+
+                  // ============= SCROLLABLE CONTENT =============
                   Expanded(
                     child: nodesAsync.when(
                       data: (nodes) {
@@ -202,7 +238,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(),
                           slivers: [
-                            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                            const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                             // Progress Summary
                             SliverToBoxAdapter(
@@ -300,6 +336,80 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  Widget _buildGlassButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool hasNotification = false,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.25),
+                Colors.white.withOpacity(0.15),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Center(
+                    child: Icon(
+                      icon,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
+              if (hasNotification)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6B6B),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B6B).withOpacity(0.5),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -478,7 +588,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
           ),
         ),
       ),
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0).then().shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.1));
+    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3, end: 0).then().shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.1));
   }
 
   Widget _buildStatChip(String value, String label, Color color) {
@@ -1129,7 +1239,7 @@ class RoadCheckpoint extends ConsumerWidget {
   }
 }
 
-// ============= DETAIL SHEET ===========
+// ============= DETAIL SHEET =============
 class RoadmapDetailSheet extends ConsumerWidget {
   final RoadmapNode node;
 

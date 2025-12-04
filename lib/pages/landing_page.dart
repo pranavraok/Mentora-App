@@ -7,6 +7,7 @@ import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/widgets/gradient_button.dart';
 import 'package:mentora_app/pages/auth_page.dart';
 import 'dart:math' as math;
+import 'package:url_launcher/url_launcher.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -29,14 +30,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-
     _rotationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-
     _confettiController = ConfettiController(duration: const Duration(seconds: 2));
-
     _scrollController.addListener(() {
       setState(() => _scrollOffset = _scrollController.offset);
     });
@@ -284,240 +282,266 @@ class HeroSection3D extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: MediaQuery.of(context).size.height * 0.95,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Badge
-          GlassmorphicContainer(
-            width: 180,
-            height: 40,
-            borderRadius: 20,
-            blur: 20,
-            alignment: Alignment.center,
-            border: 2,
-            linearGradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.2),
-                Colors.white.withOpacity(0.1),
-              ],
-            ),
-            borderGradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.5),
-                Colors.white.withOpacity(0.2),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.rocket_launch, color: AppColors.xpGold, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  '🎮 Level Up Your Career',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+          // ✅ FIXED LOGO AT TOP
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 20),
+              child: SizedBox(
+                height: 80,
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.contain,
                 ),
-              ],
+              ).animate().fadeIn().scale(delay: 100.ms),
             ),
-          ).animate().fadeIn().slideX(begin: -0.2, duration: 600.ms),
-
-          const SizedBox(height: 32),
-
-          // Main Heading
-          Text(
-            'Transform Your\nCareer Into An\nEpic Adventure',
-            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              height: 1.1,
-              fontSize: 56,
-              letterSpacing: -2,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withOpacity(0.3),
-                  offset: const Offset(0, 4),
-                  blurRadius: 20,
-                ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 100.ms, duration: 800.ms).slideY(begin: 0.3, end: 0),
-
-          const SizedBox(height: 24),
-
-          // Subtitle
-          Container(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Text(
-              'Master skills through gamified learning paths, unlock achievements, and compete with peers while building real-world projects.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withOpacity(0.95),
-                fontSize: 18,
-                height: 1.6,
-              ),
-            ),
-          ).animate().fadeIn(delay: 300.ms, duration: 800.ms).slideY(begin: 0.2, end: 0),
-
-          const SizedBox(height: 40),
-
-          // CTA Buttons
-          Row(
-            children: [
-              Expanded(
-                child: GlassmorphicContainer(
-                  width: double.infinity,
-                  height: 60,
-                  borderRadius: 16,
-                  blur: 20,
-                  alignment: Alignment.center,
-                  border: 0,
-                  linearGradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFFFFFF),
-                      Color(0xFFF0F0F0),
-                    ],
-                  ),
-                  borderGradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.5),
-                      Colors.white.withOpacity(0.2),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: onGetStarted,
-                      borderRadius: BorderRadius.circular(16),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Start Your Quest',
-                              style: TextStyle(
-                                color: AppColors.gradientBlue,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              Icons.arrow_forward_rounded,
-                              color: AppColors.gradientBlue,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                    .animate()
-                    .fadeIn(delay: 500.ms)
-                    .slideY(begin: 0.2, end: 0)
-                    .shimmer(delay: 500.ms, duration: 1200.ms),
-              ),
-              const SizedBox(width: 16),
-              GlassmorphicContainer(
-                width: 60,
-                height: 60,
-                borderRadius: 16,
-                blur: 20,
-                alignment: Alignment.center,
-                border: 2,
-                linearGradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.1),
-                    Colors.white.withOpacity(0.05),
-                  ],
-                ),
-                borderGradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0.2),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onLogin,
-                    borderRadius: BorderRadius.circular(16),
-                    child: const Center(
-                      child: Icon(
-                        Icons.login_rounded,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-              ).animate().fadeIn(delay: 600.ms).scale(delay: 600.ms),
-            ],
           ),
 
-          const SizedBox(height: 40),
+          // ✅ SCROLLABLE CONTENT BELOW
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
 
-          // Stats Row
-          Row(
-            children: [
-              _buildStatChip('10K+', 'Active Learners'),
-              const SizedBox(width: 16),
-              _buildStatChip('500+', 'Skills'),
-              const SizedBox(width: 16),
-              _buildStatChip('4.9⭐', 'Rating'),
-            ],
-          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+                  // Badge
+                  GlassmorphicContainer(
+                    width: 180,
+                    height: 40,
+                    borderRadius: 20,
+                    blur: 20,
+                    alignment: Alignment.center,
+                    border: 2,
+                    linearGradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.2),
+                        Colors.white.withOpacity(0.1),
+                      ],
+                    ),
+                    borderGradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.5),
+                        Colors.white.withOpacity(0.2),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.rocket_launch, color: AppColors.xpGold, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          '🎮 Level Up Your Career',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn().slideX(begin: -0.2, duration: 600.ms),
+                  const SizedBox(height: 32),
+
+                  // Main Heading
+                  Text(
+                    'Transform Your\nCareer Into An\nEpic Adventure',
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                      fontSize: 56,
+                      letterSpacing: -2,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(0, 4),
+                          blurRadius: 20,
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 100.ms, duration: 800.ms).slideY(begin: 0.3, end: 0),
+                  const SizedBox(height: 24),
+
+                  // Subtitle
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: Text(
+                      'Master skills through gamified learning paths, unlock achievements, and compete with peers while building real-world projects.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white.withOpacity(0.95),
+                        fontSize: 18,
+                        height: 1.6,
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 300.ms, duration: 800.ms).slideY(begin: 0.2, end: 0),
+                  const SizedBox(height: 40),
+
+                  // CTA Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GlassmorphicContainer(
+                          width: double.infinity,
+                          height: 60,
+                          borderRadius: 16,
+                          blur: 20,
+                          alignment: Alignment.center,
+                          border: 0,
+                          linearGradient: const LinearGradient(
+                            colors: [
+                              Color(0xFFFFFFFF),
+                              Color(0xFFF0F0F0),
+                            ],
+                          ),
+                          borderGradient: LinearGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.5),
+                              Colors.white.withOpacity(0.2),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: onGetStarted,
+                              borderRadius: BorderRadius.circular(16),
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Start Your Quest',
+                                      style: TextStyle(
+                                        color: AppColors.gradientBlue,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: AppColors.gradientBlue,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                            .animate()
+                            .fadeIn(delay: 500.ms)
+                            .slideY(begin: 0.2, end: 0)
+                            .shimmer(delay: 500.ms, duration: 1200.ms),
+                      ),
+                      const SizedBox(width: 16),
+                      GlassmorphicContainer(
+                        width: 60,
+                        height: 60,
+                        borderRadius: 16,
+                        blur: 20,
+                        alignment: Alignment.center,
+                        border: 2,
+                        linearGradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.1),
+                            Colors.white.withOpacity(0.05),
+                          ],
+                        ),
+                        borderGradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.5),
+                            Colors.white.withOpacity(0.2),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: onLogin,
+                            borderRadius: BorderRadius.circular(16),
+                            child: const Center(
+                              child: Icon(
+                                Icons.login_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 600.ms).scale(delay: 600.ms),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Stats Row
+                  Row(
+                    children: [
+                      _buildStatChip('100+', 'Active Courses'),
+                      const SizedBox(width: 16),
+                      _buildStatChip('500+', 'Skills'),
+                      const SizedBox(width: 16),
+                      _buildStatChip('4.9⭐', 'Rating'),
+                    ],
+                  ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+
+                  const SizedBox(height: 40), // Extra padding at bottom
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildStatChip(String value, String label) {
-    return GlassmorphicContainer(
-      width: 100,
-      height: 70,
-      borderRadius: 12,
-      blur: 15,
-      alignment: Alignment.center,
-      border: 1.5,
-      linearGradient: LinearGradient(
-        colors: [
-          Colors.white.withOpacity(0.15),
-          Colors.white.withOpacity(0.05),
-        ],
-      ),
-      borderGradient: LinearGradient(
-        colors: [
-          Colors.white.withOpacity(0.4),
-          Colors.white.withOpacity(0.1),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
+    return Expanded(
+      child: GlassmorphicContainer(
+        width: double.infinity,
+        height: 70,
+        borderRadius: 12,
+        blur: 15,
+        alignment: Alignment.center,
+        border: 1.5,
+        linearGradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.15),
+            Colors.white.withOpacity(0.05),
+          ],
+        ),
+        borderGradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.4),
+            Colors.white.withOpacity(0.1),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -526,7 +550,6 @@ class HeroSection3D extends StatelessWidget {
 // ============= BENTO GRID FEATURES =============
 class BentoFeaturesSection extends StatelessWidget {
   final double scrollOffset;
-
   const BentoFeaturesSection({super.key, required this.scrollOffset});
 
   @override
@@ -535,12 +558,28 @@ class BentoFeaturesSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Text(
-            '✨ Superpowers Unlocked',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Column(
+            children: [
+              Text(
+                'SUPERPOWERS UNLOCKED',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // ✅ UNDERLINE
+              Container(
+                width: 80,
+                height: 4,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 40),
 
@@ -591,7 +630,6 @@ class BentoFeaturesSection extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
 
           // Wide bento card
@@ -769,12 +807,28 @@ class RoadmapPreviewSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Text(
-            '🗺️ Your Journey Visualized',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Column(
+            children: [
+              Text(
+                'YOUR JOURNEY VISUALIZED',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // ✅ UNDERLINE
+              Container(
+                width: 80,
+                height: 4,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
           GlassmorphicContainer(
@@ -833,12 +887,28 @@ class GamificationStatsSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Text(
-            '🎮 Level Up System',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Column(
+            children: [
+              Text(
+                'LEVEL UP SYSTEM',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // ✅ UNDERLINE
+              Container(
+                width: 80,
+                height: 4,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
           Row(
@@ -940,7 +1010,6 @@ class GamificationStatsSection extends StatelessWidget {
 // ============= HOW IT WORKS 3D =============
 class HowItWorks3DSection extends StatelessWidget {
   final AnimationController floatingController;
-
   const HowItWorks3DSection({super.key, required this.floatingController});
 
   @override
@@ -957,12 +1026,28 @@ class HowItWorks3DSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Text(
-            'How It Works',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Column(
+            children: [
+              Text(
+                'HOW IT WORKS',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // ✅ UNDERLINE
+              Container(
+                width: 80,
+                height: 4,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 40),
           ...List.generate(steps.length, (i) {
@@ -1076,8 +1161,14 @@ class HowItWorks3DSection extends StatelessWidget {
 // ============= TEAM SECTION =============
 class TeamSection extends StatelessWidget {
   final AnimationController floatingController;
-
   const TeamSection({super.key, required this.floatingController});
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw 'Could not launch $url';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1085,13 +1176,17 @@ class TeamSection extends StatelessWidget {
       {
         'name': 'Pranav Rao K',
         'role': 'Frontend Developer',
-        'emoji': '👨💼',
+        'image': 'assets/images/pranav.jpg',
+        'linkedin': 'https://www.linkedin.com/in/pranav-rao-k-487532312/',
+        'email': 'pranavraok18@gmail.com',
         'gradient': const LinearGradient(colors: [Color(0xFF667eea), Color(0xFF764ba2)]),
       },
       {
         'name': 'Tushar P',
         'role': 'Backend Developer',
-        'emoji': '👨💼',
+        'image': 'assets/images/tushar.png',
+        'linkedin': 'https://www.linkedin.com/in/tushar-p2006/',
+        'email': 'tusharpradeep06@gmail.com',
         'gradient': const LinearGradient(colors: [Color(0xFFf093fb), Color(0xFFf5576c)]),
       },
     ];
@@ -1100,12 +1195,28 @@ class TeamSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Text(
-            '👥 Meet The Builders',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Column(
+            children: [
+              Text(
+                'MEET THE BUILDERS',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // ✅ UNDERLINE
+              Container(
+                width: 80,
+                height: 4,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Text(
@@ -1139,7 +1250,7 @@ class TeamSection extends StatelessWidget {
                     },
                     child: GlassmorphicContainer(
                       width: double.infinity,
-                      height: 280,
+                      height: 320,
                       borderRadius: 24,
                       blur: 20,
                       alignment: Alignment.center,
@@ -1177,24 +1288,23 @@ class TeamSection extends StatelessWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              // ✅ PROFILE IMAGE
                               Container(
-                                width: 100,
-                                height: 100,
+                                width: 120,
+                                height: 120,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color: Colors.black.withOpacity(0.3),
                                       blurRadius: 20,
                                       offset: const Offset(0, 10),
                                     ),
                                   ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    member['emoji'] as String,
-                                    style: const TextStyle(fontSize: 50),
+                                  image: DecorationImage(
+                                    image: AssetImage(member['image'] as String),
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                               ),
@@ -1219,13 +1329,20 @@ class TeamSection extends StatelessWidget {
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 16),
+                                  // ✅ LINKEDIN + EMAIL BUTTONS
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      _buildSocialIcon(Icons.link),
-                                      const SizedBox(width: 8),
-                                      _buildSocialIcon(Icons.mail),
+                                      GestureDetector(
+                                        onTap: () => _launchURL(member['linkedin'] as String),
+                                        child: _buildSocialIcon(Icons.work),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      GestureDetector(
+                                        onTap: () => _launchURL('mailto:${member['email']}'),
+                                        child: _buildSocialIcon(Icons.email),
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -1250,13 +1367,17 @@ class TeamSection extends StatelessWidget {
 
   Widget _buildSocialIcon(IconData icon) {
     return Container(
-      width: 36,
-      height: 36,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withOpacity(0.25),
         shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withOpacity(0.5),
+          width: 2,
+        ),
       ),
-      child: Icon(icon, color: Colors.white, size: 18),
+      child: Icon(icon, color: Colors.white, size: 20),
     );
   }
 }
@@ -1271,12 +1392,28 @@ class SocialProofSection extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          Text(
-            '💬 What Our Heroes Say',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Column(
+            children: [
+              Text(
+                'WHAT OUR HEROES SAY',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // ✅ UNDERLINE
+              Container(
+                width: 80,
+                height: 4,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
           SizedBox(
@@ -1285,9 +1422,9 @@ class SocialProofSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               children: List.generate(3, (i) {
                 final testimonials = [
-                  {'name': 'Sarah K.', 'role': 'Full Stack Dev', 'text': 'Landed my dream job in 3 months!'},
-                  {'name': 'Mike R.', 'role': 'Data Scientist', 'text': 'The gamification kept me motivated'},
-                  {'name': 'Emma L.', 'role': 'UX Designer', 'text': 'Best learning experience ever!'},
+                  {'name': 'Samarth K.', 'role': 'Full Stack Dev', 'text': 'Landed my dream job in 3 months!'},
+                  {'name': 'Likith R.', 'role': 'Data Scientist', 'text': 'The gamification kept me motivated'},
+                  {'name': 'Eeshwar L.', 'role': 'UX Designer', 'text': 'Best learning experience ever!'},
                 ];
 
                 return Container(
@@ -1398,20 +1535,13 @@ class ModernFooter extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.rocket_launch, color: AppColors.xpGold, size: 32),
-              const SizedBox(width: 12),
-              const Text(
-                'Mentora',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
+          // ✅ LOGO PNG IN FOOTER
+          SizedBox(
+            height: 60,
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -1488,3 +1618,4 @@ extension GradientScale on Gradient {
     return this;
   }
 }
+

@@ -43,3 +43,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/logo.png
+    - assets/images/pranav.jpg
+    - assets/images/tushar.png

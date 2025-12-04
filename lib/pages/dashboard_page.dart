@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:glassmorphism/glassmorphism.dart';
+import 'package:mentora_app/pages/leaderboard_page.dart';
+import 'package:mentora_app/pages/resume_checker_page.dart';
+
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/widgets/level_badge.dart';
 import 'package:mentora_app/widgets/xp_progress_bar.dart';
+
 import 'package:mentora_app/pages/roadmap_page.dart';
 import 'package:mentora_app/pages/projects_page.dart';
 import 'package:mentora_app/pages/profile_page.dart';
 import 'package:mentora_app/pages/settings_page.dart';
+import 'package:mentora_app/pages/resume_checker_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
+
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -17,17 +24,17 @@ class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+  ConsumerState createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const DashboardHome(),
-    const RoadmapPage(),
-    const ProjectsPage(),
-    const ProfilePage(),
+  final List _pages = const [
+    DashboardHome(),
+    RoadmapPage(),
+    ProjectsPage(),
+    ProfilePage(),
   ];
 
   @override
@@ -78,6 +85,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
+
     return GestureDetector(
       onTap: () => setState(() => _selectedIndex = index),
       child: AnimatedContainer(
@@ -125,7 +133,7 @@ class DashboardHome extends ConsumerStatefulWidget {
   const DashboardHome({super.key});
 
   @override
-  ConsumerState<DashboardHome> createState() => _DashboardHomeState();
+  ConsumerState createState() => _DashboardHomeState();
 }
 
 class _DashboardHomeState extends ConsumerState<DashboardHome>
@@ -147,6 +155,56 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     super.dispose();
   }
 
+  Widget _buildActionCard(
+      String title,
+      IconData icon,
+      Gradient gradient, {
+        required VoidCallback onTap,
+      }) {
+    return Container(
+      height: 110,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: (gradient as LinearGradient).colors.first.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: Colors.white, size: 32),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
@@ -154,9 +212,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
+
         return Stack(
           children: [
-            // ✅ BACKGROUND GRADIENT
+            // Background gradient
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -171,12 +230,13 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
               ),
             ),
 
-            // ✅ FLOATING PARTICLES
+            // Floating particles
             ...List.generate(8, (index) {
               return AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
-                  final offset = math.sin((_controller.value + index * 0.2) * 2 * math.pi);
+                  final offset =
+                  math.sin((_controller.value + index * 0.2) * 2 * math.pi);
                   return Positioned(
                     left: (index * 50.0) + offset * 20,
                     top: (index * 80.0) + offset * 30,
@@ -198,10 +258,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
               );
             }),
 
-            // ✅ MAIN CONTENT
+            // Main content
             Column(
               children: [
-                // ============= ULTRA MODERN GLASSMORPHIC HEADER =============
+                // Header
                 ClipRRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -225,11 +285,11 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                       child: SafeArea(
                         bottom: false,
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
+                          padding:
+                          const EdgeInsets.fromLTRB(24, 18, 24, 18),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // ✅ LOGO - CLEAN, LARGE, NO EFFECTS
                               SizedBox(
                                 height: 60,
                                 child: Image.asset(
@@ -237,30 +297,32 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   fit: BoxFit.contain,
                                 ),
                               ),
-
-                              // ✅ GLASSMORPHIC ACTIONS ROW
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Notification Button
                                   _buildGlassButton(
                                     icon: Icons.notifications_rounded,
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                          const NotificationsPage(),
+                                        ),
                                       );
                                     },
                                     hasNotification: true,
                                   ),
                                   const SizedBox(width: 12),
-                                  // Settings Button
                                   _buildGlassButton(
                                     icon: Icons.settings_rounded,
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                          const SettingsPage(),
+                                        ),
                                       );
                                     },
                                   ),
@@ -272,145 +334,464 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                       ),
                     ),
                   ),
-                ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
+                ),
 
-                // ============= SCROLLABLE CONTENT =============
+                // Scrollable content
                 Expanded(
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 24),
+                      ),
 
-                      // ============= PROFILE CARD =============
+                      // Profile card
                       SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  const Color(0xFF667eea).withOpacity(0.9),
-                                  const Color(0xFF764ba2).withOpacity(0.9),
+                        child: Animate(
+                          effects: [
+                            FadeEffect(delay: 200.ms),
+                            SlideEffect(
+                              begin: const Offset(0, 0.2),
+                              end: Offset.zero,
+                            ),
+                          ],
+                          child: Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 24),
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    const Color(0xFF667eea)
+                                        .withOpacity(0.9),
+                                    const Color(0xFF764ba2)
+                                        .withOpacity(0.9),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF667eea)
+                                        .withOpacity(0.4),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 15),
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF667eea).withOpacity(0.4),
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 15),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      AnimatedBuilder(
+                                        animation: _controller,
+                                        builder: (context, child) {
+                                          return Transform.translate(
+                                            offset: Offset(
+                                              0,
+                                              math.sin(_controller.value *
+                                                  2 *
+                                                  math.pi) *
+                                                  3,
+                                            ),
+                                            child: Container(
+                                              width: 75,
+                                              height: 75,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                gradient:
+                                                const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFFFFD700),
+                                                    Color(0xFFFFA500),
+                                                  ],
+                                                ),
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 4,
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(
+                                                        0xFFFFD700)
+                                                        .withOpacity(0.6),
+                                                    blurRadius: 25,
+                                                    spreadRadius: 3,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: const Center(
+                                                child: Text(
+                                                  '🚀',
+                                                  style: TextStyle(
+                                                    fontSize: 38,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(width: 20),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'Hello, ${user.name}! 👋',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 22,
+                                                fontWeight:
+                                                FontWeight.w900,
+                                              ),
+                                              maxLines: 1,
+                                              overflow:
+                                              TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              user.email,
+                                              style: TextStyle(
+                                                color: Colors.white
+                                                    .withOpacity(0.9),
+                                                fontSize: 13,
+                                                fontWeight:
+                                                FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow:
+                                              TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Container(
+                                              padding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white
+                                                    .withOpacity(0.2),
+                                                borderRadius:
+                                                BorderRadius.circular(
+                                                    20),
+                                                border: Border.all(
+                                                  color: Colors.white
+                                                      .withOpacity(0.3),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize:
+                                                MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons
+                                                        .workspace_premium,
+                                                    color:
+                                                    Color(0xFFFFD700),
+                                                    size: 18,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Flexible(
+                                                    child: Text(
+                                                      'Level ${user.level} - ${user.levelTitle}',
+                                                      style:
+                                                      const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                        FontWeight.w800,
+                                                      ),
+                                                      overflow:
+                                                      TextOverflow
+                                                          .ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white
+                                          .withOpacity(0.15),
+                                      borderRadius:
+                                      BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.white
+                                            .withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment
+                                              .spaceBetween,
+                                          children: [
+                                            const Text(
+                                              'XP Progress',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight:
+                                                FontWeight.w700,
+                                              ),
+                                            ),
+                                            Text(
+                                              '${user.xp} / ${user.xpForNextLevel} XP',
+                                              style: TextStyle(
+                                                color: Colors.white
+                                                    .withOpacity(0.9),
+                                                fontSize: 13,
+                                                fontWeight:
+                                                FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        ClipRRect(
+                                          borderRadius:
+                                          BorderRadius.circular(10),
+                                          child: LinearProgressIndicator(
+                                            value: user.xp /
+                                                user.xpForNextLevel,
+                                            backgroundColor: Colors.white
+                                                .withOpacity(0.2),
+                                            valueColor:
+                                            const AlwaysStoppedAnimation(
+                                              Color(0xFFFFD700),
+                                            ),
+                                            minHeight: 10,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 24),
+                      ),
+
+                      // Stats cards
+                      SliverToBoxAdapter(
+                        child: Animate(
+                          effects: [
+                            FadeEffect(delay: 300.ms),
+                            ScaleEffect(begin: const Offset(0.9, 0.9)),
+                          ],
+                          child: Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 24),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildStatCard(
+                                    icon: Icons
+                                        .local_fire_department_rounded,
+                                    value: '${user.streak}',
+                                    label: 'Day Streak',
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFFF6B6B),
+                                        Color(0xFFEE5A6F),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildStatCard(
+                                    icon: Icons.monetization_on_rounded,
+                                    value: '${user.coins}',
+                                    label: 'Coins',
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFFFD700),
+                                        Color(0xFFFFA500),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildStatCard(
+                                    icon: Icons.emoji_events_rounded,
+                                    value: '${user.achievements.length}',
+                                    label: 'Badges',
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF667eea),
+                                        Color(0xFF764ba2),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
+                          ),
+                        ),
+                      ),
+
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 28),
+                      ),
+
+                      // Today's challenge
+                      SliverToBoxAdapter(
+                        child: Animate(
+                          effects: [
+                            FadeEffect(delay: 400.ms),
+                            SlideEffect(
+                              begin: const Offset(-0.2, 0),
+                              end: Offset.zero,
+                            ),
+                          ],
+                          child: Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 24),
                             child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
                               children: [
                                 Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // Avatar
-                                    AnimatedBuilder(
-                                      animation: _controller,
-                                      builder: (context, child) {
-                                        return Transform.translate(
-                                          offset: Offset(
-                                            0,
-                                            math.sin(_controller.value * 2 * math.pi) * 3,
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFFD700),
+                                            Color(0xFFFFA500),
+                                          ],
+                                        ),
+                                        borderRadius:
+                                        BorderRadius.circular(14),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                            const Color(0xFFFFD700)
+                                                .withOpacity(0.5),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 5),
                                           ),
-                                          child: Container(
-                                            width: 75,
-                                            height: 75,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              gradient: const LinearGradient(
-                                                colors: [
-                                                  Color(0xFFFFD700),
-                                                  Color(0xFFFFA500)
-                                                ],
-                                              ),
-                                              border: Border.all(
-                                                color: Colors.white,
-                                                width: 4,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: const Color(0xFFFFD700)
-                                                      .withOpacity(0.6),
-                                                  blurRadius: 25,
-                                                  spreadRadius: 3,
-                                                ),
-                                              ],
-                                            ),
-                                            child: const Center(
-                                              child: Text('🚀',
-                                                  style: TextStyle(fontSize: 38)),
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.star_rounded,
+                                        color: Colors.white,
+                                        size: 22,
+                                      ),
                                     ),
-                                    const SizedBox(width: 20),
-
-                                    // User Info
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Today\'s Challenge',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(22),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFFFFD700)
+                                            .withOpacity(0.25),
+                                        const Color(0xFFFFA500)
+                                            .withOpacity(0.15),
+                                      ],
+                                    ),
+                                    borderRadius:
+                                    BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: const Color(0xFFFFD700)
+                                          .withOpacity(0.5),
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFFFD700)
+                                            .withOpacity(0.3),
+                                        blurRadius: 25,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
                                         children: [
-                                          Text(
-                                            'Hello, ${user.name}! 👋',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            user.email,
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(0.9),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 12),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
-                                            ),
+                                            padding:
+                                            const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(20),
-                                              border: Border.all(
-                                                color: Colors.white.withOpacity(0.3),
-                                                width: 1.5,
-                                              ),
+                                              color: Colors.white
+                                                  .withOpacity(0.2),
+                                              borderRadius:
+                                              BorderRadius.circular(
+                                                  14),
                                             ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
+                                            child: const Icon(
+                                              Icons.auto_awesome_rounded,
+                                              color: Colors.white,
+                                              size: 26,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          const Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
                                               children: [
-                                                const Icon(
-                                                  Icons.workspace_premium,
-                                                  color: Color(0xFFFFD700),
-                                                  size: 18,
+                                                Text(
+                                                  'Complete 3 Lessons',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18,
+                                                    fontWeight:
+                                                    FontWeight.w900,
+                                                  ),
                                                 ),
-                                                const SizedBox(width: 6),
-                                                Flexible(
-                                                  child: Text(
-                                                    'Level ${user.level} - ${user.levelTitle}',
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w800,
-                                                    ),
-                                                    overflow: TextOverflow.ellipsis,
+                                                SizedBox(height: 6),
+                                                Text(
+                                                  'Earn 500 XP + 50 Coins 🎁',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                    FontWeight.w600,
                                                   ),
                                                 ),
                                               ],
@@ -418,448 +799,307 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 24),
-
-                                // XP Progress Bar
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.3),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                      const SizedBox(height: 20),
+                                      Column(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
-                                            'XP Progress',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                          Row(
+                                            mainAxisAlignment:
+                                            MainAxisAlignment
+                                                .spaceBetween,
+                                            children: [
+                                              const Text(
+                                                '2/3 completed',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 13,
+                                                  fontWeight:
+                                                  FontWeight.w700,
+                                                ),
+                                              ),
+                                              Text(
+                                                '6 hours left ⏱️',
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withOpacity(0.9),
+                                                  fontSize: 12,
+                                                  fontWeight:
+                                                  FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          Text(
-                                            '${user.xp} / ${user.xpForNextLevel} XP',
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(0.9),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
+                                          const SizedBox(height: 10),
+                                          ClipRRect(
+                                            borderRadius:
+                                            BorderRadius.circular(10),
+                                            child:
+                                            const LinearProgressIndicator(
+                                              value: 0.66,
+                                              backgroundColor:
+                                              Colors.white,
+                                              valueColor:
+                                              AlwaysStoppedAnimation(
+                                                Colors.white,
+                                              ),
+                                              minHeight: 10,
                                             ),
                                           ),
                                         ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: LinearProgressIndicator(
-                                          value: user.xp / user.xpForNextLevel,
-                                          backgroundColor:
-                                          Colors.white.withOpacity(0.2),
-                                          valueColor:
-                                          const AlwaysStoppedAnimation(
-                                              Color(0xFFFFD700)),
-                                          minHeight: 10,
-                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
                             ),
-                          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
-                        ),
-                      ),
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                      // ============= STATS CARDS =============
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _buildStatCard(
-                                  icon: Icons.local_fire_department_rounded,
-                                  value: '${user.streak}',
-                                  label: 'Day Streak',
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildStatCard(
-                                  icon: Icons.monetization_on_rounded,
-                                  value: '${user.coins}',
-                                  label: 'Coins',
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildStatCard(
-                                  icon: Icons.emoji_events_rounded,
-                                  value: '${user.achievements.length}',
-                                  label: 'Badges',
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ).animate().fadeIn(delay: 300.ms).scale(),
-                        ),
-                      ),
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                      // ============= TODAY'S CHALLENGE =============
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color:
-                                          const Color(0xFFFFD700).withOpacity(0.5),
-                                          blurRadius: 15,
-                                          offset: const Offset(0, 5),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.star_rounded,
-                                      color: Colors.white,
-                                      size: 22,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Today\'s Challenge',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(22),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      const Color(0xFFFFD700).withOpacity(0.25),
-                                      const Color(0xFFFFA500).withOpacity(0.15),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(24),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFD700).withOpacity(0.5),
-                                    width: 2,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFFFFD700).withOpacity(0.3),
-                                      blurRadius: 25,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                          child: const Icon(
-                                            Icons.auto_awesome_rounded,
-                                            color: Colors.white,
-                                            size: 26,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        const Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Complete 3 Lessons',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w900,
-                                                ),
-                                              ),
-                                              SizedBox(height: 6),
-                                              Text(
-                                                'Earn 500 XP + 50 Coins 🎁',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text(
-                                              '2/3 completed',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            Text(
-                                              '6 hours left ⏱️',
-                                              style: TextStyle(
-                                                color: Colors.white.withOpacity(0.9),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 10),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: LinearProgressIndicator(
-                                            value: 0.66,
-                                            backgroundColor:
-                                            Colors.white.withOpacity(0.3),
-                                            valueColor:
-                                            const AlwaysStoppedAnimation(
-                                                Colors.white),
-                                            minHeight: 10,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.2, end: 0),
-                            ],
                           ),
                         ),
                       ),
 
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 28),
+                      ),
 
-                      // ============= QUICK ACTIONS =============
+                      // Quick Actions
                       SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color:
-                                          const Color(0xFF667eea).withOpacity(0.5),
-                                          blurRadius: 15,
-                                          offset: const Offset(0, 5),
+                        child: Animate(
+                          effects: [
+                            FadeEffect(delay: 500.ms),
+                          ],
+                          child: Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFF667eea),
+                                            Color(0xFF764ba2),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.flash_on_rounded,
-                                      color: Colors.white,
-                                      size: 22,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Quick Actions',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildActionCard(
-                                      'View\nRoadmap',
-                                      Icons.map_rounded,
-                                      const LinearGradient(
-                                        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                        borderRadius:
+                                        BorderRadius.circular(14),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFF667eea)
+                                                .withOpacity(0.5),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.flash_on_rounded,
+                                        color: Colors.white,
+                                        size: 22,
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildActionCard(
-                                      'Start\nProject',
-                                      Icons.rocket_launch_rounded,
-                                      const LinearGradient(
-                                        colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Quick Actions',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildActionCard(
-                                      'Resume\nCheck',
-                                      Icons.description_rounded,
-                                      const LinearGradient(
-                                        colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildActionCard(
+                                        'View\nRoadmap',
+                                        Icons.map_rounded,
+                                        const LinearGradient(
+                                          colors: [
+                                            Color(0xFF667eea),
+                                            Color(0xFF764ba2),
+                                          ],
+                                        ),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                              const RoadmapPage(),
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildActionCard(
-                                      'Leader\nboard',
-                                      Icons.leaderboard_rounded,
-                                      const LinearGradient(
-                                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildActionCard(
+                                        'Start\nProject',
+                                        Icons.rocket_launch_rounded,
+                                        const LinearGradient(
+                                          colors: [
+                                            Color(0xFF43e97b),
+                                            Color(0xFF38f9d7),
+                                          ],
+                                        ),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                              const ProjectsPage(),
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ).animate().fadeIn(delay: 500.ms),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildActionCard(
+                                        'Resume\nCheck',
+                                        Icons.description_rounded,
+                                        const LinearGradient(
+                                          colors: [
+                                            Color(0xFFf093fb),
+                                            Color(0xFFf5576c),
+                                          ],
+                                        ),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                              const ResumeCheckerPage()),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildActionCard(
+                                        'Leader\nboard',
+                                        Icons.leaderboard_rounded,
+                                        const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFFD700),
+                                            Color(0xFFFFA500),
+                                          ],
+                                        ),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (_) =>
+                                                const LeaderboardPage()),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
 
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 28),
+                      ),
 
-                      // ============= RECENT ACTIVITY =============
+                      // Recent activity
                       SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                                      ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color:
-                                          const Color(0xFF4facfe).withOpacity(0.5),
-                                          blurRadius: 15,
-                                          offset: const Offset(0, 5),
+                        child: Animate(
+                          effects: [
+                            FadeEffect(delay: 600.ms),
+                          ],
+                          child: Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFF4facfe),
+                                            Color(0xFF00f2fe),
+                                          ],
                                         ),
-                                      ],
+                                        borderRadius:
+                                        BorderRadius.circular(14),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                            const Color(0xFF4facfe)
+                                                .withOpacity(0.5),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.history_rounded,
+                                        color: Colors.white,
+                                        size: 22,
+                                      ),
                                     ),
-                                    child: const Icon(
-                                      Icons.history_rounded,
-                                      color: Colors.white,
-                                      size: 22,
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Recent Activity',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Recent Activity',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              _buildActivityItem(
-                                'Completed "Intro to Programming"',
-                                '2 hours ago',
-                                Icons.check_circle_rounded,
-                                const Color(0xFF43e97b),
-                                '+250 XP',
-                              ),
-                              const SizedBox(height: 12),
-                              _buildActivityItem(
-                                'Started "Calculator App"',
-                                '1 day ago',
-                                Icons.play_circle_rounded,
-                                const Color(0xFF4facfe),
-                                null,
-                              ),
-                              const SizedBox(height: 12),
-                              _buildActivityItem(
-                                'Earned "Scholar" Badge 🏆',
-                                '2 days ago',
-                                Icons.emoji_events_rounded,
-                                const Color(0xFFFFD700),
-                                '+500 XP',
-                              ),
-                              const SizedBox(height: 32),
-                            ],
-                          ).animate().fadeIn(delay: 600.ms),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildActivityItem(
+                                  'Completed "Intro to Programming"',
+                                  '2 hours ago',
+                                  Icons.check_circle_rounded,
+                                  const Color(0xFF43e97b),
+                                  '+250 XP',
+                                ),
+                                const SizedBox(height: 12),
+                                _buildActivityItem(
+                                  'Started "Calculator App"',
+                                  '1 day ago',
+                                  Icons.play_circle_rounded,
+                                  const Color(0xFF4facfe),
+                                  null,
+                                ),
+                                const SizedBox(height: 12),
+                                _buildActivityItem(
+                                  'Earned "Scholar" Badge 🏆',
+                                  '2 days ago',
+                                  Icons.emoji_events_rounded,
+                                  const Color(0xFFFFD700),
+                                  '+500 XP',
+                                ),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -871,10 +1111,14 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
         );
       },
       loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD700))),
+        child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+      ),
       error: (e, _) => Center(
-          child: Text('Error: $e',
-              style: const TextStyle(color: Colors.red))),
+        child: Text(
+          'Error: $e',
+          style: const TextStyle(color: Colors.red),
+        ),
+      ),
     );
   }
 
@@ -1001,51 +1245,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     );
   }
 
-  Widget _buildActionCard(String title, IconData icon, Gradient gradient) {
-    return Container(
-      height: 110,
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: (gradient as LinearGradient).colors.first.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(22),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(icon, color: Colors.white, size: 32),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    height: 1.2,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildActivityItem(
       String title,
       String time,
@@ -1113,7 +1312,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
           if (badge != null) ...[
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
@@ -1134,4 +1334,5 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     );
   }
 }
+
 

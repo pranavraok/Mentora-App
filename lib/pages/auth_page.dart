@@ -115,7 +115,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     return Scaffold(
       body: Stack(
         children: [
-          // ✅ ONLY COLOR CHANGED - SAME AS OTHER PAGES
+          // Background
           AnimatedBuilder(
             animation: _rotationController,
             builder: (context, child) {
@@ -164,7 +164,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
             );
           }),
 
-          // Main content - ✅ EVERYTHING ELSE KEPT SAME
+          // Main content
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -172,7 +172,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                 children: [
                   const SizedBox(height: 20),
 
-                  // Animated hero icon
+                  // ✅ LOGO INSTEAD OF ROCKET
                   AnimatedBuilder(
                     animation: _floatingController,
                     builder: (context, child) {
@@ -184,26 +184,11 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
                         child: child,
                       );
                     },
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFFD700).withOpacity(0.5),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.rocket_launch,
-                        color: Colors.white,
-                        size: 50,
+                    child: SizedBox(
+                      height: 120,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
                       ),
                     ).animate(onPlay: (controller) => controller.repeat())
                         .shimmer(duration: 2000.ms, color: Colors.white.withOpacity(0.3)),
@@ -213,7 +198,7 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
 
                   // Title
                   Text(
-                    widget.isLogin ? '🎮 Welcome Back!' : '✨ Join the Quest',
+                    widget.isLogin ? 'Welcome Back!' : 'Join the Quest',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -660,5 +645,3 @@ class _AuthPageState extends ConsumerState<AuthPage> with TickerProviderStateMix
     );
   }
 }
-
-

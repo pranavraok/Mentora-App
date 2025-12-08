@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:glassmorphism/glassmorphism.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
 
@@ -111,8 +110,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             return AnimatedBuilder(
               animation: _animController,
               builder: (context, child) {
-                final offset =
-                math.sin((_animController.value + index * 0.2) * 2 * math.pi);
+                final offset = math.sin(
+                  (_animController.value + index * 0.2) * 2 * math.pi,
+                );
                 return Positioned(
                   left: (index * 50.0) + offset * 20,
                   top: (index * 80.0) + offset * 30,
@@ -161,11 +161,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                     child: SafeArea(
                       bottom: false,
                       child: Padding(
-                        padding:
-                        const EdgeInsets.fromLTRB(24, 18, 24, 18),
+                        padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
                         child: Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             SizedBox(
                               height: 60,
@@ -182,7 +180,10 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                                   onTap: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const NotificationsPage(),
+                                      ),
                                     );
                                   },
                                   hasNotification: true,
@@ -193,7 +194,10 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                                   onTap: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SettingsPage(),
+                                      ),
                                     );
                                   },
                                 ),
@@ -217,10 +221,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                       animation: _animController,
                       builder: (context, child) {
                         return Transform.scale(
-                          scale: 1.0 +
-                              (math.sin(_animController.value *
-                                  2 *
-                                  math.pi) *
+                          scale:
+                              1.0 +
+                              (math.sin(_animController.value * 2 * math.pi) *
                                   0.08),
                           child: Container(
                             padding: const EdgeInsets.all(12),
@@ -238,12 +241,14 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFFFD700)
-                                      .withOpacity(0.6),
-                                  blurRadius: 20 +
-                                      (math.sin(_animController.value *
-                                          2 *
-                                          math.pi) *
+                                  color: const Color(
+                                    0xFFFFD700,
+                                  ).withOpacity(0.6),
+                                  blurRadius:
+                                      20 +
+                                      (math.sin(
+                                            _animController.value * 2 * math.pi,
+                                          ) *
                                           5),
                                   spreadRadius: 3,
                                 ),
@@ -263,13 +268,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ShaderMask(
-                          shaderCallback: (bounds) =>
-                              const LinearGradient(
-                                colors: [
-                                  Color(0xFFFFD700),
-                                  Color(0xFFFFA500),
-                                ],
-                              ).createShader(bounds),
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                          ).createShader(bounds),
                           child: const Text(
                             'GLOBAL LEADERBOARD',
                             style: TextStyle(
@@ -298,8 +299,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding:
-                  const EdgeInsets.fromLTRB(24, 4, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -336,7 +336,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             flex: 9,
             child: _ifPlayer(
               p2,
-                  () => _buildPodiumCard(
+              () => _buildPodiumCard(
                 p2!,
                 rankColor: const Color(0xFFC0C0C0),
                 gradient: const LinearGradient(
@@ -350,7 +350,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             flex: 10,
             child: _ifPlayer(
               p1,
-                  () => _buildPodiumCard(
+              () => _buildPodiumCard(
                 p1!,
                 isCrowned: true,
                 rankColor: const Color(0xFFFFD700),
@@ -365,7 +365,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             flex: 9,
             child: _ifPlayer(
               p3,
-                  () => _buildPodiumCard(
+              () => _buildPodiumCard(
                 p3!,
                 rankColor: const Color(0xFFCD7F32),
                 gradient: const LinearGradient(
@@ -385,11 +385,11 @@ class _LeaderboardPageState extends State<LeaderboardPage>
   }
 
   Widget _buildPodiumCard(
-      _PlayerEntry player, {
-        required Color rankColor,
-        required Gradient gradient,
-        bool isCrowned = false,
-      }) {
+    _PlayerEntry player, {
+    required Color rankColor,
+    required Gradient gradient,
+    bool isCrowned = false,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -413,10 +413,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               ),
             ],
           ),
-          child: Text(
-            player.avatarEmoji,
-            style: const TextStyle(fontSize: 26),
-          ),
+          child: Text(player.avatarEmoji, style: const TextStyle(fontSize: 26)),
         ),
         const SizedBox(height: 6),
         Text(
@@ -460,8 +457,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               ),
             ],
           ),
-          padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -527,8 +523,9 @@ class _LeaderboardPageState extends State<LeaderboardPage>
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color:
-              (gradient as LinearGradient).colors.first.withOpacity(0.35),
+              color: (gradient as LinearGradient).colors.first.withOpacity(
+                0.35,
+              ),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -561,10 +558,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: Colors.white.withOpacity(0.04),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.12),
-          width: 1.2,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.12), width: 1.2),
       ),
       child: ListView.separated(
         shrinkWrap: true,
@@ -587,8 +581,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
 
     return Container(
       decoration: BoxDecoration(gradient: gradient),
-      padding:
-      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
           Container(
@@ -638,8 +631,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight:
-                    isYou ? FontWeight.w900 : FontWeight.w700,
+                    fontWeight: isYou ? FontWeight.w900 : FontWeight.w700,
                     fontSize: 13,
                   ),
                 ),
@@ -772,11 +764,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -790,10 +778,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B6B),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: Colors.white, width: 1.5),
                     ),
                   ),
                 ),

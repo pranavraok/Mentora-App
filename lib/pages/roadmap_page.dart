@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/models/roadmap_node.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/settings_page.dart';
@@ -17,7 +16,8 @@ class RoadmapPage extends ConsumerStatefulWidget {
   ConsumerState<RoadmapPage> createState() => _RoadmapPageState();
 }
 
-class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderStateMixin {
+class _RoadmapPageState extends ConsumerState<RoadmapPage>
+    with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   late AnimationController _pulseController;
   late AnimationController _backgroundController;
@@ -76,7 +76,9 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                 return AnimatedBuilder(
                   animation: _backgroundController,
                   builder: (context, child) {
-                    final offset = math.sin((_backgroundController.value + index * 0.2) * 2 * math.pi);
+                    final offset = math.sin(
+                      (_backgroundController.value + index * 0.2) * 2 * math.pi,
+                    );
                     return Positioned(
                       left: (index * 50.0) + offset * 20,
                       top: (index * 80.0) + offset * 30,
@@ -147,7 +149,10 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                                       onTap: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const NotificationsPage(),
+                                          ),
                                         );
                                       },
                                       hasNotification: true,
@@ -158,7 +163,10 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                                       onTap: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const SettingsPage(),
+                                          ),
                                         );
                                       },
                                     ),
@@ -185,12 +193,17 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.5),
+                                    color: const Color(
+                                      0xFFFFD700,
+                                    ).withOpacity(0.5),
                                     blurRadius: 20,
                                     spreadRadius: 2,
                                   ),
@@ -208,9 +221,13 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   ShaderMask(
-                                    shaderCallback: (bounds) => const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                    ).createShader(bounds),
+                                    shaderCallback: (bounds) =>
+                                        const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFFD700),
+                                            Color(0xFFFFA500),
+                                          ],
+                                        ).createShader(bounds),
                                     child: const Text(
                                       'LEARNING ROADMAP',
                                       style: TextStyle(
@@ -251,24 +268,32 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(),
                           slivers: [
-                            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 8),
+                            ),
 
                             // Progress Summary
                             SliverToBoxAdapter(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                ),
                                 child: _buildProgressSummary(nodes),
                               ),
                             ),
 
-                            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 32),
+                            ),
 
                             // 3D Roadmap
                             SliverToBoxAdapter(
                               child: ThreeDRoadmap(nodes: nodes),
                             ),
 
-                            const SliverToBoxAdapter(child: SizedBox(height: 60)),
+                            const SliverToBoxAdapter(
+                              child: SizedBox(height: 60),
+                            ),
                           ],
                         );
                       },
@@ -277,26 +302,35 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.5),
-                                    blurRadius: 30,
-                                    spreadRadius: 10,
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFFFD700),
+                                        Color(0xFFFFA500),
+                                      ],
+                                    ),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFFFFD700,
+                                        ).withOpacity(0.5),
+                                        blurRadius: 30,
+                                        spreadRadius: 10,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: const CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                            ).animate(onPlay: (controller) => controller.repeat()).rotate(duration: 2.seconds),
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                )
+                                .animate(
+                                  onPlay: (controller) => controller.repeat(),
+                                )
+                                .rotate(duration: 2.seconds),
                             const SizedBox(height: 24),
                             Text(
                               'Loading your roadmap...',
@@ -387,11 +421,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -405,10 +435,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B6B),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: Colors.white, width: 1.5),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF6B6B).withOpacity(0.5),
@@ -432,23 +459,25 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 140,
-            height: 140,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFFFD700).withOpacity(0.2),
-                  const Color(0xFFFFA500).withOpacity(0.2),
-                ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.map_rounded,
-              size: 70,
-              color: Colors.white54,
-            ),
-          ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 2.seconds),
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFFD700).withOpacity(0.2),
+                      const Color(0xFFFFA500).withOpacity(0.2),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.map_rounded,
+                  size: 70,
+                  color: Colors.white54,
+                ),
+              )
+              .animate(onPlay: (controller) => controller.repeat())
+              .shimmer(duration: 2.seconds),
           const SizedBox(height: 32),
           const Text(
             'No Roadmap Yet',
@@ -472,136 +501,160 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
   }
 
   Widget _buildProgressSummary(List<RoadmapNode> nodes) {
-    final completed = nodes.where((n) => n.status == NodeStatus.completed).length;
-    final inProgress = nodes.where((n) => n.status == NodeStatus.inProgress).length;
+    final completed = nodes
+        .where((n) => n.status == NodeStatus.completed)
+        .length;
+    final inProgress = nodes
+        .where((n) => n.status == NodeStatus.inProgress)
+        .length;
     final total = nodes.length;
     final progress = total > 0 ? completed / total : 0.0;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.25),
-                Colors.white.withOpacity(0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.3),
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 30,
-                offset: const Offset(0, 15),
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.25),
+                    Colors.white.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 30,
+                    offset: const Offset(0, 15),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Journey Progress',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Journey Progress',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$completed of $total completed',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$completed of $total completed',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFD700).withOpacity(0.5),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '${(progress * 100).toInt()}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFD700).withOpacity(0.5),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
+                  const SizedBox(height: 20),
+                  Stack(
+                    children: [
+                      Container(
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      '${(progress * 100).toInt()}%',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Stack(
-                children: [
-                  Container(
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: progress,
-                    child: Container(
-                      height: 14,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFFD700).withOpacity(0.5),
-                            blurRadius: 15,
+                      FractionallySizedBox(
+                        widthFactor: progress,
+                        child: Container(
+                          height: 14,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFD700).withOpacity(0.5),
+                                blurRadius: 15,
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatChip(
+                        '✅ $completed',
+                        'Done',
+                        const Color(0xFF43e97b),
+                      ),
+                      _buildStatChip(
+                        '🔄 $inProgress',
+                        'Active',
+                        const Color(0xFF4facfe),
+                      ),
+                      _buildStatChip(
+                        '📚 ${total - completed - inProgress}',
+                        'Locked',
+                        const Color(0xFF6c757d),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatChip('✅ $completed', 'Done', const Color(0xFF43e97b)),
-                  _buildStatChip('🔄 $inProgress', 'Active', const Color(0xFF4facfe)),
-                  _buildStatChip('📚 ${total - completed - inProgress}', 'Locked', const Color(0xFF6c757d)),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3, end: 0).then().shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.1));
+        )
+        .animate()
+        .fadeIn(delay: 300.ms)
+        .slideY(begin: 0.3, end: 0)
+        .then()
+        .shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.1));
   }
 
   Widget _buildStatChip(String value, String label, Color color) {
@@ -609,10 +662,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage> with TickerProviderSt
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.3),
-            color.withOpacity(0.15),
-          ],
+          colors: [color.withOpacity(0.3), color.withOpacity(0.15)],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color, width: 2),
@@ -663,10 +713,7 @@ class ThreeDRoadmap extends ConsumerWidget {
         children: [
           // 3D Road
           CustomPaint(
-            size: Size(
-              MediaQuery.of(context).size.width,
-              nodes.length * 280.0,
-            ),
+            size: Size(MediaQuery.of(context).size.width, nodes.length * 280.0),
             painter: ThreeDRoadPainter(nodeCount: nodes.length),
           ),
 
@@ -681,16 +728,15 @@ class ThreeDRoadmap extends ConsumerWidget {
               left: isLeft ? 30 : null,
               right: isLeft ? null : 30,
               width: MediaQuery.of(context).size.width * 0.4,
-              child: RoadCheckpoint(
-                node: node,
-                index: index,
-                isLeft: isLeft,
-              )
+              child: RoadCheckpoint(node: node, index: index, isLeft: isLeft)
                   .animate(delay: Duration(milliseconds: 150 * index))
                   .fadeIn(duration: 600.ms)
                   .slideX(begin: isLeft ? -0.5 : 0.5, end: 0)
                   .then()
-                  .shimmer(duration: 1500.ms, color: Colors.white.withOpacity(0.1)),
+                  .shimmer(
+                    duration: 1500.ms,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
             );
           }),
 
@@ -705,10 +751,7 @@ class ThreeDRoadmap extends ConsumerWidget {
               left: isLeft
                   ? MediaQuery.of(context).size.width * 0.4 + 50
                   : MediaQuery.of(context).size.width * 0.3,
-              child: RoadMarker(
-                number: index + 1,
-                node: node,
-              )
+              child: RoadMarker(number: index + 1, node: node)
                   .animate(delay: Duration(milliseconds: 150 * index + 300))
                   .fadeIn(duration: 600.ms)
                   .scale(begin: const Offset(0, 0), end: const Offset(1, 1)),
@@ -765,7 +808,9 @@ class ThreeDRoadPainter extends CustomPainter {
       );
 
       final paint = Paint()
-        ..shader = gradient.createShader(Rect.fromLTWH(0, y, size.width, segmentHeight))
+        ..shader = gradient.createShader(
+          Rect.fromLTWH(0, y, size.width, segmentHeight),
+        )
         ..style = PaintingStyle.fill;
 
       canvas.drawPath(path, paint);
@@ -858,17 +903,14 @@ class RoadMarker extends ConsumerStatefulWidget {
   final int number;
   final RoadmapNode node;
 
-  const RoadMarker({
-    super.key,
-    required this.number,
-    required this.node,
-  });
+  const RoadMarker({super.key, required this.number, required this.node});
 
   @override
   ConsumerState<RoadMarker> createState() => _RoadMarkerState();
 }
 
-class _RoadMarkerState extends ConsumerState<RoadMarker> with SingleTickerProviderStateMixin {
+class _RoadMarkerState extends ConsumerState<RoadMarker>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -947,12 +989,7 @@ class _RoadMarkerState extends ConsumerState<RoadMarker> with SingleTickerProvid
                         Icons.check_circle,
                         color: Colors.white,
                         size: 26,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black45,
-                            blurRadius: 4,
-                          ),
-                        ],
+                        shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
                       ),
                     ),
                   if (widget.node.status == NodeStatus.locked)
@@ -1062,10 +1099,7 @@ class RoadCheckpoint extends ConsumerWidget {
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: color.withOpacity(0.7),
-                width: 2.5,
-              ),
+              border: Border.all(color: color.withOpacity(0.7), width: 2.5),
               boxShadow: [
                 BoxShadow(
                   color: color.withOpacity(0.5),
@@ -1143,7 +1177,10 @@ class RoadCheckpoint extends ConsumerWidget {
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
@@ -1269,10 +1306,7 @@ class RoadmapDetailSheet extends ConsumerWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF1A1B2E),
-            Color(0xFF0F0C29),
-          ],
+          colors: [Color(0xFF1A1B2E), Color(0xFF0F0C29)],
         ),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
@@ -1484,7 +1518,9 @@ class RoadmapDetailSheet extends ConsumerWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () async {
-                            final roadmapService = ref.read(roadmapServiceProvider);
+                            final roadmapService = ref.read(
+                              roadmapServiceProvider,
+                            );
                             await roadmapService.updateNode(
                               node.copyWith(
                                 status: NodeStatus.inProgress,
@@ -1611,7 +1647,12 @@ class RoadmapDetailSheet extends ConsumerWidget {
     }
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, Color color) {
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -1620,10 +1661,7 @@ class RoadmapDetailSheet extends ConsumerWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  color.withOpacity(0.3),
-                  color.withOpacity(0.15),
-                ],
+                colors: [color.withOpacity(0.3), color.withOpacity(0.15)],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: color, width: 2),
@@ -1658,4 +1696,3 @@ class RoadmapDetailSheet extends ConsumerWidget {
     );
   }
 }
-

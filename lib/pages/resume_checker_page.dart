@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:glassmorphism/glassmorphism.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
 
@@ -80,7 +79,8 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
               animation: _animController,
               builder: (context, child) {
                 final offset = math.sin(
-                    (_animController.value + index * 0.2) * 2 * math.pi);
+                  (_animController.value + index * 0.2) * 2 * math.pi,
+                );
                 return Positioned(
                   left: (index * 50.0) + offset * 20,
                   top: (index * 80.0) + offset * 30,
@@ -147,7 +147,10 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                   onTap: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const NotificationsPage(),
+                                      ),
                                     );
                                   },
                                   hasNotification: true,
@@ -158,7 +161,10 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                   onTap: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SettingsPage(),
+                                      ),
                                     );
                                   },
                                 ),
@@ -182,77 +188,108 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                       children: [
                         // Title section
                         Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                          child: Row(
-                            children: [
-                              AnimatedBuilder(
-                                animation: _animController,
-                                builder: (context, child) {
-                                  return Transform.scale(
-                                    scale: 1.0 +
-                                        (math.sin(_animController.value * 2 * math.pi) * 0.08),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Color.lerp(
-                                              const Color(0xFFFFD700),
-                                              const Color(0xFFf093fb),
-                                              _animController.value,
-                                            )!,
-                                            const Color(0xFFf5576c),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFFFD700).withOpacity(0.6),
-                                            blurRadius: 20 + (math.sin(_animController.value * 2 * math.pi) * 5),
-                                            spreadRadius: 3,
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.description_rounded,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  );
-                                },
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(
+                                24,
+                                20,
+                                24,
+                                16,
                               ),
-                              const SizedBox(width: 14),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  ShaderMask(
-                                    shaderCallback: (bounds) => const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                    ).createShader(bounds),
-                                    child: const Text(
-                                      'RESUME CHECKER',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
+                                  AnimatedBuilder(
+                                    animation: _animController,
+                                    builder: (context, child) {
+                                      return Transform.scale(
+                                        scale:
+                                            1.0 +
+                                            (math.sin(
+                                                  _animController.value *
+                                                      2 *
+                                                      math.pi,
+                                                ) *
+                                                0.08),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Color.lerp(
+                                                  const Color(0xFFFFD700),
+                                                  const Color(0xFFf093fb),
+                                                  _animController.value,
+                                                )!,
+                                                const Color(0xFFf5576c),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(
+                                                  0xFFFFD700,
+                                                ).withOpacity(0.6),
+                                                blurRadius:
+                                                    20 +
+                                                    (math.sin(
+                                                          _animController
+                                                                  .value *
+                                                              2 *
+                                                              math.pi,
+                                                        ) *
+                                                        5),
+                                                spreadRadius: 3,
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.description_rounded,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                  Text(
-                                    'Level up your CV for tech roles',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                  const SizedBox(width: 14),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (bounds) =>
+                                            const LinearGradient(
+                                              colors: [
+                                                Color(0xFFFFD700),
+                                                Color(0xFFFFA500),
+                                              ],
+                                            ).createShader(bounds),
+                                        child: const Text(
+                                          'RESUME CHECKER',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Level up your CV for tech roles',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
+                            )
+                            .animate()
+                            .fadeIn(delay: 200.ms)
+                            .slideY(begin: -0.2, end: 0),
 
                         // Main content
                         Padding(
@@ -267,17 +304,20 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                 children: [
                                   _buildTipChip(
                                     icon: Icons.star_rounded,
-                                    text: 'Keep it 1–2 pages with clear sections.',
+                                    text:
+                                        'Keep it 1–2 pages with clear sections.',
                                   ),
                                   const SizedBox(height: 6),
                                   _buildTipChip(
                                     icon: Icons.bolt_rounded,
-                                    text: 'Use measurable impact: "Improved performance by 30%".',
+                                    text:
+                                        'Use measurable impact: "Improved performance by 30%".',
                                   ),
                                   const SizedBox(height: 6),
                                   _buildTipChip(
                                     icon: Icons.search_rounded,
-                                    text: 'Include job-description keywords (Flutter, APIs, cloud, CI/CD).',
+                                    text:
+                                        'Include job-description keywords (Flutter, APIs, cloud, CI/CD).',
                                   ),
                                 ],
                               ),
@@ -323,10 +363,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
             const Color(0xFF764ba2).withOpacity(0.55),
           ],
         ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 2,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -408,10 +445,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
             Colors.white.withOpacity(0.05),
           ],
         ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1.4,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.4),
       ),
       child: Row(
         children: [
@@ -547,10 +581,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
             const Color(0xFF18192D).withOpacity(0.8),
           ],
         ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -642,11 +673,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
             ),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 16,
-          ),
+          child: Icon(icon, color: Colors.white, size: 16),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -698,11 +725,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -716,10 +739,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B6B),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: Colors.white, width: 1.5),
                     ),
                   ),
                 ),

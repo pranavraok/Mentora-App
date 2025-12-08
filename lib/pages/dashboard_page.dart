@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:glassmorphism/glassmorphism.dart';
 import 'package:mentora_app/pages/leaderboard_page.dart';
 import 'package:mentora_app/pages/resume_checker_page.dart';
 
-import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/providers/app_providers.dart';
-import 'package:mentora_app/widgets/level_badge.dart';
-import 'package:mentora_app/widgets/xp_progress_bar.dart';
 
 import 'package:mentora_app/pages/roadmap_page.dart';
 import 'package:mentora_app/pages/projects_page.dart';
 import 'package:mentora_app/pages/profile_page.dart';
 import 'package:mentora_app/pages/settings_page.dart';
-import 'package:mentora_app/pages/resume_checker_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
 
 import 'dart:math' as math;
@@ -98,19 +93,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-          )
+                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                )
               : null,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: isSelected ? 26 : 24,
-            ),
+            Icon(icon, color: Colors.white, size: isSelected ? 26 : 24),
             if (isSelected) ...[
               const SizedBox(width: 8),
               Text(
@@ -156,11 +147,11 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 
   Widget _buildActionCard(
-      String title,
-      IconData icon,
-      Gradient gradient, {
-        required VoidCallback onTap,
-      }) {
+    String title,
+    IconData icon,
+    Gradient gradient, {
+    required VoidCallback onTap,
+  }) {
     return Container(
       height: 110,
       decoration: BoxDecoration(
@@ -235,8 +226,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
               return AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
-                  final offset =
-                  math.sin((_controller.value + index * 0.2) * 2 * math.pi);
+                  final offset = math.sin(
+                    (_controller.value + index * 0.2) * 2 * math.pi,
+                  );
                   return Positioned(
                     left: (index * 50.0) + offset * 20,
                     top: (index * 80.0) + offset * 30,
@@ -285,8 +277,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                       child: SafeArea(
                         bottom: false,
                         child: Padding(
-                          padding:
-                          const EdgeInsets.fromLTRB(24, 18, 24, 18),
+                          padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -307,7 +298,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                          const NotificationsPage(),
+                                              const NotificationsPage(),
                                         ),
                                       );
                                     },
@@ -321,7 +312,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                          const SettingsPage(),
+                                              const SettingsPage(),
                                         ),
                                       );
                                     },
@@ -341,9 +332,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 24),
-                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
                       // Profile card
                       SliverToBoxAdapter(
@@ -356,8 +345,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ],
                           child: Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
@@ -365,17 +353,16 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    const Color(0xFF667eea)
-                                        .withOpacity(0.9),
-                                    const Color(0xFF764ba2)
-                                        .withOpacity(0.9),
+                                    const Color(0xFF667eea).withOpacity(0.9),
+                                    const Color(0xFF764ba2).withOpacity(0.9),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(28),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF667eea)
-                                        .withOpacity(0.4),
+                                    color: const Color(
+                                      0xFF667eea,
+                                    ).withOpacity(0.4),
                                     blurRadius: 30,
                                     offset: const Offset(0, 15),
                                   ),
@@ -391,9 +378,11 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           return Transform.translate(
                                             offset: Offset(
                                               0,
-                                              math.sin(_controller.value *
-                                                  2 *
-                                                  math.pi) *
+                                              math.sin(
+                                                    _controller.value *
+                                                        2 *
+                                                        math.pi,
+                                                  ) *
                                                   3,
                                             ),
                                             child: Container(
@@ -401,8 +390,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                               height: 75,
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
-                                                gradient:
-                                                const LinearGradient(
+                                                gradient: const LinearGradient(
                                                   colors: [
                                                     Color(0xFFFFD700),
                                                     Color(0xFFFFA500),
@@ -415,8 +403,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                                 boxShadow: [
                                                   BoxShadow(
                                                     color: const Color(
-                                                        0xFFFFD700)
-                                                        .withOpacity(0.6),
+                                                      0xFFFFD700,
+                                                    ).withOpacity(0.6),
                                                     blurRadius: 25,
                                                     spreadRadius: 3,
                                                   ),
@@ -438,7 +426,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                              CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
@@ -446,40 +434,37 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                               style: const TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 22,
-                                                fontWeight:
-                                                FontWeight.w900,
+                                                fontWeight: FontWeight.w900,
                                               ),
                                               maxLines: 1,
-                                              overflow:
-                                              TextOverflow.ellipsis,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                             const SizedBox(height: 6),
                                             Text(
                                               user.email,
                                               style: TextStyle(
-                                                color: Colors.white
-                                                    .withOpacity(0.9),
+                                                color: Colors.white.withOpacity(
+                                                  0.9,
+                                                ),
                                                 fontSize: 13,
-                                                fontWeight:
-                                                FontWeight.w500,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                               maxLines: 1,
-                                              overflow:
-                                              TextOverflow.ellipsis,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                             const SizedBox(height: 12),
                                             Container(
                                               padding:
-                                              const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: Colors.white
-                                                    .withOpacity(0.2),
+                                                color: Colors.white.withOpacity(
+                                                  0.2,
+                                                ),
                                                 borderRadius:
-                                                BorderRadius.circular(
-                                                    20),
+                                                    BorderRadius.circular(20),
                                                 border: Border.all(
                                                   color: Colors.white
                                                       .withOpacity(0.3),
@@ -487,30 +472,25 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                                 ),
                                               ),
                                               child: Row(
-                                                mainAxisSize:
-                                                MainAxisSize.min,
+                                                mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   const Icon(
-                                                    Icons
-                                                        .workspace_premium,
-                                                    color:
-                                                    Color(0xFFFFD700),
+                                                    Icons.workspace_premium,
+                                                    color: Color(0xFFFFD700),
                                                     size: 18,
                                                   ),
                                                   const SizedBox(width: 6),
                                                   Flexible(
                                                     child: Text(
                                                       'Level ${user.level} - ${user.levelTitle}',
-                                                      style:
-                                                      const TextStyle(
+                                                      style: const TextStyle(
                                                         color: Colors.white,
                                                         fontSize: 13,
                                                         fontWeight:
-                                                        FontWeight.w800,
+                                                            FontWeight.w800,
                                                       ),
                                                       overflow:
-                                                      TextOverflow
-                                                          .ellipsis,
+                                                          TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                 ],
@@ -525,13 +505,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: Colors.white
-                                          .withOpacity(0.15),
-                                      borderRadius:
-                                      BorderRadius.circular(20),
+                                      color: Colors.white.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: Colors.white
-                                            .withOpacity(0.3),
+                                        color: Colors.white.withOpacity(0.3),
                                         width: 1.5,
                                       ),
                                     ),
@@ -539,43 +516,42 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       children: [
                                         Row(
                                           mainAxisAlignment:
-                                          MainAxisAlignment
-                                              .spaceBetween,
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             const Text(
                                               'XP Progress',
                                               style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 14,
-                                                fontWeight:
-                                                FontWeight.w700,
+                                                fontWeight: FontWeight.w700,
                                               ),
                                             ),
                                             Text(
                                               '${user.xp} / ${user.xpForNextLevel} XP',
                                               style: TextStyle(
-                                                color: Colors.white
-                                                    .withOpacity(0.9),
+                                                color: Colors.white.withOpacity(
+                                                  0.9,
+                                                ),
                                                 fontSize: 13,
-                                                fontWeight:
-                                                FontWeight.w600,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 12),
                                         ClipRRect(
-                                          borderRadius:
-                                          BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                           child: LinearProgressIndicator(
-                                            value: user.xp /
-                                                user.xpForNextLevel,
+                                            value:
+                                                user.xp / user.xpForNextLevel,
                                             backgroundColor: Colors.white
                                                 .withOpacity(0.2),
                                             valueColor:
-                                            const AlwaysStoppedAnimation(
-                                              Color(0xFFFFD700),
-                                            ),
+                                                const AlwaysStoppedAnimation(
+                                                  Color(0xFFFFD700),
+                                                ),
                                             minHeight: 10,
                                           ),
                                         ),
@@ -589,9 +565,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                         ),
                       ),
 
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 24),
-                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
                       // Stats cards
                       SliverToBoxAdapter(
@@ -601,14 +575,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ScaleEffect(begin: const Offset(0.9, 0.9)),
                           ],
                           child: Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Row(
                               children: [
                                 Expanded(
                                   child: _buildStatCard(
-                                    icon: Icons
-                                        .local_fire_department_rounded,
+                                    icon: Icons.local_fire_department_rounded,
                                     value: '${user.streak}',
                                     label: 'Day Streak',
                                     gradient: const LinearGradient(
@@ -653,9 +625,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                         ),
                       ),
 
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 28),
-                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
                       // Today's challenge
                       SliverToBoxAdapter(
@@ -668,11 +638,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ],
                           child: Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -686,13 +654,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFFFFA500),
                                           ],
                                         ),
-                                        borderRadius:
-                                        BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color:
-                                            const Color(0xFFFFD700)
-                                                .withOpacity(0.5),
+                                            color: const Color(
+                                              0xFFFFD700,
+                                            ).withOpacity(0.5),
                                             blurRadius: 15,
                                             offset: const Offset(0, 5),
                                           ),
@@ -724,23 +691,26 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        const Color(0xFFFFD700)
-                                            .withOpacity(0.25),
-                                        const Color(0xFFFFA500)
-                                            .withOpacity(0.15),
+                                        const Color(
+                                          0xFFFFD700,
+                                        ).withOpacity(0.25),
+                                        const Color(
+                                          0xFFFFA500,
+                                        ).withOpacity(0.15),
                                       ],
                                     ),
-                                    borderRadius:
-                                    BorderRadius.circular(24),
+                                    borderRadius: BorderRadius.circular(24),
                                     border: Border.all(
-                                      color: const Color(0xFFFFD700)
-                                          .withOpacity(0.5),
+                                      color: const Color(
+                                        0xFFFFD700,
+                                      ).withOpacity(0.5),
                                       width: 2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFFD700)
-                                            .withOpacity(0.3),
+                                        color: const Color(
+                                          0xFFFFD700,
+                                        ).withOpacity(0.3),
                                         blurRadius: 25,
                                         offset: const Offset(0, 10),
                                       ),
@@ -748,19 +718,18 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
                                           Container(
-                                            padding:
-                                            const EdgeInsets.all(12),
+                                            padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
-                                              color: Colors.white
-                                                  .withOpacity(0.2),
+                                              color: Colors.white.withOpacity(
+                                                0.2,
+                                              ),
                                               borderRadius:
-                                              BorderRadius.circular(
-                                                  14),
+                                                  BorderRadius.circular(14),
                                             ),
                                             child: const Icon(
                                               Icons.auto_awesome_rounded,
@@ -772,16 +741,14 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           const Expanded(
                                             child: Column(
                                               crossAxisAlignment:
-                                              CrossAxisAlignment
-                                                  .start,
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   'Complete 3 Lessons',
                                                   style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 18,
-                                                    fontWeight:
-                                                    FontWeight.w900,
+                                                    fontWeight: FontWeight.w900,
                                                   ),
                                                 ),
                                                 SizedBox(height: 6),
@@ -790,8 +757,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                                   style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 14,
-                                                    fontWeight:
-                                                    FontWeight.w600,
+                                                    fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
                                               ],
@@ -802,20 +768,18 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       const SizedBox(height: 20),
                                       Column(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             mainAxisAlignment:
-                                            MainAxisAlignment
-                                                .spaceBetween,
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               const Text(
                                                 '2/3 completed',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 13,
-                                                  fontWeight:
-                                                  FontWeight.w700,
+                                                  fontWeight: FontWeight.w700,
                                                 ),
                                               ),
                                               Text(
@@ -824,27 +788,26 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                                   color: Colors.white
                                                       .withOpacity(0.9),
                                                   fontSize: 12,
-                                                  fontWeight:
-                                                  FontWeight.w600,
+                                                  fontWeight: FontWeight.w600,
                                                 ),
                                               ),
                                             ],
                                           ),
                                           const SizedBox(height: 10),
                                           ClipRRect(
-                                            borderRadius:
-                                            BorderRadius.circular(10),
-                                            child:
-                                            const LinearProgressIndicator(
-                                              value: 0.66,
-                                              backgroundColor:
-                                              Colors.white,
-                                              valueColor:
-                                              AlwaysStoppedAnimation(
-                                                Colors.white,
-                                              ),
-                                              minHeight: 10,
+                                            borderRadius: BorderRadius.circular(
+                                              10,
                                             ),
+                                            child:
+                                                const LinearProgressIndicator(
+                                                  value: 0.66,
+                                                  backgroundColor: Colors.white,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation(
+                                                        Colors.white,
+                                                      ),
+                                                  minHeight: 10,
+                                                ),
                                           ),
                                         ],
                                       ),
@@ -857,22 +820,16 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                         ),
                       ),
 
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 28),
-                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
                       // Quick Actions
                       SliverToBoxAdapter(
                         child: Animate(
-                          effects: [
-                            FadeEffect(delay: 500.ms),
-                          ],
+                          effects: [FadeEffect(delay: 500.ms)],
                           child: Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -886,12 +843,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFF764ba2),
                                           ],
                                         ),
-                                        borderRadius:
-                                        BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFF667eea)
-                                                .withOpacity(0.5),
+                                            color: const Color(
+                                              0xFF667eea,
+                                            ).withOpacity(0.5),
                                             blurRadius: 15,
                                             offset: const Offset(0, 5),
                                           ),
@@ -932,7 +889,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             context,
                                             MaterialPageRoute(
                                               builder: (_) =>
-                                              const RoadmapPage(),
+                                                  const RoadmapPage(),
                                             ),
                                           );
                                         },
@@ -954,7 +911,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             context,
                                             MaterialPageRoute(
                                               builder: (_) =>
-                                              const ProjectsPage(),
+                                                  const ProjectsPage(),
                                             ),
                                           );
                                         },
@@ -980,7 +937,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             context,
                                             MaterialPageRoute(
                                               builder: (_) =>
-                                              const ResumeCheckerPage()),
+                                                  const ResumeCheckerPage(),
+                                            ),
                                           );
                                         },
                                       ),
@@ -1000,8 +958,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                                builder: (_) =>
-                                                const LeaderboardPage()),
+                                              builder: (_) =>
+                                                  const LeaderboardPage(),
+                                            ),
                                           );
                                         },
                                       ),
@@ -1014,22 +973,16 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                         ),
                       ),
 
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 28),
-                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
                       // Recent activity
                       SliverToBoxAdapter(
                         child: Animate(
-                          effects: [
-                            FadeEffect(delay: 600.ms),
-                          ],
+                          effects: [FadeEffect(delay: 600.ms)],
                           child: Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 24),
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -1043,13 +996,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFF00f2fe),
                                           ],
                                         ),
-                                        borderRadius:
-                                        BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color:
-                                            const Color(0xFF4facfe)
-                                                .withOpacity(0.5),
+                                            color: const Color(
+                                              0xFF4facfe,
+                                            ).withOpacity(0.5),
                                             blurRadius: 15,
                                             offset: const Offset(0, 5),
                                           ),
@@ -1114,10 +1066,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
         child: CircularProgressIndicator(color: Color(0xFFFFD700)),
       ),
       error: (e, _) => Center(
-        child: Text(
-          'Error: $e',
-          style: const TextStyle(color: Colors.red),
-        ),
+        child: Text('Error: $e', style: const TextStyle(color: Colors.red)),
       ),
     );
   }
@@ -1157,11 +1106,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -1175,10 +1120,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B6B),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: Colors.white, width: 1.5),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF6B6B).withOpacity(0.5),
@@ -1246,30 +1188,25 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 
   Widget _buildActivityItem(
-      String title,
-      String time,
-      IconData icon,
-      Color color,
-      String? badge,
-      ) {
+    String title,
+    String time,
+    IconData icon,
+    Color color,
+    String? badge,
+  ) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color, color.withOpacity(0.7)],
-              ),
+              gradient: LinearGradient(colors: [color, color.withOpacity(0.7)]),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -1312,8 +1249,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
           if (badge != null) ...[
             const SizedBox(width: 8),
             Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
@@ -1334,5 +1270,3 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     );
   }
 }
-
-

@@ -4,8 +4,14 @@ import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/landing_page.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
+import 'package:mentora_app/config/supabase_config.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  await SupabaseConfig.initialize();
+  
   runApp(const ProviderScope(child: MyApp()));
 }
 

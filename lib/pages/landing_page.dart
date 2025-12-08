@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:rive/rive.dart' as rive;
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:confetti/confetti.dart';
 import 'package:mentora_app/theme.dart';
-import 'package:mentora_app/widgets/gradient_button.dart';
 import 'package:mentora_app/pages/auth_page.dart';
 import 'dart:math' as math;
 import 'package:url_launcher/url_launcher.dart';
@@ -16,7 +14,8 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin {
+class _LandingPageState extends State<LandingPage>
+    with TickerProviderStateMixin {
   late AnimationController _floatingController;
   late AnimationController _rotationController;
   late ConfettiController _confettiController;
@@ -34,7 +33,9 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
     _scrollController.addListener(() {
       setState(() => _scrollOffset = _scrollController.offset);
     });
@@ -74,7 +75,9 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             return AnimatedBuilder(
               animation: _floatingController,
               builder: (context, child) {
-                final offset = math.sin((_floatingController.value + index * 0.2) * 2 * math.pi);
+                final offset = math.sin(
+                  (_floatingController.value + index * 0.2) * 2 * math.pi,
+                );
                 return Positioned(
                   left: (index * 50.0) + offset * 20,
                   top: (index * 80.0) + offset * 30,
@@ -132,12 +135,16 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     _confettiController.play();
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AuthPage(isLogin: false)),
+                      MaterialPageRoute(
+                        builder: (_) => const AuthPage(isLogin: false),
+                      ),
                     );
                   },
                   onLogin: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const AuthPage(isLogin: true)),
+                    MaterialPageRoute(
+                      builder: (_) => const AuthPage(isLogin: true),
+                    ),
                   ),
                 ),
               ),
@@ -155,33 +162,37 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                 child: RoadmapPreviewSection()
                     .animate()
                     .fadeIn(delay: 400.ms, duration: 600.ms)
-                    .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1)),
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1, 1),
+                    ),
               ),
 
               // Gamification Stats
               SliverToBoxAdapter(
-                child: GamificationStatsSection()
-                    .animate()
-                    .fadeIn(delay: 600.ms, duration: 600.ms),
+                child: GamificationStatsSection().animate().fadeIn(
+                  delay: 600.ms,
+                  duration: 600.ms,
+                ),
               ),
 
               // 3D How It Works
               SliverToBoxAdapter(
-                child: HowItWorks3DSection(floatingController: _floatingController),
+                child: HowItWorks3DSection(
+                  floatingController: _floatingController,
+                ),
               ),
 
               // Team Section
               SliverToBoxAdapter(
-                child: TeamSection(floatingController: _floatingController)
-                    .animate()
-                    .fadeIn(delay: 800.ms),
+                child: TeamSection(
+                  floatingController: _floatingController,
+                ).animate().fadeIn(delay: 800.ms),
               ),
 
               // Social Proof
               SliverToBoxAdapter(
-                child: SocialProofSection()
-                    .animate()
-                    .fadeIn(delay: 900.ms),
+                child: SocialProofSection().animate().fadeIn(delay: 900.ms),
               ),
 
               // Footer
@@ -207,21 +218,18 @@ class AnimatedRocket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     // Calculate rocket position based on scroll
     final double rightPosition = math.max(-50, 20 - (scrollOffset * 0.15));
-    final double topPosition = math.max(
-      -200,
-      80 + (scrollOffset * 0.3),
-    );
+    final double topPosition = math.max(-200, 80 + (scrollOffset * 0.3));
 
     // Calculate rotation based on scroll
     final double rotation = math.min(0.3, scrollOffset * 0.0005);
 
     // Calculate opacity - fades out after scrolling past hero section
-    final double opacity = math.max(0.0, math.min(1.0, 1.0 - (scrollOffset / 800)));
+    final double opacity = math.max(
+      0.0,
+      math.min(1.0, 1.0 - (scrollOffset / 800)),
+    );
 
     return Positioned(
       right: rightPosition,
@@ -236,10 +244,7 @@ class AnimatedRocket extends StatelessWidget {
                 0,
                 math.sin(floatingController.value * 2 * math.pi) * 15,
               ),
-              child: Transform.rotate(
-                angle: rotation,
-                child: child,
-              ),
+              child: Transform.rotate(angle: rotation, child: child),
             );
           },
           child: Container(
@@ -248,17 +253,11 @@ class AnimatedRocket extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [
-                  AppColors.xpGold.withOpacity(0.3),
-                  Colors.transparent,
-                ],
+                colors: [AppColors.xpGold.withOpacity(0.3), Colors.transparent],
               ),
             ),
             child: const Center(
-              child: Text(
-                '🚀',
-                style: TextStyle(fontSize: 100),
-              ),
+              child: Text('🚀', style: TextStyle(fontSize: 100)),
             ),
           ).animate().fadeIn(duration: 800.ms).scale(delay: 200.ms),
         ),
@@ -333,7 +332,11 @@ class HeroSection3D extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.rocket_launch, color: AppColors.xpGold, size: 18),
+                        const Icon(
+                          Icons.rocket_launch,
+                          color: AppColors.xpGold,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           '🎮 Level Up Your Career',
@@ -350,93 +353,103 @@ class HeroSection3D extends StatelessWidget {
 
                   // Main Heading
                   Text(
-                    'Transform Your\nCareer Into An\nEpic Adventure',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      height: 1.1,
-                      fontSize: 56,
-                      letterSpacing: -2,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.3),
-                          offset: const Offset(0, 4),
-                          blurRadius: 20,
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 100.ms, duration: 800.ms).slideY(begin: 0.3, end: 0),
+                        'Transform Your\nCareer Into An\nEpic Adventure',
+                        style: Theme.of(context).textTheme.displayLarge
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              height: 1.1,
+                              fontSize: 56,
+                              letterSpacing: -2,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  offset: const Offset(0, 4),
+                                  blurRadius: 20,
+                                ),
+                              ],
+                            ),
+                      )
+                      .animate()
+                      .fadeIn(delay: 100.ms, duration: 800.ms)
+                      .slideY(begin: 0.3, end: 0),
                   const SizedBox(height: 24),
 
                   // Subtitle
                   Container(
-                    constraints: const BoxConstraints(maxWidth: 500),
-                    child: Text(
-                      'Master skills through gamified learning paths, unlock achievements, and compete with peers while building real-world projects.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.95),
-                        fontSize: 18,
-                        height: 1.6,
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 300.ms, duration: 800.ms).slideY(begin: 0.2, end: 0),
+                        constraints: const BoxConstraints(maxWidth: 500),
+                        child: Text(
+                          'Master skills through gamified learning paths, unlock achievements, and compete with peers while building real-world projects.',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Colors.white.withOpacity(0.95),
+                                fontSize: 18,
+                                height: 1.6,
+                              ),
+                        ),
+                      )
+                      .animate()
+                      .fadeIn(delay: 300.ms, duration: 800.ms)
+                      .slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 40),
 
                   // CTA Buttons
                   Row(
                     children: [
                       Expanded(
-                        child: GlassmorphicContainer(
-                          width: double.infinity,
-                          height: 60,
-                          borderRadius: 16,
-                          blur: 20,
-                          alignment: Alignment.center,
-                          border: 0,
-                          linearGradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFFFFFFF),
-                              Color(0xFFF0F0F0),
-                            ],
-                          ),
-                          borderGradient: LinearGradient(
-                            colors: [
-                              Colors.white.withOpacity(0.5),
-                              Colors.white.withOpacity(0.2),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: onGetStarted,
-                              borderRadius: BorderRadius.circular(16),
-                              child: Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Start Your Quest',
-                                      style: TextStyle(
-                                        color: AppColors.gradientBlue,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
+                        child:
+                            GlassmorphicContainer(
+                                  width: double.infinity,
+                                  height: 60,
+                                  borderRadius: 16,
+                                  blur: 20,
+                                  alignment: Alignment.center,
+                                  border: 0,
+                                  linearGradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFFFFFF),
+                                      Color(0xFFF0F0F0),
+                                    ],
+                                  ),
+                                  borderGradient: LinearGradient(
+                                    colors: [
+                                      Colors.white.withOpacity(0.5),
+                                      Colors.white.withOpacity(0.2),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: onGetStarted,
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Center(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Start Your Quest',
+                                              style: TextStyle(
+                                                color: AppColors.gradientBlue,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Icon(
+                                              Icons.arrow_forward_rounded,
+                                              color: AppColors.gradientBlue,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: AppColors.gradientBlue,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                            .animate()
-                            .fadeIn(delay: 500.ms)
-                            .slideY(begin: 0.2, end: 0)
-                            .shimmer(delay: 500.ms, duration: 1200.ms),
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(delay: 500.ms)
+                                .slideY(begin: 0.2, end: 0)
+                                .shimmer(delay: 500.ms, duration: 1200.ms),
                       ),
                       const SizedBox(width: 16),
                       GlassmorphicContainer(
@@ -663,16 +676,10 @@ class BentoFeaturesSection extends StatelessWidget {
       linearGradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          Colors.white.withOpacity(0.2),
-          Colors.white.withOpacity(0.05),
-        ],
+        colors: [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.05)],
       ),
       borderGradient: LinearGradient(
-        colors: [
-          Colors.white.withOpacity(0.6),
-          Colors.white.withOpacity(0.2),
-        ],
+        colors: [Colors.white.withOpacity(0.6), Colors.white.withOpacity(0.2)],
       ),
       child: Container(
         decoration: BoxDecoration(
@@ -736,16 +743,10 @@ class BentoFeaturesSection extends StatelessWidget {
       alignment: Alignment.center,
       border: 2,
       linearGradient: LinearGradient(
-        colors: [
-          Colors.white.withOpacity(0.2),
-          Colors.white.withOpacity(0.05),
-        ],
+        colors: [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.05)],
       ),
       borderGradient: LinearGradient(
-        colors: [
-          Colors.white.withOpacity(0.6),
-          Colors.white.withOpacity(0.2),
-        ],
+        colors: [Colors.white.withOpacity(0.6), Colors.white.withOpacity(0.2)],
       ),
       child: Container(
         decoration: BoxDecoration(
@@ -854,10 +855,7 @@ class RoadmapPreviewSection extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    '🎯',
-                    style: TextStyle(fontSize: 80),
-                  ),
+                  Text('🎯', style: TextStyle(fontSize: 80)),
                   const SizedBox(height: 16),
                   Text(
                     'Interactive Learning Paths',
@@ -959,7 +957,12 @@ class GamificationStatsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String value, String label, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String value,
+    String label,
+    IconData icon,
+    Color color,
+  ) {
     return GlassmorphicContainer(
       width: double.infinity,
       height: 120,
@@ -968,16 +971,10 @@ class GamificationStatsSection extends StatelessWidget {
       alignment: Alignment.center,
       border: 2,
       linearGradient: LinearGradient(
-        colors: [
-          color.withOpacity(0.3),
-          color.withOpacity(0.1),
-        ],
+        colors: [color.withOpacity(0.3), color.withOpacity(0.1)],
       ),
       borderGradient: LinearGradient(
-        colors: [
-          color.withOpacity(0.6),
-          color.withOpacity(0.2),
-        ],
+        colors: [color.withOpacity(0.6), color.withOpacity(0.2)],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1016,9 +1013,21 @@ class HowItWorks3DSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final steps = [
       {'emoji': '👋', 'title': 'Create Account', 'desc': 'Join in 30 seconds'},
-      {'emoji': '🎯', 'title': 'Choose Path', 'desc': 'AI suggests your roadmap'},
-      {'emoji': '🚀', 'title': 'Start Learning', 'desc': 'Complete quests & projects'},
-      {'emoji': '🏆', 'title': 'Earn Rewards', 'desc': 'Unlock badges & certificates'},
+      {
+        'emoji': '🎯',
+        'title': 'Choose Path',
+        'desc': 'AI suggests your roadmap',
+      },
+      {
+        'emoji': '🚀',
+        'title': 'Start Learning',
+        'desc': 'Complete quests & projects',
+      },
+      {
+        'emoji': '🏆',
+        'title': 'Earn Rewards',
+        'desc': 'Unlock badges & certificates',
+      },
       {'emoji': '💼', 'title': 'Get Hired', 'desc': 'Land your dream job'},
     ];
 
@@ -1053,103 +1062,109 @@ class HowItWorks3DSection extends StatelessWidget {
           ...List.generate(steps.length, (i) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: GlassmorphicContainer(
-                width: double.infinity,
-                height: 90,
-                borderRadius: 20,
-                blur: 20,
-                alignment: Alignment.center,
-                border: 2,
-                linearGradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.15),
-                    Colors.white.withOpacity(0.05),
-                  ],
-                ),
-                borderGradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.5),
-                    Colors.white.withOpacity(0.2),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF667eea).withOpacity(0.5),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
+              child:
+                  GlassmorphicContainer(
+                        width: double.infinity,
+                        height: 90,
+                        borderRadius: 20,
+                        blur: 20,
+                        alignment: Alignment.center,
+                        border: 2,
+                        linearGradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.15),
+                            Colors.white.withOpacity(0.05),
                           ],
                         ),
-                        child: Center(
-                          child: Text(
-                            steps[i]['emoji']!,
-                            style: const TextStyle(fontSize: 28),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              steps[i]['title']!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              steps[i]['desc']!,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                        borderGradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.5),
+                            Colors.white.withOpacity(0.2),
                           ],
                         ),
-                      ),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${i + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                            ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF667eea),
+                                      Color(0xFF764ba2),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF667eea,
+                                      ).withOpacity(0.5),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    steps[i]['emoji']!,
+                                    style: const TextStyle(fontSize: 28),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      steps[i]['title']!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      steps[i]['desc']!,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${i + 1}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-                  .animate()
-                  .fadeIn(delay: Duration(milliseconds: i * 100))
-                  .slideX(begin: 0.3, end: 0),
+                      )
+                      .animate()
+                      .fadeIn(delay: Duration(milliseconds: i * 100))
+                      .slideX(begin: 0.3, end: 0),
             );
           }),
         ],
@@ -1179,7 +1194,9 @@ class TeamSection extends StatelessWidget {
         'image': 'assets/images/pranav.jpg',
         'linkedin': 'https://www.linkedin.com/in/pranav-rao-k-487532312/',
         'email': 'pranavraok18@gmail.com',
-        'gradient': const LinearGradient(colors: [Color(0xFF667eea), Color(0xFF764ba2)]),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+        ),
       },
       {
         'name': 'Tushar P',
@@ -1187,7 +1204,9 @@ class TeamSection extends StatelessWidget {
         'image': 'assets/images/tushar.png',
         'linkedin': 'https://www.linkedin.com/in/tushar-p2006/',
         'email': 'tusharpradeep06@gmail.com',
-        'gradient': const LinearGradient(colors: [Color(0xFFf093fb), Color(0xFFf5576c)]),
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+        ),
       },
     ];
 
@@ -1243,118 +1262,144 @@ class TeamSection extends StatelessWidget {
                       return Transform.translate(
                         offset: Offset(
                           0,
-                          math.sin((floatingController.value + index * 0.5) * 2 * math.pi) * 10,
+                          math.sin(
+                                (floatingController.value + index * 0.5) *
+                                    2 *
+                                    math.pi,
+                              ) *
+                              10,
                         ),
                         child: child,
                       );
                     },
-                    child: GlassmorphicContainer(
-                      width: double.infinity,
-                      height: 320,
-                      borderRadius: 24,
-                      blur: 20,
-                      alignment: Alignment.center,
-                      border: 2,
-                      linearGradient: LinearGradient(
-                        colors: [
-                          Colors.white.withOpacity(0.2),
-                          Colors.white.withOpacity(0.05),
-                        ],
-                      ),
-                      borderGradient: LinearGradient(
-                        colors: [
-                          Colors.white.withOpacity(0.5),
-                          Colors.white.withOpacity(0.2),
-                        ],
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          gradient: member['gradient'] as Gradient,
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withOpacity(0.0),
-                                Colors.black.withOpacity(0.4),
-                              ],
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // ✅ PROFILE IMAGE
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.3),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                  image: DecorationImage(
-                                    image: AssetImage(member['image'] as String),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
+                    child:
+                        GlassmorphicContainer(
+                              width: double.infinity,
+                              height: 320,
+                              borderRadius: 24,
+                              blur: 20,
+                              alignment: Alignment.center,
+                              border: 2,
+                              linearGradient: LinearGradient(
+                                colors: [
+                                  Colors.white.withOpacity(0.2),
+                                  Colors.white.withOpacity(0.05),
+                                ],
                               ),
-                              Column(
-                                children: [
-                                  Text(
-                                    member['name'] as String,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
+                              borderGradient: LinearGradient(
+                                colors: [
+                                  Colors.white.withOpacity(0.5),
+                                  Colors.white.withOpacity(0.2),
+                                ],
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(24),
+                                  gradient: member['gradient'] as Gradient,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(24),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withOpacity(0.0),
+                                        Colors.black.withOpacity(0.4),
+                                      ],
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    member['role'] as String,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.9),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // ✅ LINKEDIN + EMAIL BUTTONS
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  padding: const EdgeInsets.all(20),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      GestureDetector(
-                                        onTap: () => _launchURL(member['linkedin'] as String),
-                                        child: _buildSocialIcon(Icons.work),
+                                      // ✅ PROFILE IMAGE
+                                      Container(
+                                        width: 120,
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.white,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.3,
+                                              ),
+                                              blurRadius: 20,
+                                              offset: const Offset(0, 10),
+                                            ),
+                                          ],
+                                          image: DecorationImage(
+                                            image: AssetImage(
+                                              member['image'] as String,
+                                            ),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
                                       ),
-                                      const SizedBox(width: 12),
-                                      GestureDetector(
-                                        onTap: () => _launchURL('mailto:${member['email']}'),
-                                        child: _buildSocialIcon(Icons.email),
+                                      Column(
+                                        children: [
+                                          Text(
+                                            member['name'] as String,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            member['role'] as String,
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                0.9,
+                                              ),
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          // ✅ LINKEDIN + EMAIL BUTTONS
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () => _launchURL(
+                                                  member['linkedin'] as String,
+                                                ),
+                                                child: _buildSocialIcon(
+                                                  Icons.work,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              GestureDetector(
+                                                onTap: () => _launchURL(
+                                                  'mailto:${member['email']}',
+                                                ),
+                                                child: _buildSocialIcon(
+                                                  Icons.email,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                        .animate()
-                        .fadeIn(delay: Duration(milliseconds: 200 + (index * 200)))
-                        .slideY(begin: 0.3, end: 0),
+                            )
+                            .animate()
+                            .fadeIn(
+                              delay: Duration(
+                                milliseconds: 200 + (index * 200),
+                              ),
+                            )
+                            .slideY(begin: 0.3, end: 0),
                   ),
                 ),
               );
@@ -1372,10 +1417,7 @@ class TeamSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.25),
         shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withOpacity(0.5),
-          width: 2,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
       ),
       child: Icon(icon, color: Colors.white, size: 20),
     );
@@ -1422,9 +1464,21 @@ class SocialProofSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               children: List.generate(3, (i) {
                 final testimonials = [
-                  {'name': 'Samarth K.', 'role': 'Full Stack Dev', 'text': 'Landed my dream job in 3 months!'},
-                  {'name': 'Likith R.', 'role': 'Data Scientist', 'text': 'The gamification kept me motivated'},
-                  {'name': 'Eeshwar L.', 'role': 'UX Designer', 'text': 'Best learning experience ever!'},
+                  {
+                    'name': 'Samarth K.',
+                    'role': 'Full Stack Dev',
+                    'text': 'Landed my dream job in 3 months!',
+                  },
+                  {
+                    'name': 'Likith R.',
+                    'role': 'Data Scientist',
+                    'text': 'The gamification kept me motivated',
+                  },
+                  {
+                    'name': 'Eeshwar L.',
+                    'role': 'UX Designer',
+                    'text': 'Best learning experience ever!',
+                  },
                 ];
 
                 return Container(
@@ -1457,7 +1511,11 @@ class SocialProofSection extends StatelessWidget {
                           Row(
                             children: List.generate(
                               5,
-                                  (index) => const Icon(Icons.star, color: AppColors.xpGold, size: 16),
+                              (index) => const Icon(
+                                Icons.star,
+                                color: AppColors.xpGold,
+                                size: 16,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -1538,10 +1596,7 @@ class ModernFooter extends StatelessWidget {
           // ✅ LOGO PNG IN FOOTER
           SizedBox(
             height: 60,
-            child: Image.asset(
-              'assets/images/logo.png',
-              fit: BoxFit.contain,
-            ),
+            child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
           ),
           const SizedBox(height: 24),
           Text(
@@ -1618,4 +1673,3 @@ extension GradientScale on Gradient {
     return this;
   }
 }
-

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mentora_app/theme.dart';
-import 'package:mentora_app/widgets/gradient_button.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'dart:math' as math;
@@ -14,7 +13,8 @@ class OnboardingPage extends ConsumerStatefulWidget {
   ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
 }
 
-class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTickerProviderStateMixin {
+class _OnboardingPageState extends ConsumerState<OnboardingPage>
+    with SingleTickerProviderStateMixin {
   int _currentStep = 0;
   final _educationController = TextEditingController();
   final _careerGoalController = TextEditingController();
@@ -73,7 +73,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
   bool _canProceed() {
     switch (_currentStep) {
       case 0:
-        return _educationController.text.isNotEmpty && _experienceLevel.isNotEmpty;
+        return _educationController.text.isNotEmpty &&
+            _experienceLevel.isNotEmpty;
       case 1:
         return _selectedSkills.isNotEmpty;
       case 2:
@@ -112,7 +113,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             return AnimatedBuilder(
               animation: _floatingController,
               builder: (context, child) {
-                final offset = math.sin((_floatingController.value + index * 0.2) * 2 * math.pi);
+                final offset = math.sin(
+                  (_floatingController.value + index * 0.2) * 2 * math.pi,
+                );
                 return Positioned(
                   left: (index * 50.0) + offset * 20,
                   top: (index * 80.0) + offset * 30,
@@ -170,7 +173,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                         child: LinearProgressIndicator(
                           value: (_currentStep + 1) / 5,
                           backgroundColor: Colors.white.withOpacity(0.2),
-                          valueColor: const AlwaysStoppedAnimation(AppColors.xpGold),
+                          valueColor: const AlwaysStoppedAnimation(
+                            AppColors.xpGold,
+                          ),
                           minHeight: 8,
                         ),
                       ),
@@ -199,7 +204,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                           child: OutlinedButton(
                             onPressed: () => setState(() => _currentStep--),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.white, width: 2),
+                              side: const BorderSide(
+                                color: Colors.white,
+                                width: 2,
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -208,7 +216,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                                Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Back',
@@ -229,18 +241,26 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: _canProceed()
-                                  ? [const Color(0xFFFFD700), const Color(0xFFFFA500)]
-                                  : [Colors.grey.shade400, Colors.grey.shade500],
+                                  ? [
+                                      const Color(0xFFFFD700),
+                                      const Color(0xFFFFA500),
+                                    ]
+                                  : [
+                                      Colors.grey.shade400,
+                                      Colors.grey.shade500,
+                                    ],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: _canProceed()
                                 ? [
-                              BoxShadow(
-                                color: const Color(0xFFFFD700).withOpacity(0.4),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ]
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFFFFD700,
+                                      ).withOpacity(0.4),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ]
                                 : [],
                           ),
                           child: Material(
@@ -248,21 +268,25 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                             child: InkWell(
                               onTap: _canProceed()
                                   ? () {
-                                if (_currentStep < 4) {
-                                  setState(() => _currentStep++);
-                                } else {
-                                  _completeOnboarding();
-                                }
-                              }
+                                      if (_currentStep < 4) {
+                                        setState(() => _currentStep++);
+                                      } else {
+                                        _completeOnboarding();
+                                      }
+                                    }
                                   : null,
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      _currentStep < 4 ? 'Next' : '🎉 Complete Setup',
+                                      _currentStep < 4
+                                          ? 'Next'
+                                          : '🎉 Complete Setup',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 18,
@@ -350,10 +374,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         const SizedBox(height: 8),
         Text(
           'Tell us about your educational journey',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 16,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
         ),
         const SizedBox(height: 24),
         TextField(
@@ -361,7 +382,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           style: const TextStyle(color: Colors.white, fontSize: 16),
           maxLines: 3,
           decoration: InputDecoration(
-            hintText: 'e.g., Bachelor\'s in Computer Science from XYZ University',
+            hintText:
+                'e.g., Bachelor\'s in Computer Science from XYZ University',
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
             filled: true,
             fillColor: Colors.white.withOpacity(0.1),
@@ -372,7 +394,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.3), width: 1.5),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -405,7 +430,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.3), width: 1.5),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -426,22 +454,29 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((level) {
+          children: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((
+            level,
+          ) {
             final isSelected = _experienceLevel == level;
             return GestureDetector(
               onTap: () => setState(() => _experienceLevel = level),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                  )
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        )
                       : null,
                   color: isSelected ? null : Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? AppColors.xpGold : Colors.white.withOpacity(0.3),
+                    color: isSelected
+                        ? AppColors.xpGold
+                        : Colors.white.withOpacity(0.3),
                     width: 2,
                   ),
                 ),
@@ -476,10 +511,26 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
   // ============= STEP 2: SKILLS =============
   Widget _buildSkillsStep() {
     final availableSkills = [
-      'Python', 'JavaScript', 'React', 'Node.js', 'Flutter', 'Java',
-      'C++', 'SQL', 'MongoDB', 'AWS', 'Docker', 'Git',
-      'Machine Learning', 'Data Science', 'UI/UX Design', 'DevOps',
-      'TypeScript', 'GraphQL', 'Firebase', 'Kubernetes',
+      'Python',
+      'JavaScript',
+      'React',
+      'Node.js',
+      'Flutter',
+      'Java',
+      'C++',
+      'SQL',
+      'MongoDB',
+      'AWS',
+      'Docker',
+      'Git',
+      'Machine Learning',
+      'Data Science',
+      'UI/UX Design',
+      'DevOps',
+      'TypeScript',
+      'GraphQL',
+      'Firebase',
+      'Kubernetes',
     ];
 
     return Column(
@@ -520,10 +571,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         const SizedBox(height: 8),
         Text(
           'Select all skills you\'re comfortable with',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 16,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
         ),
         const SizedBox(height: 8),
         Container(
@@ -565,12 +613,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                    colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                  )
+                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                        )
                       : null,
                   color: isSelected ? null : Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -592,7 +643,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -646,10 +699,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         const SizedBox(height: 8),
         Text(
           'Where do you see yourself in the future?',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 16,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
         ),
         const SizedBox(height: 24),
         TextField(
@@ -657,7 +707,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
           style: const TextStyle(color: Colors.white, fontSize: 16),
           maxLines: 4,
           decoration: InputDecoration(
-            hintText: 'e.g., Full Stack Developer at a FAANG company, building innovative products',
+            hintText:
+                'e.g., Full Stack Developer at a FAANG company, building innovative products',
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
             filled: true,
             fillColor: Colors.white.withOpacity(0.1),
@@ -668,7 +719,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.3), width: 1.5),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -689,54 +743,62 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: [
-            'Career Switch',
-            'Skill Upgrade',
-            'Get Promoted',
-            'Start Freelancing',
-            'Build Startup',
-            'Get First Job'
-          ].map((mot) {
-            final isSelected = _motivation == mot;
-            return GestureDetector(
-              onTap: () => setState(() => _motivation = mot),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                    colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-                  )
-                      : null,
-                  color: isSelected ? null : Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFFf5576c) : Colors.white.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isSelected ? Icons.check_circle : Icons.circle_outlined,
-                      color: Colors.white,
-                      size: 20,
+          children:
+              [
+                'Career Switch',
+                'Skill Upgrade',
+                'Get Promoted',
+                'Start Freelancing',
+                'Build Startup',
+                'Get First Job',
+              ].map((mot) {
+                final isSelected = _motivation == mot;
+                return GestureDetector(
+                  onTap: () => setState(() => _motivation = mot),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      mot,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFf5576c)
+                            : Colors.white.withOpacity(0.3),
+                        width: 2,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected
+                              ? Icons.check_circle
+                              : Icons.circle_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          mot,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
         ),
         const SizedBox(height: 40),
       ],
@@ -798,10 +860,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         const SizedBox(height: 8),
         Text(
           'Select topics you\'re passionate about learning',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 16,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
         ),
         const SizedBox(height: 8),
         Container(
@@ -855,8 +914,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                    colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                  )
+                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                        )
                       : null,
                   color: isSelected ? null : Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -871,7 +930,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (isSelected)
-                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     if (isSelected) const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -879,7 +942,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
@@ -936,10 +1001,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         const SizedBox(height: 8),
         Text(
           'Let\'s customize your learning experience',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 16,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
         ),
         const SizedBox(height: 32),
 
@@ -954,7 +1016,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
               ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1.5,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -976,15 +1041,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                       SizedBox(height: 4),
                       Text(
                         'How many hours per week?',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
@@ -1006,8 +1071,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
               SliderTheme(
                 data: SliderThemeData(
                   trackHeight: 6,
-                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
-                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 12,
+                  ),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 24,
+                  ),
                   activeTrackColor: AppColors.xpGold,
                   inactiveTrackColor: Colors.white.withOpacity(0.2),
                   thumbColor: AppColors.xpGold,
@@ -1018,7 +1087,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                   min: 1,
                   max: 40,
                   divisions: 39,
-                  onChanged: (value) => setState(() => _weeklyHours = value.toInt()),
+                  onChanged: (value) =>
+                      setState(() => _weeklyHours = value.toInt()),
                 ),
               ),
               Row(
@@ -1026,11 +1096,17 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                 children: [
                   Text(
                     '1 hr',
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
                   ),
                   Text(
                     '40 hrs',
-                    style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -1052,61 +1128,81 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: [
-            {'icon': Icons.visibility, 'label': 'Visual', 'desc': 'Videos & Diagrams'},
-            {'icon': Icons.menu_book, 'label': 'Reading', 'desc': 'Articles & Docs'},
-            {'icon': Icons.people, 'label': 'Interactive', 'desc': 'Hands-on Projects'},
-            {'icon': Icons.mic, 'label': 'Auditory', 'desc': 'Podcasts & Audio'},
-          ].map((style) {
-            final isSelected = _learningStyle == style['label'];
-            return GestureDetector(
-              onTap: () => setState(() => _learningStyle = style['label'] as String),
-              child: Container(
-                width: (MediaQuery.of(context).size.width - 60) / 2,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  )
-                      : null,
-                  color: isSelected ? null : Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFF764ba2) : Colors.white.withOpacity(0.3),
-                    width: 2,
+          children:
+              [
+                {
+                  'icon': Icons.visibility,
+                  'label': 'Visual',
+                  'desc': 'Videos & Diagrams',
+                },
+                {
+                  'icon': Icons.menu_book,
+                  'label': 'Reading',
+                  'desc': 'Articles & Docs',
+                },
+                {
+                  'icon': Icons.people,
+                  'label': 'Interactive',
+                  'desc': 'Hands-on Projects',
+                },
+                {
+                  'icon': Icons.mic,
+                  'label': 'Auditory',
+                  'desc': 'Podcasts & Audio',
+                },
+              ].map((style) {
+                final isSelected = _learningStyle == style['label'];
+                return GestureDetector(
+                  onTap: () =>
+                      setState(() => _learningStyle = style['label'] as String),
+                  child: Container(
+                    width: (MediaQuery.of(context).size.width - 60) / 2,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFF764ba2)
+                            : Colors.white.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          style['icon'] as IconData,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          style['label'] as String,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          style['desc'] as String,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      style['icon'] as IconData,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      style['label'] as String,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      style['desc'] as String,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 12,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+                );
+              }).toList(),
         ),
         const SizedBox(height: 40),
 
@@ -1121,7 +1217,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
               ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.xpGold.withOpacity(0.5), width: 2),
+            border: Border.all(
+              color: AppColors.xpGold.withOpacity(0.5),
+              width: 2,
+            ),
           ),
           child: const Row(
             children: [
@@ -1142,10 +1241,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> with SingleTick
                     SizedBox(height: 4),
                     Text(
                       'Complete setup to unlock your personalized learning path!',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),

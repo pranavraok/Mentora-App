@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/models/project.dart';
 import 'package:mentora_app/models/project_extensions.dart';
 import 'package:mentora_app/providers/app_providers.dart';
@@ -17,7 +16,8 @@ class ProjectsPage extends ConsumerStatefulWidget {
   ConsumerState<ProjectsPage> createState() => _ProjectsPageState();
 }
 
-class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerProviderStateMixin {
+class _ProjectsPageState extends ConsumerState<ProjectsPage>
+    with SingleTickerProviderStateMixin {
   String selectedFilter = 'All';
   late AnimationController _animController;
 
@@ -68,7 +68,9 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                 return AnimatedBuilder(
                   animation: _animController,
                   builder: (context, child) {
-                    final offset = math.sin((_animController.value + index * 0.2) * 2 * math.pi);
+                    final offset = math.sin(
+                      (_animController.value + index * 0.2) * 2 * math.pi,
+                    );
                     return Positioned(
                       left: (index * 50.0) + offset * 20,
                       top: (index * 80.0) + offset * 30,
@@ -130,7 +132,6 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                                   ),
                                 ),
 
-
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -139,7 +140,10 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                                       onTap: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const NotificationsPage(),
+                                          ),
                                         );
                                       },
                                       hasNotification: true,
@@ -150,7 +154,10 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                                       onTap: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const SettingsPage(),
+                                          ),
                                         );
                                       },
                                     ),
@@ -175,7 +182,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                           animation: _animController,
                           builder: (context, child) {
                             return Transform.scale(
-                              scale: 1.0 + (math.sin(_animController.value * 2 * math.pi) * 0.08),
+                              scale:
+                                  1.0 +
+                                  (math.sin(
+                                        _animController.value * 2 * math.pi,
+                                      ) *
+                                      0.08),
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -192,8 +204,17 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFFFD700).withOpacity(0.6),
-                                      blurRadius: 20 + (math.sin(_animController.value * 2 * math.pi) * 5),
+                                      color: const Color(
+                                        0xFFFFD700,
+                                      ).withOpacity(0.6),
+                                      blurRadius:
+                                          20 +
+                                          (math.sin(
+                                                _animController.value *
+                                                    2 *
+                                                    math.pi,
+                                              ) *
+                                              5),
                                       spreadRadius: 3,
                                     ),
                                   ],
@@ -213,10 +234,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                           children: [
                             ShaderMask(
                               shaderCallback: (bounds) => const LinearGradient(
-                                colors: [
-                                  Color(0xFFFFD700),
-                                  Color(0xFFFFA500),
-                                ],
+                                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                               ).createShader(bounds),
                               child: const Text(
                                 'BUILD PROJECTS',
@@ -247,14 +265,23 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                     height: 52,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
                       physics: const BouncingScrollPhysics(),
                       children: [
                         _buildFilterChip('All', Icons.apps_rounded),
                         const SizedBox(width: 10),
-                        _buildFilterChip('In Progress', Icons.play_circle_outline),
+                        _buildFilterChip(
+                          'In Progress',
+                          Icons.play_circle_outline,
+                        ),
                         const SizedBox(width: 10),
-                        _buildFilterChip('Completed', Icons.check_circle_outline),
+                        _buildFilterChip(
+                          'Completed',
+                          Icons.check_circle_outline,
+                        ),
                         const SizedBox(width: 10),
                         _buildFilterChip('Unlocked', Icons.lock_open_rounded),
                       ],
@@ -277,12 +304,16 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                         return GridView.builder(
                           padding: const EdgeInsets.all(20),
                           physics: const BouncingScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
-                            childAspectRatio: 0.72,
-                            crossAxisSpacing: 14,
-                            mainAxisSpacing: 14,
-                          ),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount:
+                                    MediaQuery.of(context).size.width > 600
+                                    ? 3
+                                    : 2,
+                                childAspectRatio: 0.72,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                              ),
                           itemCount: filteredProjects.length,
                           itemBuilder: (context, index) => ProjectCard(
                             project: filteredProjects[index],
@@ -295,26 +326,35 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.5),
-                                    blurRadius: 30,
-                                    spreadRadius: 10,
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFFFD700),
+                                        Color(0xFFFFA500),
+                                      ],
+                                    ),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFFFFD700,
+                                        ).withOpacity(0.5),
+                                        blurRadius: 30,
+                                        spreadRadius: 10,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: const CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                            ).animate(onPlay: (controller) => controller.repeat()).rotate(duration: 2.seconds),
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                )
+                                .animate(
+                                  onPlay: (controller) => controller.repeat(),
+                                )
+                                .rotate(duration: 2.seconds),
                             const SizedBox(height: 24),
                             Text(
                               'Loading Projects...',
@@ -405,11 +445,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -423,10 +459,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B6B),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: Colors.white, width: 1.5),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF6B6B).withOpacity(0.5),
@@ -450,23 +483,25 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 140,
-            height: 140,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFFFD700).withOpacity(0.2),
-                  const Color(0xFFFFA500).withOpacity(0.2),
-                ],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.rocket_launch_rounded,
-              size: 70,
-              color: Colors.white54,
-            ),
-          ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 2.seconds),
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFFD700).withOpacity(0.2),
+                      const Color(0xFFFFA500).withOpacity(0.2),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.rocket_launch_rounded,
+                  size: 70,
+                  color: Colors.white54,
+                ),
+              )
+              .animate(onPlay: (controller) => controller.repeat())
+              .shimmer(duration: 2.seconds),
           const SizedBox(height: 32),
           const Text(
             'No Projects Yet',
@@ -524,33 +559,31 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-          )
+                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                )
               : null,
           color: isSelected ? null : Colors.white.withOpacity(0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? Colors.white.withOpacity(0.5) : Colors.white.withOpacity(0.15),
+            color: isSelected
+                ? Colors.white.withOpacity(0.5)
+                : Colors.white.withOpacity(0.15),
             width: isSelected ? 2 : 1.5,
           ),
           boxShadow: isSelected
               ? [
-            BoxShadow(
-              color: const Color(0xFFFFD700).withOpacity(0.5),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ]
+                  BoxShadow(
+                    color: const Color(0xFFFFD700).withOpacity(0.5),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
               : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 16,
-            ),
+            Icon(icon, color: Colors.white, size: 16),
             const SizedBox(width: 7),
             Text(
               label,
@@ -569,11 +602,17 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> with SingleTickerPr
   List<Project> _filterProjects(List<Project> projects) {
     switch (selectedFilter) {
       case 'In Progress':
-        return projects.where((p) => p.status == ProjectStatus.inProgress).toList();
+        return projects
+            .where((p) => p.status == ProjectStatus.inProgress)
+            .toList();
       case 'Completed':
-        return projects.where((p) => p.status == ProjectStatus.completed).toList();
+        return projects
+            .where((p) => p.status == ProjectStatus.completed)
+            .toList();
       case 'Unlocked':
-        return projects.where((p) => p.status == ProjectStatus.unlocked).toList();
+        return projects
+            .where((p) => p.status == ProjectStatus.unlocked)
+            .toList();
       default:
         return projects;
     }
@@ -585,11 +624,7 @@ class ProjectCard extends ConsumerWidget {
   final Project project;
   final int index;
 
-  const ProjectCard({
-    super.key,
-    required this.project,
-    required this.index,
-  });
+  const ProjectCard({super.key, required this.project, required this.index});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -599,303 +634,359 @@ class ProjectCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => _showProjectDetails(context, ref),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.2),
-                  Colors.white.withOpacity(0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: color.withOpacity(0.6),
-                width: 2.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Icon Section
-                Container(
-                  height: 95,
-                  decoration: BoxDecoration(
-                    gradient: gradient,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Background Pattern
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: HexagonPatternPainter(color: Colors.white.withOpacity(0.15)),
-                        ),
+      child:
+          ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(0.2),
+                          Colors.white.withOpacity(0.1),
+                        ],
                       ),
-                      // Icon
-                      Center(
-                        child: Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.25),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 10,
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            _getProjectIcon(project.status),
-                            size: 28,
-                            color: Colors.white,
-                          ),
-                        ),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: color.withOpacity(0.6),
+                        width: 2.5,
                       ),
-                      // Status Badge
-                      if (project.status == ProjectStatus.completed)
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black26,
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.check,
-                              size: 14,
-                              color: Color(0xFF43e97b),
-                            ),
-                          ).animate(onPlay: (controller) => controller.repeat()).scale(
-                            duration: 1.seconds,
-                            begin: const Offset(0.9, 0.9),
-                            end: const Offset(1.1, 1.1),
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
                         ),
-                    ],
-                  ),
-                ),
-
-                // Content Section
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
+                      ],
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Difficulty & XP
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      difficultyColor.withOpacity(0.3),
-                                      difficultyColor.withOpacity(0.15),
+                        // Top Icon Section
+                        Container(
+                          height: 95,
+                          decoration: BoxDecoration(
+                            gradient: gradient,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(20),
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              // Background Pattern
+                              Positioned.fill(
+                                child: CustomPaint(
+                                  painter: HexagonPatternPainter(
+                                    color: Colors.white.withOpacity(0.15),
+                                  ),
+                                ),
+                              ),
+                              // Icon
+                              Center(
+                                child: Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.25),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 10,
+                                      ),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(7),
-                                  border: Border.all(color: difficultyColor, width: 1.5),
-                                ),
-                                child: Text(
-                                  project.difficulty.name.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w900,
-                                    color: difficultyColor,
-                                    letterSpacing: 0.4,
+                                  child: Icon(
+                                    _getProjectIcon(project.status),
+                                    size: 28,
+                                    color: Colors.white,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 5),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                              // Status Badge
+                              if (project.status == ProjectStatus.completed)
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child:
+                                      Container(
+                                            padding: const EdgeInsets.all(5),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black26,
+                                                  blurRadius: 8,
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Icon(
+                                              Icons.check,
+                                              size: 14,
+                                              color: Color(0xFF43e97b),
+                                            ),
+                                          )
+                                          .animate(
+                                            onPlay: (controller) =>
+                                                controller.repeat(),
+                                          )
+                                          .scale(
+                                            duration: 1.seconds,
+                                            begin: const Offset(0.9, 0.9),
+                                            end: const Offset(1.1, 1.1),
+                                          ),
                                 ),
-                                borderRadius: BorderRadius.circular(7),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.4),
-                                    blurRadius: 8,
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.star, size: 10, color: Colors.white),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    '${project.xpReward}',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // Title
-                        Text(
-                          project.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 5),
-                        // Description
-                        Flexible(
-                          child: Text(
-                            project.description,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 11,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        // Progress Bar or Status
-                        if (project.status == ProjectStatus.inProgress)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '${(project.completionPercentage * 100).toInt()}%',
-                                    style: TextStyle(
-                                      color: color,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${project.tasks.where((t) => t.isCompleted).length}/${project.tasks.length}',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 5),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Stack(
+
+                        // Content Section
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Difficulty & XP
+                                Row(
                                   children: [
-                                    Container(
-                                      height: 5,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    FractionallySizedBox(
-                                      widthFactor: project.completionPercentage,
+                                    Flexible(
                                       child: Container(
-                                        height: 5,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 7,
+                                          vertical: 4,
+                                        ),
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
-                                            colors: [color, color.withOpacity(0.7)],
+                                            colors: [
+                                              difficultyColor.withOpacity(0.3),
+                                              difficultyColor.withOpacity(0.15),
+                                            ],
                                           ),
-                                          borderRadius: BorderRadius.circular(8),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: color.withOpacity(0.5),
-                                              blurRadius: 8,
-                                            ),
+                                          borderRadius: BorderRadius.circular(
+                                            7,
+                                          ),
+                                          border: Border.all(
+                                            color: difficultyColor,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          project.difficulty.name.toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.w900,
+                                            color: difficultyColor,
+                                            letterSpacing: 0.4,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFFD700),
+                                            Color(0xFFFFA500),
                                           ],
                                         ),
+                                        borderRadius: BorderRadius.circular(7),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFFFFD700,
+                                            ).withOpacity(0.4),
+                                            blurRadius: 8,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.star,
+                                            size: 10,
+                                            color: Colors.white,
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            '${project.xpReward}',
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 7),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  color.withOpacity(0.25),
-                                  color.withOpacity(0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: color.withOpacity(0.5), width: 1.5),
-                            ),
-                            child: Center(
-                              child: Text(
-                                _getStatusText(project.status),
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900,
+                                const SizedBox(height: 8),
+                                // Title
+                                Text(
+                                  project.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.2,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
+                                const SizedBox(height: 5),
+                                // Description
+                                Flexible(
+                                  child: Text(
+                                    project.description,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 11,
+                                      height: 1.3,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                // Progress Bar or Status
+                                if (project.status == ProjectStatus.inProgress)
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            '${(project.completionPercentage * 100).toInt()}%',
+                                            style: TextStyle(
+                                              color: color,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${project.tasks.where((t) => t.isCompleted).length}/${project.tasks.length}',
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                0.7,
+                                              ),
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              height: 5,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.2,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                            ),
+                                            FractionallySizedBox(
+                                              widthFactor:
+                                                  project.completionPercentage,
+                                              child: Container(
+                                                height: 5,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      color,
+                                                      color.withOpacity(0.7),
+                                                    ],
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: color.withOpacity(
+                                                        0.5,
+                                                      ),
+                                                      blurRadius: 8,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          color.withOpacity(0.25),
+                                          color.withOpacity(0.1),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: color.withOpacity(0.5),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        _getStatusText(project.status),
+                                        style: TextStyle(
+                                          color: color,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      )
-          .animate(delay: Duration(milliseconds: 100 * index))
-          .fadeIn(duration: 600.ms)
-          .slideY(begin: 0.3, end: 0)
-          .then()
-          .shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.05)),
+              )
+              .animate(delay: Duration(milliseconds: 100 * index))
+              .fadeIn(duration: 600.ms)
+              .slideY(begin: 0.3, end: 0)
+              .then()
+              .shimmer(
+                duration: 2.seconds,
+                color: Colors.white.withOpacity(0.05),
+              ),
     );
   }
 
@@ -1054,10 +1145,7 @@ class ProjectDetailSheet extends ConsumerWidget {
               ],
             ),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
           ),
           child: Column(
             children: [
@@ -1108,7 +1196,10 @@ class ProjectDetailSheet extends ConsumerWidget {
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.25),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 3),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 3,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.3),
@@ -1144,14 +1235,25 @@ class ProjectDetailSheet extends ConsumerWidget {
                                       runSpacing: 8,
                                       children: [
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: difficultyColor.withOpacity(0.3),
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: Colors.white, width: 2),
+                                            color: difficultyColor.withOpacity(
+                                              0.3,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
                                           ),
                                           child: Text(
-                                            project.difficulty.name.toUpperCase(),
+                                            project.difficulty.name
+                                                .toUpperCase(),
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 11,
@@ -1160,16 +1262,30 @@ class ProjectDetailSheet extends ConsumerWidget {
                                           ),
                                         ),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: Colors.white, width: 2),
+                                            color: Colors.white.withOpacity(
+                                              0.2,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(Icons.star, color: Colors.white, size: 13),
+                                              const Icon(
+                                                Icons.star,
+                                                color: Colors.white,
+                                                size: 13,
+                                              ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 '${project.xpReward} XP',
@@ -1233,7 +1349,9 @@ class ProjectDetailSheet extends ConsumerWidget {
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.white.withOpacity(0.5),
+                                            color: Colors.white.withOpacity(
+                                              0.5,
+                                            ),
                                             blurRadius: 10,
                                           ),
                                         ],
@@ -1312,7 +1430,10 @@ class ProjectDetailSheet extends ConsumerWidget {
                           runSpacing: 10,
                           children: project.requiredSkills.map((skill) {
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -1327,7 +1448,9 @@ class ProjectDetailSheet extends ConsumerWidget {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFFFD700).withOpacity(0.3),
+                                    color: const Color(
+                                      0xFFFFD700,
+                                    ).withOpacity(0.3),
                                     blurRadius: 10,
                                   ),
                                 ],
@@ -1362,20 +1485,27 @@ class ProjectDetailSheet extends ConsumerWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(14),
                               child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                filter: ImageFilter.blur(
+                                  sigmaX: 10,
+                                  sigmaY: 10,
+                                ),
                                 child: Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: task.isCompleted
                                           ? [
-                                        const Color(0xFF43e97b).withOpacity(0.25),
-                                        const Color(0xFF43e97b).withOpacity(0.1),
-                                      ]
+                                              const Color(
+                                                0xFF43e97b,
+                                              ).withOpacity(0.25),
+                                              const Color(
+                                                0xFF43e97b,
+                                              ).withOpacity(0.1),
+                                            ]
                                           : [
-                                        Colors.white.withOpacity(0.1),
-                                        Colors.white.withOpacity(0.05),
-                                      ],
+                                              Colors.white.withOpacity(0.1),
+                                              Colors.white.withOpacity(0.05),
+                                            ],
                                     ),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
@@ -1393,10 +1523,15 @@ class ProjectDetailSheet extends ConsumerWidget {
                                         decoration: BoxDecoration(
                                           gradient: task.isCompleted
                                               ? const LinearGradient(
-                                            colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                                          )
+                                                  colors: [
+                                                    Color(0xFF43e97b),
+                                                    Color(0xFF38f9d7),
+                                                  ],
+                                                )
                                               : null,
-                                          color: task.isCompleted ? null : Colors.transparent,
+                                          color: task.isCompleted
+                                              ? null
+                                              : Colors.transparent,
                                           shape: BoxShape.circle,
                                           border: Border.all(
                                             color: task.isCompleted
@@ -1407,10 +1542,10 @@ class ProjectDetailSheet extends ConsumerWidget {
                                         ),
                                         child: task.isCompleted
                                             ? const Icon(
-                                          Icons.check,
-                                          size: 14,
-                                          color: Colors.white,
-                                        )
+                                                Icons.check,
+                                                size: 14,
+                                                color: Colors.white,
+                                              )
                                             : null,
                                       ),
                                       const SizedBox(width: 12),
@@ -1465,7 +1600,9 @@ class ProjectDetailSheet extends ConsumerWidget {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () async {
-                          final projectService = ref.read(projectServiceProvider);
+                          final projectService = ref.read(
+                            projectServiceProvider,
+                          );
                           await projectService.updateProject(
                             project.copyWith(
                               status: ProjectStatus.inProgress,
@@ -1572,5 +1709,3 @@ class ProjectDetailSheet extends ConsumerWidget {
     }
   }
 }
-
-

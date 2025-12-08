@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/widgets/level_badge.dart';
 import 'package:mentora_app/pages/landing_page.dart';
@@ -17,15 +16,30 @@ class ProfilePage extends ConsumerStatefulWidget {
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends ConsumerState<ProfilePage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _floatingController;
   bool _showAvatarPicker = false;
   String _selectedAvatar = '🚀'; // Default avatar
 
   // Cool avatar options
   final List<String> _avatarEmojis = [
-    '🚀', '🎮', '⚡', '🔥', '💎', '🏆', '🎯', '⭐',
-    '🦄', '🐉', '🦸', '🧙', '🤖', '👾', '🎪', '🎨',
+    '🚀',
+    '🎮',
+    '⚡',
+    '🔥',
+    '💎',
+    '🏆',
+    '🎯',
+    '⭐',
+    '🦄',
+    '🐉',
+    '🦸',
+    '🧙',
+    '🤖',
+    '👾',
+    '🎪',
+    '🎨',
   ];
 
   @override
@@ -72,7 +86,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                 return AnimatedBuilder(
                   animation: _floatingController,
                   builder: (context, child) {
-                    final offset = math.sin((_floatingController.value + index * 0.2) * 2 * math.pi);
+                    final offset = math.sin(
+                      (_floatingController.value + index * 0.2) * 2 * math.pi,
+                    );
                     return Positioned(
                       left: (index * 50.0) + offset * 20,
                       top: (index * 80.0) + offset * 30,
@@ -143,7 +159,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                       onTap: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const NotificationsPage(),
+                                          ),
                                         );
                                       },
                                       hasNotification: true,
@@ -153,8 +172,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                       icon: Icons.settings_rounded,
                                       onTap: () {
                                         Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (context) => const SettingsPage()),
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const SettingsPage(),
+                                          ),
                                         );
                                       },
                                     ),
@@ -177,83 +199,110 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
 
                           // Avatar section with floating animation
                           AnimatedBuilder(
-                            animation: _floatingController,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(
-                                  0,
-                                  math.sin(_floatingController.value * 2 * math.pi) * 8,
+                                animation: _floatingController,
+                                builder: (context, child) {
+                                  return Transform.translate(
+                                    offset: Offset(
+                                      0,
+                                      math.sin(
+                                            _floatingController.value *
+                                                2 *
+                                                math.pi,
+                                          ) *
+                                          8,
+                                    ),
+                                    child: child,
+                                  );
+                                },
+                                child: GestureDetector(
+                                  onTap: () => setState(
+                                    () =>
+                                        _showAvatarPicker = !_showAvatarPicker,
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        width: 140,
+                                        height: 140,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFFFD700),
+                                              Color(0xFFFFA500),
+                                            ],
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFFFFD700,
+                                              ).withOpacity(0.5),
+                                              blurRadius: 40,
+                                              spreadRadius: 10,
+                                            ),
+                                          ],
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 4,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            _selectedAvatar,
+                                            style: const TextStyle(
+                                              fontSize: 70,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFF667eea),
+                                                Color(0xFF764ba2),
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 3,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.edit,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: child,
-                              );
-                            },
-                            child: GestureDetector(
-                              onTap: () => setState(() => _showAvatarPicker = !_showAvatarPicker),
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    width: 140,
-                                    height: 140,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFFFFD700).withOpacity(0.5),
-                                          blurRadius: 40,
-                                          spreadRadius: 10,
-                                        ),
-                                      ],
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 4,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        _selectedAvatar,
-                                        style: const TextStyle(fontSize: 70),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 0,
-                                    bottom: 0,
-                                    child: Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                        ),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 3),
-                                      ),
-                                      child: const Icon(
-                                        Icons.edit,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.8, 0.8)),
+                              )
+                              .animate()
+                              .fadeIn(delay: 200.ms)
+                              .scale(begin: const Offset(0.8, 0.8)),
 
                           const SizedBox(height: 20),
 
                           // Name and email
                           Text(
-                            user.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 28,
-                            ),
-                          ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
+                                user.name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 28,
+                                ),
+                              )
+                              .animate()
+                              .fadeIn(delay: 300.ms)
+                              .slideY(begin: 0.2, end: 0),
 
                           const SizedBox(height: 8),
 
@@ -269,10 +318,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
 
                           // Level badge
                           LevelBadge(
-                            level: user.level,
-                            title: user.levelTitle,
-                            size: 80,
-                          ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.8, 0.8)),
+                                level: user.level,
+                                title: user.levelTitle,
+                                size: 80,
+                              )
+                              .animate()
+                              .fadeIn(delay: 500.ms)
+                              .scale(begin: const Offset(0.8, 0.8)),
 
                           const SizedBox(height: 32),
 
@@ -287,7 +339,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                     value: '${user.xp}',
                                     label: 'Total XP',
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                      colors: [
+                                        Color(0xFFFFD700),
+                                        Color(0xFFFFA500),
+                                      ],
                                     ),
                                     delay: 600,
                                   ),
@@ -299,7 +354,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                     value: '${user.streak}',
                                     label: 'Day Streak',
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                                      colors: [
+                                        Color(0xFFFF6B6B),
+                                        Color(0xFFFF8E53),
+                                      ],
                                     ),
                                     delay: 700,
                                   ),
@@ -311,7 +369,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                     value: '${user.coins}',
                                     label: 'Coins',
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                      colors: [
+                                        Color(0xFF667eea),
+                                        Color(0xFF764ba2),
+                                      ],
                                     ),
                                     delay: 800,
                                   ),
@@ -325,19 +386,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                           // Avatar picker (if shown)
                           if (_showAvatarPicker)
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(24),
                                 child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 10,
+                                    sigmaY: 10,
+                                  ),
                                   child: Container(
                                     width: double.infinity,
                                     height: 180,
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
-                                          const Color(0xFF667eea).withOpacity(0.3),
-                                          const Color(0xFF764ba2).withOpacity(0.2),
+                                          const Color(
+                                            0xFF667eea,
+                                          ).withOpacity(0.3),
+                                          const Color(
+                                            0xFF764ba2,
+                                          ).withOpacity(0.2),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(24),
@@ -351,7 +421,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                         Padding(
                                           padding: const EdgeInsets.all(16),
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               const Text(
                                                 '🎨 Choose Your Avatar',
@@ -362,24 +433,35 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                                 ),
                                               ),
                                               IconButton(
-                                                icon: const Icon(Icons.close, color: Colors.white),
-                                                onPressed: () => setState(() => _showAvatarPicker = false),
+                                                icon: const Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                ),
+                                                onPressed: () => setState(
+                                                  () =>
+                                                      _showAvatarPicker = false,
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
                                         Expanded(
                                           child: GridView.builder(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 8,
-                                              mainAxisSpacing: 8,
-                                              crossAxisSpacing: 8,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
                                             ),
+                                            gridDelegate:
+                                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                                  crossAxisCount: 8,
+                                                  mainAxisSpacing: 8,
+                                                  crossAxisSpacing: 8,
+                                                ),
                                             itemCount: _avatarEmojis.length,
                                             itemBuilder: (context, index) {
-                                              final emoji = _avatarEmojis[index];
-                                              final isSelected = emoji == _selectedAvatar;
+                                              final emoji =
+                                                  _avatarEmojis[index];
+                                              final isSelected =
+                                                  emoji == _selectedAvatar;
                                               return GestureDetector(
                                                 onTap: () {
                                                   setState(() {
@@ -390,20 +472,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                                 child: Container(
                                                   decoration: BoxDecoration(
                                                     color: isSelected
-                                                        ? const Color(0xFFFFD700).withOpacity(0.3)
-                                                        : Colors.white.withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(12),
+                                                        ? const Color(
+                                                            0xFFFFD700,
+                                                          ).withOpacity(0.3)
+                                                        : Colors.white
+                                                              .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                     border: Border.all(
                                                       color: isSelected
-                                                          ? const Color(0xFFFFD700)
-                                                          : Colors.white.withOpacity(0.2),
+                                                          ? const Color(
+                                                              0xFFFFD700,
+                                                            )
+                                                          : Colors.white
+                                                                .withOpacity(
+                                                                  0.2,
+                                                                ),
                                                       width: isSelected ? 2 : 1,
                                                     ),
                                                   ),
                                                   child: Center(
                                                     child: Text(
                                                       emoji,
-                                                      style: const TextStyle(fontSize: 24),
+                                                      style: const TextStyle(
+                                                        fontSize: 24,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -446,13 +541,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                   ),
                                   border: Border(
                                     top: BorderSide(
-                                      color: const Color(0xFFFFD700).withOpacity(0.3),
+                                      color: const Color(
+                                        0xFFFFD700,
+                                      ).withOpacity(0.3),
                                       width: 2,
                                     ),
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFFFD700).withOpacity(0.1),
+                                      color: const Color(
+                                        0xFFFFD700,
+                                      ).withOpacity(0.1),
                                       blurRadius: 40,
                                       spreadRadius: 5,
                                     ),
@@ -465,124 +564,192 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                     // Career info cards
                                     if (user.careerGoal != null)
                                       _buildInfoCard(
-                                        icon: Icons.flag,
-                                        title: 'Career Goal',
-                                        value: user.careerGoal!,
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                        ),
-                                      ).animate().fadeIn(delay: 900.ms).slideX(begin: -0.2, end: 0),
+                                            icon: Icons.flag,
+                                            title: 'Career Goal',
+                                            value: user.careerGoal!,
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFF667eea),
+                                                Color(0xFF764ba2),
+                                              ],
+                                            ),
+                                          )
+                                          .animate()
+                                          .fadeIn(delay: 900.ms)
+                                          .slideX(begin: -0.2, end: 0),
 
                                     if (user.education != null)
                                       _buildInfoCard(
-                                        icon: Icons.school,
-                                        title: 'Education',
-                                        value: user.education!,
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                                        ),
-                                      ).animate().fadeIn(delay: 1000.ms).slideX(begin: -0.2, end: 0),
+                                            icon: Icons.school,
+                                            title: 'Education',
+                                            value: user.education!,
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFF4facfe),
+                                                Color(0xFF00f2fe),
+                                              ],
+                                            ),
+                                          )
+                                          .animate()
+                                          .fadeIn(delay: 1000.ms)
+                                          .slideX(begin: -0.2, end: 0),
 
                                     _buildInfoCard(
-                                      icon: Icons.schedule,
-                                      title: 'Weekly Commitment',
-                                      value: '${user.weeklyHours} hours/week',
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                                      ),
-                                    ).animate().fadeIn(delay: 1100.ms).slideX(begin: -0.2, end: 0),
+                                          icon: Icons.schedule,
+                                          title: 'Weekly Commitment',
+                                          value:
+                                              '${user.weeklyHours} hours/week',
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFF43e97b),
+                                              Color(0xFF38f9d7),
+                                            ],
+                                          ),
+                                        )
+                                        .animate()
+                                        .fadeIn(delay: 1100.ms)
+                                        .slideX(begin: -0.2, end: 0),
 
                                     // Skills section
                                     if (user.skills.isNotEmpty) ...[
                                       const SizedBox(height: 32),
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                Container(
-                                                  padding: const EdgeInsets.all(10),
-                                                  decoration: BoxDecoration(
-                                                    gradient: const LinearGradient(
-                                                      colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-                                                    ),
-                                                    borderRadius: BorderRadius.circular(14),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: const Color(0xFFf093fb).withOpacity(0.4),
-                                                        blurRadius: 15,
-                                                        spreadRadius: 2,
+                                                Row(
+                                                  children: [
+                                                    Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            10,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        gradient:
+                                                            const LinearGradient(
+                                                              colors: [
+                                                                Color(
+                                                                  0xFFf093fb,
+                                                                ),
+                                                                Color(
+                                                                  0xFFf5576c,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              14,
+                                                            ),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: const Color(
+                                                              0xFFf093fb,
+                                                            ).withOpacity(0.4),
+                                                            blurRadius: 15,
+                                                            spreadRadius: 2,
+                                                          ),
+                                                        ],
                                                       ),
-                                                    ],
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.star,
-                                                    color: Colors.white,
-                                                    size: 22,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 14),
-                                                ShaderMask(
-                                                  shaderCallback: (bounds) => const LinearGradient(
-                                                    colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-                                                  ).createShader(bounds),
-                                                  child: const Text(
-                                                    'Skills & Expertise',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 22,
-                                                      fontWeight: FontWeight.w900,
+                                                      child: const Icon(
+                                                        Icons.star,
+                                                        color: Colors.white,
+                                                        size: 22,
+                                                      ),
                                                     ),
-                                                  ),
+                                                    const SizedBox(width: 14),
+                                                    ShaderMask(
+                                                      shaderCallback: (bounds) =>
+                                                          const LinearGradient(
+                                                            colors: [
+                                                              Color(0xFFf093fb),
+                                                              Color(0xFFf5576c),
+                                                            ],
+                                                          ).createShader(
+                                                            bounds,
+                                                          ),
+                                                      child: const Text(
+                                                        'Skills & Expertise',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 20),
+                                                Wrap(
+                                                  spacing: 10,
+                                                  runSpacing: 10,
+                                                  children: user.skills.map((
+                                                    skill,
+                                                  ) {
+                                                    return Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 18,
+                                                            vertical: 12,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        gradient:
+                                                            LinearGradient(
+                                                              colors: [
+                                                                const Color(
+                                                                  0xFF667eea,
+                                                                ).withOpacity(
+                                                                  0.5,
+                                                                ),
+                                                                const Color(
+                                                                  0xFF764ba2,
+                                                                ).withOpacity(
+                                                                  0.4,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              20,
+                                                            ),
+                                                        border: Border.all(
+                                                          color: const Color(
+                                                            0xFF667eea,
+                                                          ).withOpacity(0.6),
+                                                          width: 2,
+                                                        ),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: const Color(
+                                                              0xFF667eea,
+                                                            ).withOpacity(0.3),
+                                                            blurRadius: 12,
+                                                            spreadRadius: 1,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      child: Text(
+                                                        skill,
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          fontSize: 15,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 20),
-                                            Wrap(
-                                              spacing: 10,
-                                              runSpacing: 10,
-                                              children: user.skills.map((skill) {
-                                                return Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 18,
-                                                    vertical: 12,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      colors: [
-                                                        const Color(0xFF667eea).withOpacity(0.5),
-                                                        const Color(0xFF764ba2).withOpacity(0.4),
-                                                      ],
-                                                    ),
-                                                    borderRadius: BorderRadius.circular(20),
-                                                    border: Border.all(
-                                                      color: const Color(0xFF667eea).withOpacity(0.6),
-                                                      width: 2,
-                                                    ),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: const Color(0xFF667eea).withOpacity(0.3),
-                                                        blurRadius: 12,
-                                                        spreadRadius: 1,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: Text(
-                                                    skill,
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight: FontWeight.w700,
-                                                      fontSize: 15,
-                                                    ),
-                                                  ),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          ],
-                                        ),
-                                      ).animate().fadeIn(delay: 1200.ms).slideY(begin: 0.2, end: 0),
+                                          )
+                                          .animate()
+                                          .fadeIn(delay: 1200.ms)
+                                          .slideY(begin: 0.2, end: 0),
                                     ],
 
                                     const SizedBox(height: 40),
@@ -614,7 +781,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                                     // Divider with gradient
                                     Container(
                                       height: 1,
-                                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                      ),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
@@ -630,70 +799,97 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
 
                                     // Logout button
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                                      child: GestureDetector(
-                                        onTap: () async {
-                                          await ref.read(userNotifierProvider).logout();
-                                          if (context.mounted) {
-                                            Navigator.pushAndRemoveUntil(
-                                              context,
-                                              MaterialPageRoute(builder: (_) => const LandingPage()),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                          ),
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              await ref
+                                                  .read(userNotifierProvider)
+                                                  .logout();
+                                              if (context.mounted) {
+                                                Navigator.pushAndRemoveUntil(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        const LandingPage(),
+                                                  ),
                                                   (route) => false,
-                                            );
-                                          }
-                                        },
-                                        child: Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.symmetric(vertical: 18),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                const Color(0xFFFF6B6B).withOpacity(0.4),
-                                                const Color(0xFFFF8E53).withOpacity(0.3),
-                                              ],
+                                                );
+                                              }
+                                            },
+                                            child: Container(
+                                              width: double.infinity,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 18,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    const Color(
+                                                      0xFFFF6B6B,
+                                                    ).withOpacity(0.4),
+                                                    const Color(
+                                                      0xFFFF8E53,
+                                                    ).withOpacity(0.3),
+                                                  ],
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                                border: Border.all(
+                                                  color: const Color(
+                                                    0xFFFF6B6B,
+                                                  ).withOpacity(0.6),
+                                                  width: 2,
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(
+                                                      0xFFFF6B6B,
+                                                    ).withOpacity(0.3),
+                                                    blurRadius: 15,
+                                                    spreadRadius: 2,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFFF6B6B,
+                                                      ).withOpacity(0.3),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.logout,
+                                                      color: Colors.white,
+                                                      size: 20,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  const Text(
+                                                    'Logout',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 17,
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                            borderRadius: BorderRadius.circular(18),
-                                            border: Border.all(
-                                              color: const Color(0xFFFF6B6B).withOpacity(0.6),
-                                              width: 2,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: const Color(0xFFFF6B6B).withOpacity(0.3),
-                                                blurRadius: 15,
-                                                spreadRadius: 2,
-                                              ),
-                                            ],
                                           ),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.all(8),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(0xFFFF6B6B).withOpacity(0.3),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(
-                                                  Icons.logout,
-                                                  color: Colors.white,
-                                                  size: 20,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              const Text(
-                                                'Logout',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 17,
-                                                  fontWeight: FontWeight.w900,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ).animate().fadeIn(delay: 1600.ms).shake(delay: 1600.ms),
+                                        )
+                                        .animate()
+                                        .fadeIn(delay: 1600.ms)
+                                        .shake(delay: 1600.ms),
 
                                     const SizedBox(height: 50),
                                   ],
@@ -759,11 +955,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                   onTap: onTap,
                   borderRadius: BorderRadius.circular(16),
                   child: Center(
-                    child: Icon(
-                      icon,
-                      color: Colors.white,
-                      size: 22,
-                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
                   ),
                 ),
               ),
@@ -777,10 +969,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B6B),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
+                      border: Border.all(color: Colors.white, width: 1.5),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF6B6B).withOpacity(0.5),
@@ -1021,7 +1210,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.5), size: 28),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.white.withOpacity(0.5),
+                      size: 28,
+                    ),
                   ],
                 ),
               ),
@@ -1032,4 +1225,3 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
     );
   }
 }
-

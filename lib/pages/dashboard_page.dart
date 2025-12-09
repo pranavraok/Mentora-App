@@ -995,7 +995,15 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFFf5576c),
                                           ],
                                         ),
-                                        onTap: () => _navigateTo(3),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const ResumeCheckerPageWithBackButton(),
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -1009,7 +1017,15 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFFFFA500),
                                           ],
                                         ),
-                                        onTap: () => _navigateTo(0),
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const LeaderboardPageWithBackButton(),
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
                                   ],
@@ -1314,6 +1330,62 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Resume Checker Page with Back Button
+class ResumeCheckerPageWithBackButton extends StatelessWidget {
+  const ResumeCheckerPageWithBackButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B2E),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Resume Checker',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      body: const ResumeCheckerPage(),
+    );
+  }
+}
+
+/// Leaderboard Page with Back Button
+class LeaderboardPageWithBackButton extends StatelessWidget {
+  const LeaderboardPageWithBackButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1B2E),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Leaderboard',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      body: const LeaderboardPage(),
     );
   }
 }

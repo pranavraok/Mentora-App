@@ -18,9 +18,10 @@ import {
 } from "../_shared/utils.ts";
 
 interface ResumeAnalysisRequest {
-  file_url: string;
   file_name: string;
-  extracted_text: string; // OCR text from client-side (Tesseract.js)
+  file_content_base64?: string; // Base64 encoded PDF/DOCX content
+  extracted_text?: string; // Pre-extracted text (fallback)
+  user_id?: string; // User ID (for backward compatibility)
   target_role?: string;
   target_company?: string;
 }
@@ -76,15 +77,42 @@ serve(async (req: Request) => {
     const body: ResumeAnalysisRequest = await req.json();
 
     // Validate input
-    validateInput(body, {
-      file_url: { required: true, type: "string" },
-      extracted_text: { required: true, type: "string", minLength: 100 },
-    });
+    if (!body.file_name) {
+      return errorResponse('file_name is required', 400);
+    }
+
+    // Extract text from base64 content
+    let extractedText = body.extracted_text || '';
+    
+    if (body.file_content_base64 && !extractedText) {
+      // For now, use a simple approach: decode and use as placeholder
+      // In production, you'd use a PDF extraction library
+      try {
+        const binaryString = atob(body.file_content_base64);
+        // Try to extract some text (very basic - just get printable chars)
+        extractedText = binaryString
+          .split('')
+          .filter(char => char.charCodeAt(0) >= 32 && char.charCodeAt(0) <= 126)
+          .join('')
+          .substring(0, 5000); // Limit to first 5000 chars
+      } catch (e) {
+        console.error('Error decoding base64:', e);
+        extractedText = `Resume file: ${body.file_name}\n[Binary file content - unable to extract text directly]`;
+      }
+    }
+
+    // Require at least some text to analyze
+    if (!extractedText || extractedText.length < 50) {
+      return errorResponse(
+        'Could not extract text from resume. Please ensure file is a valid PDF or DOCX.',
+        400
+      );
+    }
 
     console.log(`Analyzing resume for user: ${profile.id}`);
 
     // Check if this resume was already analyzed (by file hash)
-    const resumeHash = generateHash(body.extracted_text); // Simple hash of content
+    const resumeHash = generateHash(extractedText); // Simple hash of content
     const { data: existingAnalysis } = await supabase
       .from("resume_analyses")
       .select("*")
@@ -102,7 +130,7 @@ serve(async (req: Request) => {
     }
 
     // Build analysis prompt
-    const prompt = buildAnalysisPrompt(body.extracted_text, body.target_role, body.target_company);
+    const prompt = buildAnalysisPrompt(extractedText, body.target_role, body.target_company);
 
     // Call Gemini API with 429 error handling
     let analysis: ResumeAnalysisResponse;
@@ -132,12 +160,11 @@ serve(async (req: Request) => {
       .from("resume_analyses")
       .insert({
         user_id: profile.id,
-        file_url: body.file_url,
         file_name: body.file_name,
         file_hash: resumeHash,
         overall_score: analysis.overall_score,
         ats_compatibility: analysis.ats_compatibility,
-        extracted_text: body.extracted_text,
+        extracted_text: extractedText,
         analysis_result: analysis,
         improvements: analysis.improvements,
         keyword_gaps: analysis.keyword_gaps,

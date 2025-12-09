@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -46,12 +47,12 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
     super.dispose();
   }
 
-  /// Pick PDF/DOCX file and upload to Supabase Storage
+  /// Pick PDF/DOCX file and analyze directly via Edge Function
   Future<void> _pickAndUploadResume() async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'docx'],
+        allowedExtensions: ['pdf', 'docx', 'doc'],
       );
 
       if (result == null || result.files.isEmpty) return;
@@ -65,43 +66,79 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
 
       setState(() => _errorMessage = null);
 
-      // Upload to Supabase Storage
+      // Get authenticated user
       final user = SupabaseConfig.client.auth.currentUser;
       if (user == null) {
         _showError('Not authenticated');
         return;
       }
 
-      final fileName =
-          'resume_${DateTime.now().millisecondsSinceEpoch}.${file.extension}';
-      final path = '${user.id}/$fileName';
+      // Get user profile ID
+      final userRow = await SupabaseConfig.client
+          .from('users')
+          .select('id')
+          .eq('supabase_uid', user.id)
+          .single();
 
-      await SupabaseConfig.client.storage
-          .from('career-resumes')
-          .uploadBinary(
-            path,
-            bytes,
-            fileOptions: FileOptions(
-              contentType: file.extension == 'pdf'
-                  ? 'application/pdf'
-                  : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            ),
-          );
+      final userId = userRow['id'] as String;
 
-      final publicUrl = SupabaseConfig.client.storage
-          .from('career-resumes')
-          .getPublicUrl(path);
+      // Convert bytes to base64 for transmission
+      final base64Resume = base64Encode(bytes);
 
-      setState(() => _resumeUrl = publicUrl);
+      print('Calling analyzeResume with file: ${file.name}');
 
-      // Call Gemini analysis
-      await _analyzeResume(publicUrl, file.name);
+      // Call Edge Function directly with file content
+      await _analyzeResumeWithBase64(base64Resume, file.name, userId);
     } catch (e) {
-      _showError('Upload failed: $e');
+      _showError('Error: $e');
     }
   }
 
-  /// Call analyzeResume Edge Function with Gemini AI
+  /// Analyze resume by sending base64 content to Edge Function
+  Future<void> _analyzeResumeWithBase64(
+    String base64Content,
+    String fileName,
+    String userId,
+  ) async {
+    setState(() {
+      _isAnalyzing = true;
+      _hasAnalyzed = false;
+      _errorMessage = null;
+    });
+
+    try {
+      // Call Edge Function with base64 encoded file
+      final response = await SupabaseConfig.client.functions.invoke(
+        'analyzeResume',
+        body: {
+          'file_name': fileName,
+          'file_content_base64': base64Content,
+          'user_id': userId,
+        },
+      );
+
+      final data = response as Map<String, dynamic>;
+
+      setState(() {
+        _scoreOverall = (data['overall_score'] as num?)?.toInt() ?? 0;
+        _scoreTech = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
+        _scoreReadability = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
+        _suggestions = List<String>.from(
+          (data['improvements'] as List?) ?? [],
+        ).take(3).toList();
+        _isAnalyzing = false;
+        _hasAnalyzed = true;
+      });
+
+      print('Resume analyzed successfully: Overall=$_scoreOverall');
+    } catch (e) {
+      print('Error analyzing resume: $e');
+      _showError('Analysis error: $e');
+      setState(() => _isAnalyzing = false);
+    }
+  }
+
+  /// Call analyzeResume Edge Function with Gemini AI (deprecated - use base64 method)
   Future<void> _analyzeResume(String resumeUrl, String fileName) async {
     setState(() {
       _isAnalyzing = true;

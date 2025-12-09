@@ -32,6 +32,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     ProfilePage(),
   ];
 
+  void _navigateToPage(int index) {
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAuthenticatedAsync = ref.watch(isAuthenticatedProvider);
@@ -46,18 +50,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.lock_outline,
-                    size: 80,
-                    color: Colors.white54,
-                  ),
+                  Icon(Icons.lock_outline, size: 80, color: Colors.white54),
                   SizedBox(height: 24),
                   Text(
                     'Please login first',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 18,
-                    ),
+                    style: TextStyle(color: Colors.white54, fontSize: 18),
                   ),
                 ],
               ),
@@ -68,7 +65,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           return userAsync.when(
             data: (user) => user == null
                 ? const Center(child: CircularProgressIndicator())
-                : _pages[_selectedIndex],
+                : Column(
+                    children: [
+                      Expanded(
+                        child: _pages[_selectedIndex] is DashboardHome
+                            ? DashboardHome(onNavigate: _navigateToPage)
+                            : _pages[_selectedIndex],
+                      ),
+                    ],
+                  ),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('Error: $e')),
           );
@@ -164,7 +169,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 }
 
 class DashboardHome extends ConsumerStatefulWidget {
-  const DashboardHome({super.key});
+  final Function(int)? onNavigate;
+
+  const DashboardHome({super.key, this.onNavigate});
 
   @override
   ConsumerState createState() => _DashboardHomeState();
@@ -188,20 +195,24 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     });
   }
 
+  void _navigateTo(int index) {
+    widget.onNavigate?.call(index);
+  }
+
   Future<void> _loadDashboardData() async {
     try {
       // Force refresh of current user data
       // ignore: unused_result
       await ref.refresh(currentUserProvider);
-      
+
       // Force refresh of roadmap nodes
       // ignore: unused_result
       await ref.refresh(roadmapNodesSupabaseProvider);
-      
+
       // Force refresh of user skills
       // ignore: unused_result
       await ref.refresh(userSkillsSupabaseProvider);
-      
+
       print('Dashboard data loaded from Supabase');
     } catch (e) {
       print('Error loading dashboard data: $e');
@@ -952,15 +963,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFF764ba2),
                                           ],
                                         ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const RoadmapPage(),
-                                            ),
-                                          );
-                                        },
+                                        onTap: () => _navigateTo(1),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -974,15 +977,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFF38f9d7),
                                           ],
                                         ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const ProjectsPage(),
-                                            ),
-                                          );
-                                        },
+                                        onTap: () => _navigateTo(2),
                                       ),
                                     ),
                                   ],
@@ -1000,15 +995,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFFf5576c),
                                           ],
                                         ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const ResumeCheckerPage(),
-                                            ),
-                                          );
-                                        },
+                                        onTap: () => _navigateTo(3),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -1022,15 +1009,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Color(0xFFFFA500),
                                           ],
                                         ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const LeaderboardPage(),
-                                            ),
-                                          );
-                                        },
+                                        onTap: () => _navigateTo(0),
                                       ),
                                     ),
                                   ],

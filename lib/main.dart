@@ -43,7 +43,9 @@ class AppInitializer extends ConsumerWidget {
       data: (_) {
         return isAuthenticatedAsync.when(
           data: (isAuthenticated) {
-            return isAuthenticated ? const DashboardPage() : const LandingPage();
+            return isAuthenticated
+                ? const DashboardPage()
+                : const LandingPage();
           },
           loading: () => const Scaffold(
             body: Center(
@@ -61,11 +63,8 @@ class AppInitializer extends ConsumerWidget {
               ),
             ),
           ),
-          error: (e, _) => Scaffold(
-            body: Center(
-              child: Text('Auth error: $e'),
-            ),
-          ),
+          error: (e, _) =>
+              Scaffold(body: Center(child: Text('Auth error: $e'))),
         );
       },
       loading: () => const Scaffold(

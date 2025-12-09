@@ -3,8 +3,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
+import 'package:mentora_app/config/supabase_config.dart';
 
 class ResumeCheckerPage extends StatefulWidget {
   const ResumeCheckerPage({super.key});
@@ -20,9 +23,13 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
   bool _isAnalyzing = false;
   bool _hasAnalyzed = false;
 
-  int _scoreOverall = 82;
-  int _scoreTech = 88;
-  int _scoreReadability = 76;
+  // Real scores from Gemini analysis
+  int _scoreOverall = 0;
+  int _scoreTech = 0;
+  int _scoreReadability = 0;
+  List<String> _suggestions = [];
+  String? _resumeUrl;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -39,18 +46,118 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
     super.dispose();
   }
 
-  Future<void> _startAnalysis() async {
+  /// Pick PDF/DOCX file and upload to Supabase Storage
+  Future<void> _pickAndUploadResume() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'docx'],
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.single;
+      final bytes = file.bytes;
+      if (bytes == null) {
+        _showError('Could not read file');
+        return;
+      }
+
+      setState(() => _errorMessage = null);
+
+      // Upload to Supabase Storage
+      final user = SupabaseConfig.client.auth.currentUser;
+      if (user == null) {
+        _showError('Not authenticated');
+        return;
+      }
+
+      final fileName =
+          'resume_${DateTime.now().millisecondsSinceEpoch}.${file.extension}';
+      final path = '${user.id}/$fileName';
+
+      await SupabaseConfig.client.storage.from('career-resumes').uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              contentType:
+                  file.extension == 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ),
+          );
+
+      final publicUrl = SupabaseConfig.client.storage
+          .from('career-resumes')
+          .getPublicUrl(path);
+
+      setState(() => _resumeUrl = publicUrl);
+
+      // Call Gemini analysis
+      await _analyzeResume(publicUrl, file.name);
+    } catch (e) {
+      _showError('Upload failed: $e');
+    }
+  }
+
+  /// Call analyzeResume Edge Function with Gemini AI
+  Future<void> _analyzeResume(String resumeUrl, String fileName) async {
     setState(() {
       _isAnalyzing = true;
       _hasAnalyzed = false;
+      _errorMessage = null;
     });
 
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final user = SupabaseConfig.client.auth.currentUser;
+      if (user == null) {
+        _showError('Not authenticated');
+        return;
+      }
 
-    setState(() {
-      _isAnalyzing = false;
-      _hasAnalyzed = true;
-    });
+      // Get user profile ID
+      final userRow = await SupabaseConfig.client
+          .from('users')
+          .select('id')
+          .eq('supabase_uid', user.id)
+          .single();
+
+      final userId = userRow['id'] as String;
+
+      // Call Edge Function
+      final response = await SupabaseConfig.client.functions.invoke(
+        'analyzeResume',
+        body: {
+          'resume_url': resumeUrl,
+          'file_name': fileName,
+          'user_id': userId,
+        },
+      );
+
+      final data = response as Map<String, dynamic>;
+
+      setState(() {
+        _scoreOverall = (data['overall_score'] as num?)?.toInt() ?? 0;
+        _scoreTech = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
+        _scoreReadability = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
+        _suggestions = List<String>.from(
+          (data['improvements'] as List?) ?? [],
+        ).take(3).toList();
+        _isAnalyzing = false;
+        _hasAnalyzed = true;
+      });
+
+      print('Resume analyzed successfully: Overall=$_scoreOverall');
+    } catch (e) {
+      print('Error analyzing resume: $e');
+      _showError('Analysis error: $e');
+      setState(() => _isAnalyzing = false);
+    }
+  }
+
+  void _showError(String message) {
+    setState(() => _errorMessage = message);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   @override
@@ -405,7 +512,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _isAnalyzing ? null : _startAnalysis,
+              onPressed: _isAnalyzing ? null : _pickAndUploadResume,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF4F46E5),
@@ -605,20 +712,41 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
             ],
           ),
           const SizedBox(height: 10),
-          _buildSuggestionItem(
-            'Showcase your best projects first',
-            'Put 2–3 impactful Flutter / full-stack projects above older college work.',
-          ),
-          const SizedBox(height: 10),
-          _buildSuggestionItem(
-            'Align with job description',
-            'Mirror the skills and tools from the JD (state-management, APIs, cloud, CI/CD).',
-          ),
-          const SizedBox(height: 10),
-          _buildSuggestionItem(
-            'Clean formatting matters',
-            'Use consistent headings, spacing and bullet style for a professional look.',
-          ),
+          // Show real suggestions from Gemini or placeholders
+          if (_suggestions.isEmpty)
+            Text(
+              'Upload a resume to see personalized suggestions from Gemini AI.',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            )
+          else
+            ..._suggestions.map((suggestion) => Column(
+                  children: [
+                    _buildSuggestionItem(suggestion, ''),
+                    if (_suggestions.indexOf(suggestion) < _suggestions.length - 1)
+                      const SizedBox(height: 10),
+                  ],
+                )),
+          if (_suggestions.isEmpty) ...[
+            const SizedBox(height: 10),
+            _buildSuggestionItem(
+              'Showcase your best projects first',
+              'Put 2–3 impactful Flutter / full-stack projects above older college work.',
+            ),
+            const SizedBox(height: 10),
+            _buildSuggestionItem(
+              'Align with job description',
+              'Mirror the skills and tools from the JD (state-management, APIs, cloud, CI/CD).',
+            ),
+            const SizedBox(height: 10),
+            _buildSuggestionItem(
+              'Clean formatting matters',
+              'Use consistent headings, spacing and bullet style for a professional look.',
+            ),
+          ],
         ],
       ),
     );
@@ -646,15 +774,17 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 3),
-              Text(
-                body,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.85),
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
+              if (body.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Text(
+                  body,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

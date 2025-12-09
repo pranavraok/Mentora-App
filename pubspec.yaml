@@ -4,7 +4,7 @@ publish_to: "none"
 version: 1.0.0
 
 environment:
-  sdk: '^3.8.0'
+  sdk: "^3.8.0"
 
 dependencies:
   flutter:
@@ -12,9 +12,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.1.0
   provider: ^6.1.2
-  firebase_core: '>=2.21.1'
-  firebase_auth: '>=5.3.3'
-  cloud_firestore: '>=5.5.0'
+  firebase_core: ">=2.21.1"
+  firebase_auth: ">=5.3.3"
+  cloud_firestore: ">=5.5.0"
   cloud_functions: ^6.0.0
   firebase_messaging: ^16.0.0
   flutter_riverpod: ^3.0.0
@@ -23,17 +23,17 @@ dependencies:
   supabase_flutter: ^2.8.0
   intl: 0.20.2
   fl_chart: 0.68.0
-  file_picker: '>=8.1.2'
-  image_picker: '>=1.1.2'
+  file_picker: ">=8.1.2"
+  image_picker: ">=1.1.2"
   url_launcher: ^6.0.0
   animations: ^2.0.0
   lottie: ^3.0.0
   confetti: 0.8.0
-  rive: ^0.13.0  # For 3D character animations
-  flutter_animate: ^4.5.0  # For advanced effects
-  glassmorphism: ^3.0.0  # For glass effects
-  flutter_staggered_grid_view: ^0.7.0  # For bento layouts
-  shimmer: ^3.0.0  # For premium loading effects
+  rive: ^0.13.0 # For 3D character animations
+  flutter_animate: ^4.5.0 # For advanced effects
+  glassmorphism: ^3.0.0 # For glass effects
+  flutter_staggered_grid_view: ^0.7.0 # For bento layouts
+  shimmer: ^3.0.0 # For premium loading effects
 
 dev_dependencies:
   flutter_test:

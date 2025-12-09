@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseConfig {
   // Project credentials
   static const String supabaseUrl = 'https://vjbluyrmhgzcbltlvptj.supabase.co';
-  static const String supabaseAnonKey = 
+  static const String supabaseAnonKey =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqYmx1eXJtaGd6Y2JsdGx2cHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyMTA5NzIsImV4cCI6MjA4MDc4Njk3Mn0.Z_nm2JksoggrCymVmkrUsfR9wUPJvXzg0fhgEjcHecQ';
 
   // Storage buckets

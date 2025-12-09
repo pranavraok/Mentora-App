@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
 import 'package:mentora_app/providers/app_providers.dart';
+import 'package:mentora_app/services/roadmap_service_supabase.dart';
+import 'package:mentora_app/config/supabase_config.dart';
 import 'dart:math' as math;
 
 class OnboardingPage extends ConsumerStatefulWidget {
@@ -26,6 +28,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
   String _learningStyle = 'Visual';
   String _motivation = 'Career Switch';
   late AnimationController _floatingController;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -46,28 +49,140 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
   }
 
   Future<void> _completeOnboarding() async {
-    final userAsync = ref.read(currentUserProvider);
-    await userAsync.when(
-      data: (user) async {
-        if (user == null) return;
-        final updatedUser = user.copyWith(
-          education: _educationController.text,
-          careerGoal: _careerGoalController.text,
-          skills: _selectedSkills,
-          weeklyHours: _weeklyHours,
-          updatedAt: DateTime.now(),
+    if (_isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      // Get current user from Supabase Auth
+      final currentUser = SupabaseConfig.client.auth.currentUser;
+      if (currentUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Not logged in. Please sign in first.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get or create user ID from database
+      var userResponse = await SupabaseConfig.client
+          .from('users')
+          .select('id')
+          .eq('supabase_uid', currentUser.id)
+          .maybeSingle();
+
+      String userId;
+
+      if (userResponse == null) {
+        // User profile doesn't exist yet - create it now
+        final insertResponse = await SupabaseConfig.client
+            .from('users')
+            .insert({
+              'supabase_uid': currentUser.id,
+              'email': currentUser.email!,
+              'name': currentUser.userMetadata?['name'] ?? 'User',
+              'onboarding_complete': false,
+            })
+            .select('id')
+            .single();
+
+        userId = insertResponse['id'] as String;
+      } else {
+        userId = userResponse['id'] as String;
+      }
+
+      // Build comprehensive onboarding payload
+      final payload = {
+        'user_id': userId,
+        'career_goal': _careerGoalController.text,
+        'current_skills': _selectedSkills,
+        'target_skills': _selectedInterests,
+        'experience': _experienceLevel,
+        'education': _educationController.text,
+        'learning_style': _learningStyle,
+        'time_commitment': _weeklyHours,
+        'motivation': _motivation,
+      };
+
+      // Call Supabase Edge Function to generate roadmap via Gemini AI
+      final roadmapService = RoadmapService();
+      final result = await roadmapService.generateRoadmap(
+        userId: userId,
+        careerGoal: _careerGoalController.text,
+        currentSkills: _selectedSkills,
+        targetSkills: _selectedInterests,
+        experience: _experienceLevel,
+        education: _educationController.text,
+        learningStyle: _learningStyle,
+        timelineMonths: (_weeklyHours * 4)
+            .toInt(), // Rough estimate based on commitment
+      );
+
+      // Update user profile with onboarding data
+      await SupabaseConfig.client
+          .from('users')
+          .update({
+            'onboarding_complete': true,
+            'career_goal': _careerGoalController.text,
+            'college': _educationController.text,
+            'last_activity': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId);
+
+      // Also update local user model via provider
+      final userAsync = ref.read(currentUserProvider);
+      await userAsync.when(
+        data: (user) async {
+          if (user == null) return;
+          final updatedUser = user.copyWith(
+            education: _educationController.text,
+            careerGoal: _careerGoalController.text,
+            skills: _selectedSkills,
+            weeklyHours: _weeklyHours,
+            updatedAt: DateTime.now(),
+          );
+          final userService = ref.read(userServiceProvider);
+          await userService.updateUser(updatedUser);
+        },
+        loading: () async {},
+        error: (_, __) async {},
+      );
+
+      if (!mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🎉 Roadmap generated! Welcome to your journey!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navigate to dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    } catch (e, stackTrace) {
+      print('Error completing onboarding: $e');
+      print('Stack trace: $stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
-        final userService = ref.read(userServiceProvider);
-        await userService.updateUser(updatedUser);
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DashboardPage()),
-        );
-      },
-      loading: () async {},
-      error: (_, __) async {},
-    );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   bool _canProceed() {
@@ -266,7 +381,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: _canProceed()
+                              onTap: (_canProceed() && !_isSubmitting)
                                   ? () {
                                       if (_currentStep < 4) {
                                         setState(() => _currentStep++);
@@ -280,27 +395,52 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _currentStep < 4
-                                          ? 'Next'
-                                          : '🎉 Complete Setup',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
+                                child: _isSubmitting
+                                    ? const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text(
+                                            'Generating your roadmap...',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            _currentStep < 4
+                                                ? 'Next'
+                                                : '🎉 Complete Setup',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Icon(
+                                            Icons.arrow_forward_rounded,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: Colors.white,
-                                      size: 24,
-                                    ),
-                                  ],
-                                ),
                               ),
                             ),
                           ),

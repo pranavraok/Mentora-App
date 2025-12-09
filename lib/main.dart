@@ -8,10 +8,10 @@ import 'package:mentora_app/config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Supabase
   await SupabaseConfig.initialize();
-  
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -48,17 +48,19 @@ class AppInitializer extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.rocket_launch, size: 80, color: AppColors.gradientPurple),
+              Icon(
+                Icons.rocket_launch,
+                size: 80,
+                color: AppColors.gradientPurple,
+              ),
               SizedBox(height: 24),
               CircularProgressIndicator(),
             ],
           ),
         ),
       ),
-      error: (e, _) => Scaffold(
-        body: Center(child: Text('Error initializing app: $e')),
-      ),
+      error: (e, _) =>
+          Scaffold(body: Center(child: Text('Error initializing app: $e'))),
     );
   }
 }
-

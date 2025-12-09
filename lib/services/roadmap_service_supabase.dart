@@ -24,14 +24,12 @@ class RoadmapService {
       body: {
         'user_profile': {
           'career_goal': careerGoal,
-          'current_skills': currentSkills.map((skill) => {
-            'skill': skill,
-            'level': 'Beginner'
-          }).toList(),
-          'target_skills': targetSkills.map((skill) => {
-            'skill': skill,
-            'level': 'Advanced'
-          }).toList(),
+          'current_skills': currentSkills
+              .map((skill) => {'skill': skill, 'level': 'Beginner'})
+              .toList(),
+          'target_skills': targetSkills
+              .map((skill) => {'skill': skill, 'level': 'Advanced'})
+              .toList(),
           'interests': targetSkills,
           'timeline_months': timelineMonths ?? 12,
           'learning_style': learningStyle ?? 'Visual',

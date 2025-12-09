@@ -74,10 +74,10 @@ export async function getAuthenticatedUser(req: Request, supabase: SupabaseClien
   return { authUser: user, profile };
 }
 
-// Call Google Gemini API
+// Call Google Gemini API with quota protection
 export async function callGemini(prompt: string, systemInstructions?: string) {
   const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-  const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-1.5-pro-latest";
+  const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash-lite";
 
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY not configured");

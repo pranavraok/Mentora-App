@@ -171,10 +171,22 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
       print('Stack trace: $stackTrace');
 
       if (mounted) {
+        // Check if error is quota/resource exhausted
+        final errorMessage = e.toString().toLowerCase();
+        final isQuotaError =
+            errorMessage.contains('429') ||
+            errorMessage.contains('resource_exhausted') ||
+            errorMessage.contains('quota');
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(
+              isQuotaError
+                  ? '⏳ LLM quota exceeded, please try again later.'
+                  : 'Error: ${e.toString()}',
+            ),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: isQuotaError ? 5 : 3),
           ),
         );
       }

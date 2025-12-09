@@ -51,6 +51,17 @@ interface SectionAnalysis {
   recommendations: string[];
 }
 
+// Simple hash function for file content
+function generateHash(content: string): string {
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -70,14 +81,49 @@ serve(async (req) => {
 
     console.log(`Analyzing resume for user: ${profile.id}`);
 
+    // Check if this resume was already analyzed (by file hash)
+    const resumeHash = generateHash(body.extracted_text); // Simple hash of content
+    const { data: existingAnalysis } = await supabase
+      .from("resume_analyses")
+      .select("*")
+      .eq("user_id", profile.id)
+      .eq("file_hash", resumeHash)
+      .maybeSingle();
+
+    if (existingAnalysis) {
+      console.log(`Resume analysis already exists for user ${profile.id}, returning cached analysis`);
+      return successResponse({
+        message: "Analysis retrieved from cache",
+        analysis: existingAnalysis.analysis_result,
+        cached: true,
+      });
+    }
+
     // Build analysis prompt
     const prompt = buildAnalysisPrompt(body.extracted_text, body.target_role, body.target_company);
 
-    // Call Gemini API
-    const analysis: ResumeAnalysisResponse = await callGemini(
-      prompt,
-      "You are an expert resume reviewer and ATS optimization specialist with 10+ years of experience in tech recruiting."
-    );
+    // Call Gemini API with 429 error handling
+    let analysis: ResumeAnalysisResponse;
+    try {
+      analysis = await callGemini(
+        prompt,
+        "You are an expert resume reviewer and ATS optimization specialist with 10+ years of experience in tech recruiting."
+      );
+    } catch (geminiError) {
+      const errorMessage = geminiError instanceof Error ? geminiError.message : String(geminiError);
+      
+      // Check for quota exhaustion errors
+      if (errorMessage.includes("429") || errorMessage.includes("RESOURCE_EXHAUSTED") || errorMessage.includes("quota")) {
+        console.error("Gemini quota exhausted:", errorMessage);
+        return errorResponse(
+          "AI quota used up for now. Please try again in a few minutes.",
+          429
+        );
+      }
+      
+      // Re-throw other errors
+      throw geminiError;
+    }
 
     // Store analysis in database
     const { data: savedAnalysis, error: saveError } = await supabase
@@ -86,6 +132,7 @@ serve(async (req) => {
         user_id: profile.id,
         file_url: body.file_url,
         file_name: body.file_name,
+        file_hash: resumeHash,
         overall_score: analysis.overall_score,
         ats_compatibility: analysis.ats_compatibility,
         extracted_text: body.extracted_text,

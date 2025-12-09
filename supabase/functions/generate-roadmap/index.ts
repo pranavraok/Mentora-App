@@ -94,14 +94,59 @@ serve(async (req) => {
 
     console.log(`Generating roadmap for user: ${profile.id}`);
 
+    // Check if roadmap already exists for this user
+    const { data: existingNodes, error: checkError } = await supabase
+      .from("roadmap_nodes")
+      .select("*")
+      .eq("user_id", profile.id)
+      .limit(1);
+
+    if (checkError) {
+      console.error("Error checking existing roadmap:", checkError);
+    }
+
+    // If roadmap exists, return it instead of generating a new one
+    if (existingNodes && existingNodes.length > 0) {
+      console.log(`Roadmap already exists for user ${profile.id}, returning stored roadmap`);
+      
+      const { data: allNodes } = await supabase
+        .from("roadmap_nodes")
+        .select("*")
+        .eq("user_id", profile.id)
+        .order("order_index", { ascending: true });
+
+      return successResponse({
+        message: "Roadmap retrieved from cache",
+        nodes: allNodes || [],
+        cached: true,
+      });
+    }
+
     // Build Gemini prompt
     const prompt = buildGeminiPrompt(userProfile);
 
-    // Call Gemini API
-    const geminiResponse: GeminiRoadmapResponse = await callGemini(
-      prompt,
-      "You are an expert career advisor and curriculum designer. Generate personalized career roadmaps with actionable steps."
-    );
+    // Call Gemini API with 429 error handling
+    let geminiResponse: GeminiRoadmapResponse;
+    try {
+      geminiResponse = await callGemini(
+        prompt,
+        "You are an expert career advisor and curriculum designer. Generate personalized career roadmaps with actionable steps."
+      );
+    } catch (geminiError) {
+      const errorMessage = geminiError instanceof Error ? geminiError.message : String(geminiError);
+      
+      // Check for quota exhaustion errors
+      if (errorMessage.includes("429") || errorMessage.includes("RESOURCE_EXHAUSTED") || errorMessage.includes("quota")) {
+        console.error("Gemini quota exhausted:", errorMessage);
+        return errorResponse(
+          "AI quota used up for now. Please try again in a few minutes.",
+          429
+        );
+      }
+      
+      // Re-throw other errors
+      throw geminiError;
+    }
 
     console.log(`Gemini generated ${geminiResponse.nodes.length} nodes`);
 

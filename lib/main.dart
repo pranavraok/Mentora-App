@@ -37,11 +37,36 @@ class AppInitializer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storageAsync = ref.watch(storageProvider);
+    final isAuthenticatedAsync = ref.watch(isAuthenticatedProvider);
 
     return storageAsync.when(
       data: (_) {
-        final isAuthenticated = ref.watch(isAuthenticatedProvider);
-        return isAuthenticated ? const DashboardPage() : const LandingPage();
+        return isAuthenticatedAsync.when(
+          data: (isAuthenticated) {
+            return isAuthenticated ? const DashboardPage() : const LandingPage();
+          },
+          loading: () => const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.rocket_launch,
+                    size: 80,
+                    color: AppColors.gradientPurple,
+                  ),
+                  SizedBox(height: 24),
+                  CircularProgressIndicator(),
+                ],
+              ),
+            ),
+          ),
+          error: (e, _) => Scaffold(
+            body: Center(
+              child: Text('Auth error: $e'),
+            ),
+          ),
+        );
       },
       loading: () => const Scaffold(
         body: Center(

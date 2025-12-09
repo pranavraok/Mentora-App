@@ -5,8 +5,6 @@ import 'package:glassmorphism/glassmorphism.dart';
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/pages/onboarding_page.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
-import 'package:mentora_app/models/user_model.dart';
-import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/services/auth_service.dart';
 import 'dart:math' as math;
 

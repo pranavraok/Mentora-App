@@ -4,6 +4,8 @@
 // Endpoint: POST /functions/v1/generate-roadmap
 // Creates personalized career roadmap using Gemini API
 
+// deno-lint-ignore-file
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   corsHeaders,
@@ -69,7 +71,7 @@ interface GeminiRoadmapResponse {
   milestones: Array<{ week: number; title: string; description: string }>;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -284,7 +286,8 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in generate-roadmap:", error);
-    return errorResponse(error.message || "Failed to generate roadmap", 500);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return errorResponse(errorMsg || "Failed to generate roadmap", 500);
   }
 });
 

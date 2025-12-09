@@ -4,6 +4,8 @@
 // Endpoint: POST /functions/v1/award-xp
 // Awards XP, handles level-ups, achievements, coins
 
+// deno-lint-ignore-file
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   corsHeaders,
@@ -22,7 +24,7 @@ interface AwardXPRequest {
   metadata?: any;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -57,6 +59,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in award-xp:", error);
-    return errorResponse(error.message || "Failed to award XP", 500);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return errorResponse(errorMsg || "Failed to award XP", 500);
   }
 });

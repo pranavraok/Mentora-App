@@ -8,6 +8,7 @@ import 'package:mentora_app/services/user_service.dart';
 import 'package:mentora_app/services/roadmap_service.dart';
 import 'package:mentora_app/services/project_service.dart';
 import 'package:mentora_app/services/achievement_service.dart';
+import 'package:mentora_app/config/supabase_config.dart';
 
 final storageProvider = FutureProvider<LocalStorageService>((ref) async {
   return await LocalStorageService.getInstance();
@@ -34,8 +35,48 @@ final achievementServiceProvider = Provider<AchievementService>((ref) {
 });
 
 final currentUserProvider = FutureProvider<UserModel?>((ref) async {
-  final userService = ref.watch(userServiceProvider);
-  return await userService.getCurrentUser();
+  // First check if user is authenticated with Supabase
+  final supabaseUser = SupabaseConfig.client.auth.currentUser;
+  
+  if (supabaseUser == null) {
+    // Not authenticated - try to get from local storage (backwards compat)
+    final userService = ref.watch(userServiceProvider);
+    return await userService.getCurrentUser();
+  }
+
+  // User is authenticated with Supabase - fetch their profile from database
+  try {
+    final response = await SupabaseConfig.client
+        .from('users')
+        .select()
+        .eq('supabase_uid', supabaseUser.id)
+        .maybeSingle();
+
+    if (response == null) {
+      print('User profile not found in Supabase for UID: ${supabaseUser.id}');
+      return null;
+    }
+
+    // Convert Supabase user data to UserModel
+    return UserModel(
+      id: response['id'] as String,
+      name: response['name'] as String? ?? 'User',
+      email: response['email'] as String? ?? '',
+      education: response['college'] as String?,
+      level: response['current_level'] as int? ?? 1,
+      xp: response['total_xp'] as int? ?? 0,
+      coins: response['total_coins'] as int? ?? 0,
+      careerGoal: response['career_goal'] as String?,
+      skills: [],
+      weeklyHours: 10,
+      achievements: [],
+      createdAt: DateTime.parse(response['created_at'] as String),
+      updatedAt: DateTime.parse(response['updated_at'] as String),
+    );
+  } catch (e) {
+    print('Error fetching user from Supabase: $e');
+    return null;
+  }
 });
 
 final userNotifierProvider = Provider<UserNotifier>((ref) {
@@ -65,6 +106,71 @@ class UserNotifier {
   }
 }
 
+// =====================================================
+// ROADMAP NODES - From Supabase
+// =====================================================
+final roadmapNodesSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final currentUser = SupabaseConfig.client.auth.currentUser;
+  if (currentUser == null) return [];
+
+  try {
+    // Get user ID from Supabase
+    final userResponse = await SupabaseConfig.client
+        .from('users')
+        .select('id')
+        .eq('supabase_uid', currentUser.id)
+        .maybeSingle();
+
+    if (userResponse == null) return [];
+
+    final userId = userResponse['id'] as String;
+
+    // Fetch roadmap nodes
+    final nodes = await SupabaseConfig.client
+        .from('roadmap_nodes')
+        .select()
+        .eq('user_id', userId)
+        .order('order_index', ascending: true);
+
+    return nodes;
+  } catch (e) {
+    print('Error fetching roadmap nodes from Supabase: $e');
+    return [];
+  }
+});
+
+// =====================================================
+// USER SKILLS - From Supabase
+// =====================================================
+final userSkillsSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final currentUser = SupabaseConfig.client.auth.currentUser;
+  if (currentUser == null) return [];
+
+  try {
+    // Get user ID from Supabase
+    final userResponse = await SupabaseConfig.client
+        .from('users')
+        .select('id')
+        .eq('supabase_uid', currentUser.id)
+        .maybeSingle();
+
+    if (userResponse == null) return [];
+
+    final userId = userResponse['id'] as String;
+
+    // Fetch user skills
+    final skills = await SupabaseConfig.client
+        .from('user_skills')
+        .select()
+        .eq('user_id', userId);
+
+    return skills;
+  } catch (e) {
+    print('Error fetching user skills from Supabase: $e');
+    return [];
+  }
+});
+
 final roadmapNodesProvider = FutureProvider.family<List<RoadmapNode>, String>((ref, userId) async {
   final service = ref.watch(roadmapServiceProvider);
   return await service.getRoadmapNodes(userId);
@@ -85,10 +191,10 @@ final userAchievementsProvider = FutureProvider.family<List<UserAchievement>, St
   return await service.getUserAchievements(userId);
 });
 
-final isAuthenticatedProvider = Provider<bool>((ref) {
-  final userAsync = ref.watch(currentUserProvider);
-  return userAsync.maybeWhen(
-    data: (user) => user != null,
-    orElse: () => false,
-  );
+final isAuthenticatedProvider = StreamProvider<bool>((ref) {
+  // Listen to Supabase auth state changes
+  return SupabaseConfig.client.auth.onAuthStateChange.map((data) {
+    final session = data.session;
+    return session != null;
+  });
 });

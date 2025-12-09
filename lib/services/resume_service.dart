@@ -4,6 +4,7 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mentora_app/config/supabase_config.dart';
+import 'dart:typed_data';
 
 class ResumeService {
   final SupabaseClient _client = SupabaseConfig.client;
@@ -18,7 +19,7 @@ class ResumeService {
 
     await _client.storage
         .from(SupabaseConfig.resumeBucket)
-        .uploadBinary(fileName, fileBytes);
+        .uploadBinary(fileName, Uint8List.fromList(fileBytes));
 
     return _client.storage
         .from(SupabaseConfig.resumeBucket)

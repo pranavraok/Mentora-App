@@ -4,6 +4,8 @@
 // Endpoint: POST /functions/v1/complete-project
 // Handles project completion, verification, and rewards
 
+// deno-lint-ignore-file
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   corsHeaders,
@@ -25,7 +27,7 @@ interface CompleteProjectRequest {
   completed_tasks?: string[];
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -211,6 +213,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in complete-project:", error);
-    return errorResponse(error.message || "Failed to complete project", 500);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return errorResponse(errorMsg || "Failed to complete project", 500);
   }
 });

@@ -94,22 +94,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         userId = userResponse['id'] as String;
       }
 
-      // Build comprehensive onboarding payload
-      final payload = {
-        'user_id': userId,
-        'career_goal': _careerGoalController.text,
-        'current_skills': _selectedSkills,
-        'target_skills': _selectedInterests,
-        'experience': _experienceLevel,
-        'education': _educationController.text,
-        'learning_style': _learningStyle,
-        'time_commitment': _weeklyHours,
-        'motivation': _motivation,
-      };
-
       // Call Supabase Edge Function to generate roadmap via Gemini AI
       final roadmapService = RoadmapService();
-      final result = await roadmapService.generateRoadmap(
+      await roadmapService.generateRoadmap(
         userId: userId,
         careerGoal: _careerGoalController.text,
         currentSkills: _selectedSkills,

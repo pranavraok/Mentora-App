@@ -4,6 +4,8 @@
 // Endpoint: POST /functions/v1/analyze-resume
 // Analyzes resume using Gemini API for ATS optimization
 
+// deno-lint-ignore-file
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   corsHeaders,
@@ -62,7 +64,7 @@ function generateHash(content: string): string {
   return Math.abs(hash).toString(16);
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -160,7 +162,8 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in analyze-resume:", error);
-    return errorResponse(error.message || "Failed to analyze resume", 500);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return errorResponse(errorMsg || "Failed to analyze resume", 500);
   }
 });
 

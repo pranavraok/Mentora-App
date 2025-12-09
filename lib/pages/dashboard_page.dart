@@ -34,15 +34,58 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isAuthenticatedAsync = ref.watch(isAuthenticatedProvider);
     final userAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      body: userAsync.when(
-        data: (user) => user == null
-            ? const Center(child: Text('Please login'))
-            : _pages[_selectedIndex],
+      body: isAuthenticatedAsync.when(
+        data: (isAuthenticated) {
+          if (!isAuthenticated) {
+            // Not authenticated - show login prompt
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    size: 80,
+                    color: Colors.white54,
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'Please login first',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Authenticated - show dashboard
+          return userAsync.when(
+            data: (user) => user == null
+                ? const Center(child: CircularProgressIndicator())
+                : _pages[_selectedIndex],
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Auth error: $e'),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Go Back'),
+              ),
+            ],
+          ),
+        ),
       ),
       bottomNavigationBar: _buildModernBottomNav(),
     );
@@ -138,6 +181,31 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
+
+    // Load dashboard data from Supabase on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDashboardData();
+    });
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      // Force refresh of current user data
+      // ignore: unused_result
+      await ref.refresh(currentUserProvider);
+      
+      // Force refresh of roadmap nodes
+      // ignore: unused_result
+      await ref.refresh(roadmapNodesSupabaseProvider);
+      
+      // Force refresh of user skills
+      // ignore: unused_result
+      await ref.refresh(userSkillsSupabaseProvider);
+      
+      print('Dashboard data loaded from Supabase');
+    } catch (e) {
+      print('Error loading dashboard data: $e');
+    }
   }
 
   @override

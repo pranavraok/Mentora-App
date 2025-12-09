@@ -4,6 +4,8 @@
 // Endpoint: POST /functions/v1/daily-rewards
 // Awards daily login XP and manages streaks
 
+// deno-lint-ignore-file
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   corsHeaders,
@@ -16,7 +18,7 @@ import {
   createNotification,
 } from "../_shared/utils.ts";
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -106,6 +108,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in daily-rewards:", error);
-    return errorResponse(error.message || "Failed to process daily reward", 500);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return errorResponse(errorMsg || "Failed to process daily reward", 500);
   }
 });

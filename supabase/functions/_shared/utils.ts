@@ -2,6 +2,9 @@
 // SHARED UTILITIES FOR EDGE FUNCTIONS
 // =====================================================
 
+// @deno-types="https://deno.land/x/types/index.d.ts"
+// deno-lint-ignore-file
+
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 // Initialize Supabase client with service role

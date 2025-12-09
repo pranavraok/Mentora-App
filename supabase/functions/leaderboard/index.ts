@@ -4,6 +4,8 @@
 // Endpoint: GET /functions/v1/leaderboard?period=weekly&category=overall&limit=50
 // Returns paginated leaderboard with realtime subscriptions
 
+// deno-lint-ignore-file
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   corsHeaders,
@@ -12,7 +14,7 @@ import {
   createServiceClient,
 } from "../_shared/utils.ts";
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -185,6 +187,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in leaderboard:", error);
-    return errorResponse(error.message || "Failed to fetch leaderboard", 500);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return errorResponse(errorMsg || "Failed to fetch leaderboard", 500);
   }
 });

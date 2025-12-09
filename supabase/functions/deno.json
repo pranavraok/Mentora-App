@@ -1,0 +1,13 @@
+{
+  "tasks": {
+    "check": "deno check --all mod.ts"
+  },
+  "imports": {
+    "https://deno.land/std@0.168.0/": "https://deno.land/std@0.168.0/",
+    "https://esm.sh/@supabase/supabase-js@2.39.0": "https://esm.sh/@supabase/supabase-js@2.39.0"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window"],
+    "strict": true
+  }
+}

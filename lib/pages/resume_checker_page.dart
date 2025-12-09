@@ -76,12 +76,15 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
           'resume_${DateTime.now().millisecondsSinceEpoch}.${file.extension}';
       final path = '${user.id}/$fileName';
 
-      await SupabaseConfig.client.storage.from('career-resumes').uploadBinary(
+      await SupabaseConfig.client.storage
+          .from('career-resumes')
+          .uploadBinary(
             path,
             bytes,
             fileOptions: FileOptions(
-              contentType:
-                  file.extension == 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              contentType: file.extension == 'pdf'
+                  ? 'application/pdf'
+                  : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             ),
           );
 
@@ -723,13 +726,16 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
               ),
             )
           else
-            ..._suggestions.map((suggestion) => Column(
-                  children: [
-                    _buildSuggestionItem(suggestion, ''),
-                    if (_suggestions.indexOf(suggestion) < _suggestions.length - 1)
-                      const SizedBox(height: 10),
-                  ],
-                )),
+            ..._suggestions.map(
+              (suggestion) => Column(
+                children: [
+                  _buildSuggestionItem(suggestion, ''),
+                  if (_suggestions.indexOf(suggestion) <
+                      _suggestions.length - 1)
+                    const SizedBox(height: 10),
+                ],
+              ),
+            ),
           if (_suggestions.isEmpty) ...[
             const SizedBox(height: 10),
             _buildSuggestionItem(

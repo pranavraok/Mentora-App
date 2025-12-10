@@ -10,39 +10,42 @@ import 'package:mentora_app/services/project_service.dart';
 import 'package:mentora_app/services/achievement_service.dart';
 import 'package:mentora_app/config/supabase_config.dart';
 
-final storageProvider = FutureProvider<LocalStorageService>((ref) async {
+final storageProvider = FutureProvider((ref) async {
   return await LocalStorageService.getInstance();
 });
 
-final userServiceProvider = Provider<UserService>((ref) {
+final userServiceProvider = Provider((ref) {
   final storage = ref.watch(storageProvider).value;
   return UserService(storage!);
 });
 
-final roadmapServiceProvider = Provider<RoadmapService>((ref) {
+final roadmapServiceProvider = Provider((ref) {
   final storage = ref.watch(storageProvider).value;
   return RoadmapService(storage!);
 });
 
-final projectServiceProvider = Provider<ProjectService>((ref) {
+final projectServiceProvider = Provider((ref) {
   final storage = ref.watch(storageProvider).value;
   return ProjectService(storage!);
 });
 
-final achievementServiceProvider = Provider<AchievementService>((ref) {
+final achievementServiceProvider = Provider((ref) {
   final storage = ref.watch(storageProvider).value;
   return AchievementService(storage!);
 });
 
-final currentUserProvider = FutureProvider<UserModel?>((ref) async {
+final currentUserProvider = FutureProvider((ref) async {
   // First check if user is authenticated with Supabase
   final supabaseUser = SupabaseConfig.client.auth.currentUser;
 
   if (supabaseUser == null) {
+    print('❌ No authenticated Supabase user');
     // Not authenticated - try to get from local storage (backwards compat)
     final userService = ref.watch(userServiceProvider);
     return await userService.getCurrentUser();
   }
+
+  print('✅ Authenticated user: ${supabaseUser.email}');
 
   // User is authenticated with Supabase - fetch their profile from database
   try {
@@ -53,9 +56,11 @@ final currentUserProvider = FutureProvider<UserModel?>((ref) async {
         .maybeSingle();
 
     if (response == null) {
-      print('User profile not found in Supabase for UID: ${supabaseUser.id}');
+      print('❌ User profile not found in Supabase for UID: ${supabaseUser.id}');
       return null;
     }
+
+    print('✅ User profile found: ${response['name']}');
 
     // Convert Supabase user data to UserModel
     return UserModel(
@@ -73,13 +78,14 @@ final currentUserProvider = FutureProvider<UserModel?>((ref) async {
       createdAt: DateTime.parse(response['created_at'] as String),
       updatedAt: DateTime.parse(response['updated_at'] as String),
     );
-  } catch (e) {
-    print('Error fetching user from Supabase: $e');
+  } catch (e, stackTrace) {
+    print('❌ Error fetching user from Supabase: $e');
+    print('Stack trace: $stackTrace');
     return null;
   }
 });
 
-final userNotifierProvider = Provider<UserNotifier>((ref) {
+final userNotifierProvider = Provider((ref) {
   final userService = ref.watch(userServiceProvider);
   return UserNotifier(userService, ref);
 });
@@ -110,7 +116,73 @@ class UserNotifier {
 // ROADMAP NODES - From Supabase
 // =====================================================
 final roadmapNodesSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>(
-  (ref) async {
+      (ref) async {
+    print('🔍 Starting to fetch roadmap nodes...');
+
+    try {
+      final currentUser = SupabaseConfig.client.auth.currentUser;
+
+      if (currentUser == null) {
+        print('❌ No authenticated user found in Supabase');
+        return [];
+      }
+
+      print('✅ Authenticated user: ${currentUser.id}');
+
+      // Get user ID from Supabase users table
+      final userResponse = await SupabaseConfig.client
+          .from('users')
+          .select('id')
+          .eq('supabase_uid', currentUser.id)
+          .maybeSingle();
+
+      if (userResponse == null) {
+        print('❌ User not found in database for supabase_uid: ${currentUser.id}');
+        return [];
+      }
+
+      final userId = userResponse['id'] as String;
+      print('✅ Found user in database with ID: $userId');
+
+      // Fetch roadmap nodes
+      final response = await SupabaseConfig.client
+          .from('roadmap_nodes')
+          .select()
+          .eq('user_id', userId)
+          .order('order_index', ascending: true);
+
+      print('✅ Raw response from Supabase: $response');
+      print('✅ Response type: ${response.runtimeType}');
+      print('✅ Fetched ${response.length} roadmap nodes from Supabase');
+
+      // Print first node for debugging
+      if (response.isNotEmpty) {
+        print('📋 First node sample:');
+        print('   Title: ${response[0]['title']}');
+        print('   Type: ${response[0]['node_type']}');
+        print('   Status: ${response[0]['status']}');
+      } else {
+        print('⚠️ No nodes found for user: $userId');
+      }
+
+      // Convert to List<Map<String, dynamic>>
+      final nodesList = List<Map<String, dynamic>>.from(response);
+      print('✅ Converted to List<Map<String, dynamic>> with ${nodesList.length} items');
+
+      return nodesList;
+    } catch (e, stackTrace) {
+      print('❌ Error fetching roadmap nodes: $e');
+      print('Stack trace: $stackTrace');
+      return [];
+    }
+  },
+);
+
+// =====================================================
+// USER SKILLS - From Supabase
+// =====================================================
+final userSkillsSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>(
+      (ref) async {
     final currentUser = SupabaseConfig.client.auth.currentUser;
     if (currentUser == null) return [];
 
@@ -126,62 +198,26 @@ final roadmapNodesSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>(
 
       final userId = userResponse['id'] as String;
 
-      // Fetch roadmap nodes
-      final nodes = await SupabaseConfig.client
-          .from('roadmap_nodes')
+      // Fetch user skills
+      final skills = await SupabaseConfig.client
+          .from('user_skills')
           .select()
-          .eq('user_id', userId)
-          .order('order_index', ascending: true);
+          .eq('user_id', userId);
 
-      return nodes;
+      return List<Map<String, dynamic>>.from(skills);
     } catch (e) {
-      print('Error fetching roadmap nodes from Supabase: $e');
+      print('❌ Error fetching user skills from Supabase: $e');
       return [];
     }
   },
 );
 
-// =====================================================
-// USER SKILLS - From Supabase
-// =====================================================
-final userSkillsSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>((
-  ref,
-) async {
-  final currentUser = SupabaseConfig.client.auth.currentUser;
-  if (currentUser == null) return [];
-
-  try {
-    // Get user ID from Supabase
-    final userResponse = await SupabaseConfig.client
-        .from('users')
-        .select('id')
-        .eq('supabase_uid', currentUser.id)
-        .maybeSingle();
-
-    if (userResponse == null) return [];
-
-    final userId = userResponse['id'] as String;
-
-    // Fetch user skills
-    final skills = await SupabaseConfig.client
-        .from('user_skills')
-        .select()
-        .eq('user_id', userId);
-
-    return skills;
-  } catch (e) {
-    print('Error fetching user skills from Supabase: $e');
-    return [];
-  }
-});
-
-final roadmapNodesProvider = FutureProvider.family<List<RoadmapNode>, String>((
-  ref,
-  userId,
-) async {
-  final service = ref.watch(roadmapServiceProvider);
-  return await service.getRoadmapNodes(userId);
-});
+final roadmapNodesProvider = FutureProvider.family<List<RoadmapNode>, String>(
+      (ref, userId) async {
+    final service = ref.watch(roadmapServiceProvider);
+    return await service.getRoadmapNodes(userId);
+  },
+);
 
 final projectsProvider = FutureProvider<List<Project>>((ref) async {
   final service = ref.watch(projectServiceProvider);
@@ -193,11 +229,12 @@ final achievementsProvider = FutureProvider<List<Achievement>>((ref) async {
   return await service.getAllAchievements();
 });
 
+// ✅ FIXED: Changed return type to UserAchievement
 final userAchievementsProvider =
-    FutureProvider.family<List<UserAchievement>, String>((ref, userId) async {
-      final service = ref.watch(achievementServiceProvider);
-      return await service.getUserAchievements(userId);
-    });
+FutureProvider.family<List<UserAchievement>, String>((ref, userId) async {
+  final service = ref.watch(achievementServiceProvider);
+  return await service.getUserAchievements(userId);
+});
 
 final isAuthenticatedProvider = StreamProvider<bool>((ref) {
   // Listen to Supabase auth state changes

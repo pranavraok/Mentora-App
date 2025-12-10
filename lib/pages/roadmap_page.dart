@@ -5,7 +5,7 @@ import 'package:mentora_app/models/roadmap_node.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
-
+import 'package:mentora_app/config/supabase_config.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -47,11 +47,12 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
-
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
-        final nodesAsync = ref.watch(roadmapNodesProvider(user.id));
+
+        // ⭐ CHANGED: Using roadmapNodesSupabaseProvider instead of roadmapNodesProvider
+        final nodesAsync = ref.watch(roadmapNodesSupabaseProvider);
 
         return Scaffold(
           body: Stack(
@@ -151,7 +152,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const NotificationsPage(),
+                                            const NotificationsPage(),
                                           ),
                                         );
                                       },
@@ -165,7 +166,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const SettingsPage(),
+                                            const SettingsPage(),
                                           ),
                                         );
                                       },
@@ -259,10 +260,15 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                   // ============= SCROLLABLE CONTENT =============
                   Expanded(
                     child: nodesAsync.when(
-                      data: (nodes) {
-                        if (nodes.isEmpty) {
+                      data: (rawNodes) {
+                        if (rawNodes.isEmpty) {
                           return _buildEmptyState();
                         }
+
+// ⭐ CONVERT RAW JSON TO RoadmapNode OBJECTS
+                        final nodes = rawNodes.map((json) {
+                          return RoadmapNode.fromJson(json as Map<String, dynamic>);
+                        }).toList();
 
                         return CustomScrollView(
                           controller: _scrollController,
@@ -302,34 +308,34 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                                  width: 80,
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFFD700),
-                                        Color(0xFFFFA500),
-                                      ],
-                                    ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFFFFD700,
-                                        ).withOpacity(0.5),
-                                        blurRadius: 30,
-                                        spreadRadius: 10,
-                                      ),
-                                    ],
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFFFD700,
+                                    ).withOpacity(0.5),
+                                    blurRadius: 30,
+                                    spreadRadius: 10,
                                   ),
-                                  child: const CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 3,
-                                  ),
-                                )
+                                ],
+                              ),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
                                 .animate(
-                                  onPlay: (controller) => controller.repeat(),
-                                )
+                              onPlay: (controller) => controller.repeat(),
+                            )
                                 .rotate(duration: 2.seconds),
                             const SizedBox(height: 24),
                             Text(
@@ -362,13 +368,16 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              e.toString(),
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.6),
-                                fontSize: 13,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 40),
+                              child: Text(
+                                e.toString(),
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 13,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
@@ -459,23 +468,23 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFFFFD700).withOpacity(0.2),
-                      const Color(0xFFFFA500).withOpacity(0.2),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.map_rounded,
-                  size: 70,
-                  color: Colors.white54,
-                ),
-              )
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.2),
+                  const Color(0xFFFFA500).withOpacity(0.2),
+                ],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.map_rounded,
+              size: 70,
+              color: Colors.white54,
+            ),
+          )
               .animate(onPlay: (controller) => controller.repeat())
               .shimmer(duration: 2.seconds),
           const SizedBox(height: 32),
@@ -511,145 +520,145 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
     final progress = total > 0 ? completed / total : 0.0;
 
     return ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.25),
-                    Colors.white.withOpacity(0.1),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 30,
-                    offset: const Offset(0, 15),
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.25),
+                Colors.white.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 15),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Journey Progress',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$completed of $total completed',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFD700).withOpacity(0.5),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '${(progress * 100).toInt()}%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              child: Column(
+              const SizedBox(height: 20),
+              Stack(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Journey Progress',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '$completed of $total completed',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  Container(
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: progress,
+                    child: Container(
+                      height: 14,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD700).withOpacity(0.5),
+                            blurRadius: 15,
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFFD700).withOpacity(0.5),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          '${(progress * 100).toInt()}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Stack(
-                    children: [
-                      Container(
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      FractionallySizedBox(
-                        widthFactor: progress,
-                        child: Container(
-                          height: 14,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFFD700).withOpacity(0.5),
-                                blurRadius: 15,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatChip(
-                        '✅ $completed',
-                        'Done',
-                        const Color(0xFF43e97b),
-                      ),
-                      _buildStatChip(
-                        '🔄 $inProgress',
-                        'Active',
-                        const Color(0xFF4facfe),
-                      ),
-                      _buildStatChip(
-                        '📚 ${total - completed - inProgress}',
-                        'Locked',
-                        const Color(0xFF6c757d),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatChip(
+                    '✅ $completed',
+                    'Done',
+                    const Color(0xFF43e97b),
+                  ),
+                  _buildStatChip(
+                    '🔄 $inProgress',
+                    'Active',
+                    const Color(0xFF4facfe),
+                  ),
+                  _buildStatChip(
+                    '📚 ${total - completed - inProgress}',
+                    'Locked',
+                    const Color(0xFF6c757d),
+                  ),
+                ],
+              ),
+            ],
           ),
-        )
+        ),
+      ),
+    )
         .animate()
         .fadeIn(delay: 300.ms)
         .slideY(begin: 0.3, end: 0)
@@ -734,9 +743,9 @@ class ThreeDRoadmap extends ConsumerWidget {
                   .slideX(begin: isLeft ? -0.5 : 0.5, end: 0)
                   .then()
                   .shimmer(
-                    duration: 1500.ms,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
+                duration: 1500.ms,
+                color: Colors.white.withOpacity(0.1),
+              ),
             );
           }),
 
@@ -1274,6 +1283,8 @@ class RoadCheckpoint extends ConsumerWidget {
       case NodeType.bonus:
         iconData = Icons.card_giftcard_rounded;
         break;
+      default:
+        iconData = Icons.circle;
     }
 
     return Icon(iconData, color: Colors.white, size: 20);
@@ -1518,17 +1529,23 @@ class RoadmapDetailSheet extends ConsumerWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () async {
-                            final roadmapService = ref.read(
-                              roadmapServiceProvider,
-                            );
-                            await roadmapService.updateNode(
-                              node.copyWith(
-                                status: NodeStatus.inProgress,
-                                startedAt: DateTime.now(),
-                              ),
-                            );
-                            ref.invalidate(roadmapNodesProvider);
-                            if (context.mounted) Navigator.pop(context);
+                            try {
+                              // ⭐ UPDATE NODE STATUS IN SUPABASE DIRECTLY
+                              await SupabaseConfig.client
+                                  .from('roadmap_nodes')
+                                  .update({
+                                'status': 'inProgress',
+                                'started_at': DateTime.now().toIso8601String(),
+                              })
+                                  .eq('id', node.id);
+
+                              // Refresh the roadmap
+                              ref.invalidate(roadmapNodesSupabaseProvider);
+
+                              if (context.mounted) Navigator.pop(context);
+                            } catch (e) {
+                              debugPrint('Error updating node: $e');
+                            }
                           },
                           borderRadius: BorderRadius.circular(18),
                           child: Center(
@@ -1629,6 +1646,8 @@ class RoadmapDetailSheet extends ConsumerWidget {
       case NodeType.bonus:
         iconData = Icons.card_giftcard_rounded;
         break;
+      default:
+        iconData = Icons.circle;
     }
 
     return Icon(iconData, color: Colors.white, size: 38);
@@ -1648,11 +1667,11 @@ class RoadmapDetailSheet extends ConsumerWidget {
   }
 
   Widget _buildDetailRow(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
+      IconData icon,
+      String label,
+      String value,
+      Color color,
+      ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(

@@ -6,6 +6,7 @@ import 'package:mentora_app/models/project_extensions.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
+import 'package:mentora_app/config/supabase_config.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -39,16 +40,16 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
-
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
+
         final projectsAsync = ref.watch(projectsProvider);
 
         return Scaffold(
           body: Stack(
             children: [
-              // ✅ ORIGINAL BACKGROUND - Just gradient + blurred circles
+              // BACKGROUND GRADIENT
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -63,7 +64,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                 ),
               ),
 
-              // ✅ FLOATING BLUR CIRCLES (ORIGINAL)
+              // FLOATING BLUR CIRCLES
               ...List.generate(8, (index) {
                 return AnimatedBuilder(
                   animation: _animController,
@@ -92,10 +93,10 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                 );
               }),
 
-              // ============= CONTENT LAYER =============
+              // CONTENT
               Column(
                 children: [
-                  // ============= MODERN GLASSMORPHIC HEADER =============
+                  // HEADER
                   ClipRRect(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -123,7 +124,6 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // ✅ LOGO
                                 SizedBox(
                                   height: 60,
                                   child: Image.asset(
@@ -131,7 +131,6 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                                     fit: BoxFit.contain,
                                   ),
                                 ),
-
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -142,7 +141,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const NotificationsPage(),
+                                            const NotificationsPage(),
                                           ),
                                         );
                                       },
@@ -156,7 +155,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const SettingsPage(),
+                                            const SettingsPage(),
                                           ),
                                         );
                                       },
@@ -171,23 +170,19 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                     ),
                   ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
 
-                  // ============= PAGE TITLE (BUILD PROJECTS - LEFT SIDE) =============
+                  // TITLE
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
                     child: Row(
                       children: [
-                        // Animated Icon
                         AnimatedBuilder(
                           animation: _animController,
                           builder: (context, child) {
                             return Transform.scale(
-                              scale:
-                                  1.0 +
-                                  (math.sin(
-                                        _animController.value * 2 * math.pi,
-                                      ) *
-                                      0.08),
+                              scale: 1.0 +
+                                  math.sin(_animController.value * 2 * math.pi) *
+                                      0.08,
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -204,17 +199,13 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(
-                                        0xFFFFD700,
-                                      ).withOpacity(0.6),
-                                      blurRadius:
-                                          20 +
-                                          (math.sin(
-                                                _animController.value *
-                                                    2 *
-                                                    math.pi,
-                                              ) *
-                                              5),
+                                      color: const Color(0xFFFFD700)
+                                          .withOpacity(0.6),
+                                      blurRadius: 20 +
+                                          math.sin(_animController.value *
+                                              2 *
+                                              math.pi) *
+                                              5,
                                       spreadRadius: 3,
                                     ),
                                   ],
@@ -233,9 +224,13 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ShaderMask(
-                              shaderCallback: (bounds) => const LinearGradient(
-                                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                              ).createShader(bounds),
+                              shaderCallback: (bounds) =>
+                                  const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFFD700),
+                                      Color(0xFFFFA500),
+                                    ],
+                                  ).createShader(bounds),
                               child: const Text(
                                 'BUILD PROJECTS',
                                 style: TextStyle(
@@ -258,9 +253,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
+                  )
+                      .animate()
+                      .fadeIn(delay: 200.ms)
+                      .slideY(begin: -0.2, end: 0),
 
-                  // Filter Chips
+                  // FILTERS
                   SizedBox(
                     height: 52,
                     child: ListView(
@@ -274,21 +272,16 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                         _buildFilterChip('All', Icons.apps_rounded),
                         const SizedBox(width: 10),
                         _buildFilterChip(
-                          'In Progress',
-                          Icons.play_circle_outline,
-                        ),
+                            'In Progress', Icons.play_circle_outline),
                         const SizedBox(width: 10),
-                        _buildFilterChip(
-                          'Completed',
-                          Icons.check_circle_outline,
-                        ),
+                        _buildFilterChip('Completed', Icons.check_circle_outline),
                         const SizedBox(width: 10),
                         _buildFilterChip('Unlocked', Icons.lock_open_rounded),
                       ],
                     ),
                   ),
 
-                  // Scrollable Content
+                  // CONTENT
                   Expanded(
                     child: projectsAsync.when(
                       data: (projects) {
@@ -297,6 +290,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                         }
 
                         final filteredProjects = _filterProjects(projects);
+
                         if (filteredProjects.isEmpty) {
                           return _buildEmptyFilterState();
                         }
@@ -305,20 +299,20 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                           padding: const EdgeInsets.all(20),
                           physics: const BouncingScrollPhysics(),
                           gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount:
-                                    MediaQuery.of(context).size.width > 600
-                                    ? 3
-                                    : 2,
-                                childAspectRatio: 0.72,
-                                crossAxisSpacing: 14,
-                                mainAxisSpacing: 14,
-                              ),
-                          itemCount: filteredProjects.length,
-                          itemBuilder: (context, index) => ProjectCard(
-                            project: filteredProjects[index],
-                            index: index,
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount:
+                            MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
                           ),
+                          itemCount: filteredProjects.length,
+                          itemBuilder: (context, index) {
+                            return ProjectCard(
+                              project: filteredProjects[index],
+                              index: index,
+                            );
+                          },
                         );
                       },
                       loading: () => Center(
@@ -326,34 +320,33 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                                  width: 80,
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFFD700),
-                                        Color(0xFFFFA500),
-                                      ],
-                                    ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFFFFD700,
-                                        ).withOpacity(0.5),
-                                        blurRadius: 30,
-                                        spreadRadius: 10,
-                                      ),
-                                    ],
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700)
+                                        .withOpacity(0.5),
+                                    blurRadius: 30,
+                                    spreadRadius: 10,
                                   ),
-                                  child: const CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 3,
-                                  ),
-                                )
+                                ],
+                              ),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
                                 .animate(
-                                  onPlay: (controller) => controller.repeat(),
-                                )
+                              onPlay: (controller) => controller.repeat(),
+                            )
                                 .rotate(duration: 2.seconds),
                             const SizedBox(height: 24),
                             Text(
@@ -483,23 +476,23 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFFFFD700).withOpacity(0.2),
-                      const Color(0xFFFFA500).withOpacity(0.2),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.rocket_launch_rounded,
-                  size: 70,
-                  color: Colors.white54,
-                ),
-              )
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.2),
+                  const Color(0xFFFFA500).withOpacity(0.2),
+                ],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.rocket_launch_rounded,
+              size: 70,
+              color: Colors.white54,
+            ),
+          )
               .animate(onPlay: (controller) => controller.repeat())
               .shimmer(duration: 2.seconds),
           const SizedBox(height: 32),
@@ -550,8 +543,13 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
 
   Widget _buildFilterChip(String label, IconData icon) {
     final isSelected = selectedFilter == label;
+
     return GestureDetector(
-      onTap: () => setState(() => selectedFilter = label),
+      onTap: () {
+        setState(() {
+          selectedFilter = label;
+        });
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -559,8 +557,8 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                )
+            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+          )
               : null,
           color: isSelected ? null : Colors.white.withOpacity(0.08),
           borderRadius: BorderRadius.circular(16),
@@ -572,12 +570,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
           ),
           boxShadow: isSelected
               ? [
-                  BoxShadow(
-                    color: const Color(0xFFFFD700).withOpacity(0.5),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
+            BoxShadow(
+              color: const Color(0xFFFFD700).withOpacity(0.5),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ]
               : null,
         ),
         child: Row(
@@ -619,12 +617,16 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage>
   }
 }
 
-// ============= PROJECT CARD (Enhanced with Glassmorphism) =============
+// PROJECT CARD
 class ProjectCard extends ConsumerWidget {
   final Project project;
   final int index;
 
-  const ProjectCard({super.key, required this.project, required this.index});
+  const ProjectCard({
+    super.key,
+    required this.project,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -634,359 +636,342 @@ class ProjectCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () => _showProjectDetails(context, ref),
-      child:
-          ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.2),
-                          Colors.white.withOpacity(0.1),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: color.withOpacity(0.6),
-                        width: 2.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.2),
+                  Colors.white.withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: color.withOpacity(0.6),
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Icon Section
+                Container(
+                  height: 95,
+                  decoration: BoxDecoration(
+                    gradient: gradient,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Top Icon Section
-                        Container(
-                          height: 95,
-                          decoration: BoxDecoration(
-                            gradient: gradient,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(20),
-                            ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Background Pattern
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: HexagonPatternPainter(
+                            color: Colors.white.withOpacity(0.15),
                           ),
-                          child: Stack(
-                            children: [
-                              // Background Pattern
-                              Positioned.fill(
-                                child: CustomPaint(
-                                  painter: HexagonPatternPainter(
-                                    color: Colors.white.withOpacity(0.15),
-                                  ),
-                                ),
+                        ),
+                      ),
+                      // Icon
+                      Center(
+                        child: Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
                               ),
-                              // Icon
-                              Center(
-                                child: Container(
-                                  width: 54,
-                                  height: 54,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.25),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 3,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 10,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    _getProjectIcon(project.status),
-                                    size: 28,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              // Status Badge
-                              if (project.status == ProjectStatus.completed)
-                                Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child:
-                                      Container(
-                                            padding: const EdgeInsets.all(5),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.white,
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black26,
-                                                  blurRadius: 8,
-                                                ),
-                                              ],
-                                            ),
-                                            child: const Icon(
-                                              Icons.check,
-                                              size: 14,
-                                              color: Color(0xFF43e97b),
-                                            ),
-                                          )
-                                          .animate(
-                                            onPlay: (controller) =>
-                                                controller.repeat(),
-                                          )
-                                          .scale(
-                                            duration: 1.seconds,
-                                            begin: const Offset(0.9, 0.9),
-                                            end: const Offset(1.1, 1.1),
-                                          ),
-                                ),
                             ],
                           ),
+                          child: Icon(
+                            _getProjectIcon(project.status),
+                            size: 28,
+                            color: Colors.white,
+                          ),
                         ),
+                      ),
+                      // Status Badge
+                      if (project.status == ProjectStatus.completed)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              size: 14,
+                              color: Color(0xFF43e97b),
+                            ),
+                          )
+                              .animate(
+                            onPlay: (controller) => controller.repeat(),
+                          )
+                              .scale(
+                            duration: 1.seconds,
+                            begin: const Offset(0.9, 0.9),
+                            end: const Offset(1.1, 1.1),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
 
-                        // Content Section
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Difficulty & XP
-                                Row(
+                // Content Section
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Difficulty & XP
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      difficultyColor.withOpacity(0.3),
+                                      difficultyColor.withOpacity(0.15),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(7),
+                                  border: Border.all(
+                                    color: difficultyColor,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  project.difficulty.name.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w900,
+                                    color: difficultyColor,
+                                    letterSpacing: 0.4,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(7),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700)
+                                        .withOpacity(0.4),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    size: 10,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${project.xpReward}',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Title
+                        Text(
+                          project.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 5),
+
+                        // Description
+                        Flexible(
+                          child: Text(
+                            project.description,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 11,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Progress Bar or Status
+                        if (project.status == ProjectStatus.inProgress)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${(project.completionPercentage * 100).toInt()}%',
+                                    style: TextStyle(
+                                      color: color,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${project.tasks.where((t) => t.isCompleted).length}/${project.tasks.length}',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Stack(
                                   children: [
-                                    Flexible(
+                                    Container(
+                                      height: 5,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    FractionallySizedBox(
+                                      widthFactor: project.completionPercentage,
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 7,
-                                          vertical: 4,
-                                        ),
+                                        height: 5,
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              difficultyColor.withOpacity(0.3),
-                                              difficultyColor.withOpacity(0.15),
+                                              color,
+                                              color.withOpacity(0.7),
                                             ],
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            7,
-                                          ),
-                                          border: Border.all(
-                                            color: difficultyColor,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          project.difficulty.name.toUpperCase(),
-                                          style: TextStyle(
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.w900,
-                                            color: difficultyColor,
-                                            letterSpacing: 0.4,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFFD700),
-                                            Color(0xFFFFA500),
+                                          borderRadius:
+                                          BorderRadius.circular(8),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: color.withOpacity(0.5),
+                                              blurRadius: 8,
+                                            ),
                                           ],
                                         ),
-                                        borderRadius: BorderRadius.circular(7),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(
-                                              0xFFFFD700,
-                                            ).withOpacity(0.4),
-                                            blurRadius: 8,
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.star,
-                                            size: 10,
-                                            color: Colors.white,
-                                          ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            '${project.xpReward}',
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                // Title
-                                Text(
-                                  project.title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1.2,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 7),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  color.withOpacity(0.25),
+                                  color.withOpacity(0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: color.withOpacity(0.5),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                _getStatusText(project.status),
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
                                 ),
-                                const SizedBox(height: 5),
-                                // Description
-                                Flexible(
-                                  child: Text(
-                                    project.description,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 11,
-                                      height: 1.3,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                // Progress Bar or Status
-                                if (project.status == ProjectStatus.inProgress)
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            '${(project.completionPercentage * 100).toInt()}%',
-                                            style: TextStyle(
-                                              color: color,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                          Text(
-                                            '${project.tasks.where((t) => t.isCompleted).length}/${project.tasks.length}',
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(
-                                                0.7,
-                                              ),
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 5),
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Stack(
-                                          children: [
-                                            Container(
-                                              height: 5,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(
-                                                  0.2,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                            ),
-                                            FractionallySizedBox(
-                                              widthFactor:
-                                                  project.completionPercentage,
-                                              child: Container(
-                                                height: 5,
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    colors: [
-                                                      color,
-                                                      color.withOpacity(0.7),
-                                                    ],
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: color.withOpacity(
-                                                        0.5,
-                                                      ),
-                                                      blurRadius: 8,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                else
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 7,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          color.withOpacity(0.25),
-                                          color.withOpacity(0.1),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: color.withOpacity(0.5),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        _getStatusText(project.status),
-                                        style: TextStyle(
-                                          color: color,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
                 ),
-              )
-              .animate(delay: Duration(milliseconds: 100 * index))
-              .fadeIn(duration: 600.ms)
-              .slideY(begin: 0.3, end: 0)
-              .then()
-              .shimmer(
-                duration: 2.seconds,
-                color: Colors.white.withOpacity(0.05),
-              ),
+              ],
+            ),
+          ),
+        ),
+      )
+          .animate(delay: Duration(milliseconds: 100 * index))
+          .fadeIn(duration: 600.ms)
+          .slideY(begin: 0.3, end: 0)
+          .then()
+          .shimmer(
+        duration: 2.seconds,
+        color: Colors.white.withOpacity(0.05),
+      ),
     );
   }
 
@@ -1053,13 +1038,13 @@ class ProjectCard extends ConsumerWidget {
   String _getStatusText(ProjectStatus status) {
     switch (status) {
       case ProjectStatus.completed:
-        return 'Completed ✓';
+        return 'Completed';
       case ProjectStatus.inProgress:
         return 'In Progress';
       case ProjectStatus.unlocked:
         return 'Start Building';
       case ProjectStatus.locked:
-        return 'Locked 🔒';
+        return 'Locked';
     }
   }
 
@@ -1073,7 +1058,7 @@ class ProjectCard extends ConsumerWidget {
   }
 }
 
-// ============= HEXAGON PATTERN PAINTER =============
+// HEXAGON PATTERN PAINTER
 class HexagonPatternPainter extends CustomPainter {
   final Color color;
 
@@ -1087,6 +1072,7 @@ class HexagonPatternPainter extends CustomPainter {
       ..strokeWidth = 1.5;
 
     const spacing = 22.0;
+
     for (double y = -spacing; y < size.height + spacing; y += spacing) {
       for (double x = -spacing; x < size.width + spacing; x += spacing * 1.5) {
         final offset = (y / spacing).floor() % 2 == 0 ? 0.0 : spacing * 0.75;
@@ -1098,17 +1084,15 @@ class HexagonPatternPainter extends CustomPainter {
   void _drawHexagon(Canvas canvas, Paint paint, Offset center, double radius) {
     final path = Path();
     for (int i = 0; i < 6; i++) {
-      final angle = (math.pi / 3) * i;
+      final angle = math.pi / 3 * i;
       final x = center.dx + radius * math.cos(angle);
       final y = center.dy + radius * math.sin(angle);
-
       if (i == 0) {
         path.moveTo(x, y);
       } else {
         path.lineTo(x, y);
       }
     }
-
     path.close();
     canvas.drawPath(path, paint);
   }
@@ -1117,7 +1101,7 @@ class HexagonPatternPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ============= PROJECT DETAIL SHEET (Enhanced) =============
+// PROJECT DETAIL SHEET (Keeping original logic but cleaned up)
 class ProjectDetailSheet extends ConsumerWidget {
   final Project project;
 
@@ -1144,8 +1128,13 @@ class ProjectDetailSheet extends ConsumerWidget {
                 const Color(0xFF0F0C29).withOpacity(0.95),
               ],
             ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(32),
+            ),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
           ),
           child: Column(
             children: [
@@ -1240,12 +1229,10 @@ class ProjectDetailSheet extends ConsumerWidget {
                                             vertical: 5,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: difficultyColor.withOpacity(
-                                              0.3,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
+                                            color: difficultyColor
+                                                .withOpacity(0.3),
+                                            borderRadius:
+                                            BorderRadius.circular(10),
                                             border: Border.all(
                                               color: Colors.white,
                                               width: 2,
@@ -1267,12 +1254,10 @@ class ProjectDetailSheet extends ConsumerWidget {
                                             vertical: 5,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.2,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
+                                            color:
+                                            Colors.white.withOpacity(0.2),
+                                            borderRadius:
+                                            BorderRadius.circular(10),
                                             border: Border.all(
                                               color: Colors.white,
                                               width: 2,
@@ -1349,9 +1334,8 @@ class ProjectDetailSheet extends ConsumerWidget {
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.white.withOpacity(
-                                              0.5,
-                                            ),
+                                            color:
+                                            Colors.white.withOpacity(0.5),
                                             blurRadius: 10,
                                           ),
                                         ],
@@ -1379,7 +1363,7 @@ class ProjectDetailSheet extends ConsumerWidget {
                     children: [
                       // Overview
                       const Text(
-                        '📝 Overview',
+                        'Overview',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -1414,10 +1398,11 @@ class ProjectDetailSheet extends ConsumerWidget {
                         ),
                       ),
 
+                      // Required Skills
                       if (project.requiredSkills.isNotEmpty) ...[
                         const SizedBox(height: 24),
                         const Text(
-                          '💡 Required Skills',
+                          'Required Skills',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -1448,9 +1433,8 @@ class ProjectDetailSheet extends ConsumerWidget {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFFFFD700,
-                                    ).withOpacity(0.3),
+                                    color: const Color(0xFFFFD700)
+                                        .withOpacity(0.3),
                                     blurRadius: 10,
                                   ),
                                 ],
@@ -1468,10 +1452,11 @@ class ProjectDetailSheet extends ConsumerWidget {
                         ),
                       ],
 
+                      // Tasks
                       if (project.tasks.isNotEmpty) ...[
                         const SizedBox(height: 24),
                         Text(
-                          '✅ Tasks (${project.tasks.where((t) => t.isCompleted).length}/${project.tasks.length})',
+                          'Tasks (${project.tasks.where((t) => t.isCompleted).length}/${project.tasks.length})',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -1495,17 +1480,15 @@ class ProjectDetailSheet extends ConsumerWidget {
                                     gradient: LinearGradient(
                                       colors: task.isCompleted
                                           ? [
-                                              const Color(
-                                                0xFF43e97b,
-                                              ).withOpacity(0.25),
-                                              const Color(
-                                                0xFF43e97b,
-                                              ).withOpacity(0.1),
-                                            ]
+                                        const Color(0xFF43e97b)
+                                            .withOpacity(0.25),
+                                        const Color(0xFF43e97b)
+                                            .withOpacity(0.1),
+                                      ]
                                           : [
-                                              Colors.white.withOpacity(0.1),
-                                              Colors.white.withOpacity(0.05),
-                                            ],
+                                        Colors.white.withOpacity(0.1),
+                                        Colors.white.withOpacity(0.05),
+                                      ],
                                     ),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
@@ -1523,11 +1506,11 @@ class ProjectDetailSheet extends ConsumerWidget {
                                         decoration: BoxDecoration(
                                           gradient: task.isCompleted
                                               ? const LinearGradient(
-                                                  colors: [
-                                                    Color(0xFF43e97b),
-                                                    Color(0xFF38f9d7),
-                                                  ],
-                                                )
+                                            colors: [
+                                              Color(0xFF43e97b),
+                                              Color(0xFF38f9d7),
+                                            ],
+                                          )
                                               : null,
                                           color: task.isCompleted
                                               ? null
@@ -1536,16 +1519,17 @@ class ProjectDetailSheet extends ConsumerWidget {
                                           border: Border.all(
                                             color: task.isCompleted
                                                 ? const Color(0xFF43e97b)
-                                                : Colors.white.withOpacity(0.5),
+                                                : Colors.white
+                                                .withOpacity(0.5),
                                             width: 2,
                                           ),
                                         ),
                                         child: task.isCompleted
                                             ? const Icon(
-                                                Icons.check,
-                                                size: 14,
-                                                color: Colors.white,
-                                              )
+                                          Icons.check,
+                                          size: 14,
+                                          color: Colors.white,
+                                        )
                                             : null,
                                       ),
                                       const SizedBox(width: 12),
@@ -1600,17 +1584,20 @@ class ProjectDetailSheet extends ConsumerWidget {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () async {
-                          final projectService = ref.read(
-                            projectServiceProvider,
-                          );
-                          await projectService.updateProject(
-                            project.copyWith(
-                              status: ProjectStatus.inProgress,
-                              startedAt: DateTime.now(),
-                            ),
-                          );
-                          ref.invalidate(projectsProvider);
-                          if (context.mounted) Navigator.pop(context);
+                          try {
+                            final projectService =
+                            ref.read(projectServiceProvider);
+                            await projectService.updateProject(
+                              project.copyWith(
+                                status: ProjectStatus.inProgress,
+                                startedAt: DateTime.now(),
+                              ),
+                            );
+                            ref.invalidate(projectsProvider);
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            debugPrint('Error updating project: $e');
+                          }
                         },
                         borderRadius: BorderRadius.circular(18),
                         child: Center(

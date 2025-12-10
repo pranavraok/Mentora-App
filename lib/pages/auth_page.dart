@@ -6,10 +6,12 @@ import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/pages/onboarding_page.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
 import 'package:mentora_app/services/auth_service.dart';
+import 'package:mentora_app/widgets/auth_popup_dialog.dart';
 import 'dart:math' as math;
 
 class AuthPage extends ConsumerStatefulWidget {
   final bool isLogin;
+
   const AuthPage({super.key, this.isLogin = true});
 
   @override
@@ -69,10 +71,12 @@ class _AuthPageState extends ConsumerState<AuthPage>
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;
           const curve = Curves.easeInOutCubic;
+
           var tween = Tween(
             begin: begin,
             end: end,
           ).chain(CurveTween(curve: curve));
+
           return SlideTransition(
             position: animation.drive(tween),
             child: child,
@@ -83,6 +87,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 
+  // ⭐ UPDATED AUTH HANDLER
   Future<void> _handleAuth() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -92,7 +97,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
       final authService = AuthService();
 
       if (widget.isLogin) {
-        // LOGIN
+        // ============= LOGIN =============
         final response = await authService.signInWithEmail(
           _emailController.text.trim(),
           _passwordController.text,
@@ -106,22 +111,32 @@ class _AuthPageState extends ConsumerState<AuthPage>
 
           if (!mounted) return;
 
-          if (isComplete) {
-            // Go to dashboard
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const DashboardPage()),
-            );
-          } else {
-            // Go to onboarding
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const OnboardingPage()),
-            );
-          }
+          // Show login success popup
+          await showAuthPopup(
+            context: context,
+            title: 'Login Successful! 🎉',
+            message: 'Welcome back! Let\'s continue your journey.',
+            icon: Icons.check_circle_rounded,
+            iconColor: const Color(0xFF43e97b),
+            onClose: () {
+              if (isComplete) {
+                // Go to dashboard
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DashboardPage()),
+                );
+              } else {
+                // Go to onboarding (first-time user)
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OnboardingPage()),
+                );
+              }
+            },
+          );
         }
       } else {
-        // SIGN UP
+        // ============= SIGN UP =============
         final response = await authService.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text,
@@ -131,28 +146,28 @@ class _AuthPageState extends ConsumerState<AuthPage>
         if (response.user != null) {
           if (!mounted) return;
 
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Account created! Complete your profile to get started.',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // Go to onboarding
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const OnboardingPage()),
+          // Show email verification popup with auto-redirect
+          await showAuthPopup(
+            context: context,
+            title: 'Check Your Email! 📧',
+            message:
+            'We\'ve sent a verification link to ${_emailController.text.trim()}. Please verify your email to continue.',
+            icon: Icons.mark_email_read_rounded,
+            iconColor: const Color(0xFF4facfe),
+            autoCloseDurationSeconds: 10,
+            onClose: () {
+              // Redirect to login page after 10 seconds
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const AuthPage(isLogin: true)),
+              );
+            },
           );
         }
       }
     } catch (e) {
       if (!mounted) return;
-
       setState(() => _isLoading = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceAll('Exception: ', '')),
@@ -164,6 +179,54 @@ class _AuthPageState extends ConsumerState<AuthPage>
 
     if (mounted) {
       setState(() => _isLoading = false);
+    }
+  }
+
+  // ⭐ NEW GOOGLE SIGN-IN HANDLER
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = AuthService();
+      final success = await authService.signInWithGoogle();
+
+      if (success && mounted) {
+        // Wait for auth state to update
+        await Future.delayed(const Duration(seconds: 2));
+
+        final user = authService.currentUser;
+        if (user != null) {
+          final isComplete = await authService.isOnboardingComplete(user.id);
+
+          if (!mounted) return;
+
+          if (isComplete) {
+            // Existing user - go to dashboard
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const DashboardPage()),
+            );
+          } else {
+            // New user - go to onboarding
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const OnboardingPage()),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google sign-in failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -233,7 +296,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                 children: [
                   const SizedBox(height: 20),
 
-                  // ✅ LOGO INSTEAD OF ROCKET
+                  // Logo
                   AnimatedBuilder(
                     animation: _floatingController,
                     builder: (context, child) {
@@ -246,21 +309,20 @@ class _AuthPageState extends ConsumerState<AuthPage>
                         child: child,
                       );
                     },
-                    child:
-                        SizedBox(
-                              height: 120,
-                              child: Image.asset(
-                                'assets/images/logo.png',
-                                fit: BoxFit.contain,
-                              ),
-                            )
-                            .animate(
-                              onPlay: (controller) => controller.repeat(),
-                            )
-                            .shimmer(
-                              duration: 2000.ms,
-                              color: Colors.white.withOpacity(0.3),
-                            ),
+                    child: SizedBox(
+                      height: 120,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                        .animate(
+                      onPlay: (controller) => controller.repeat(),
+                    )
+                        .shimmer(
+                      duration: 2000.ms,
+                      color: Colors.white.withOpacity(0.3),
+                    ),
                   ),
 
                   const SizedBox(height: 24),
@@ -300,264 +362,258 @@ class _AuthPageState extends ConsumerState<AuthPage>
 
                   // Form card
                   IntrinsicHeight(
-                        child: GlassmorphicContainer(
-                          width: double.infinity,
-                          height: double.infinity,
-                          borderRadius: 32,
-                          blur: 20,
-                          alignment: Alignment.center,
-                          border: 2,
-                          linearGradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.white.withOpacity(0.2),
-                              Colors.white.withOpacity(0.05),
-                            ],
-                          ),
-                          borderGradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.white.withOpacity(0.6),
-                              Colors.white.withOpacity(0.2),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(28),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
+                    child: GlassmorphicContainer(
+                      width: double.infinity,
+                      height: double.infinity,
+                      borderRadius: 32,
+                      blur: 20,
+                      alignment: Alignment.center,
+                      border: 2,
+                      linearGradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(0.2),
+                          Colors.white.withOpacity(0.05),
+                        ],
+                      ),
+                      borderGradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(0.6),
+                          Colors.white.withOpacity(0.2),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(28),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Social login buttons
+                              Row(
                                 children: [
-                                  // Social login buttons
-                                  Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildSocialButton(
-                                              icon: Icons.g_mobiledata,
-                                              label: 'Google',
-                                              onTap: () {},
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: _buildSocialButton(
-                                              icon: Icons.apple,
-                                              label: 'Apple',
-                                              onTap: () {},
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                      .animate()
-                                      .fadeIn(delay: 400.ms)
-                                      .slideY(begin: 0.2, end: 0),
-
-                                  const SizedBox(height: 20),
-
-                                  // Divider
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withOpacity(0.3),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                        ),
-                                        child: Text(
-                                          'or',
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(
-                                              0.7,
-                                            ),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withOpacity(0.3),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ).animate().fadeIn(delay: 500.ms),
-
-                                  const SizedBox(height: 20),
-
-                                  // Name field (for signup)
-                                  if (!widget.isLogin) ...[
-                                    _buildTextField(
-                                          controller: _nameController,
-                                          label: 'Full Name',
-                                          icon: Icons.person_outline,
-                                          validator: (v) => v?.isEmpty ?? true
-                                              ? 'Name required'
-                                              : null,
-                                          delay: 600,
-                                        )
-                                        .animate()
-                                        .fadeIn(delay: 600.ms)
-                                        .slideX(begin: -0.2, end: 0),
-                                    const SizedBox(height: 14),
-                                  ],
-
-                                  // Email field
-                                  _buildTextField(
-                                        controller: _emailController,
-                                        label: 'Email Address',
-                                        icon: Icons.email_outlined,
-                                        keyboardType:
-                                            TextInputType.emailAddress,
-                                        validator: (v) {
-                                          if (v?.isEmpty ?? true)
-                                            return 'Email required';
-                                          if (!v!.contains('@'))
-                                            return 'Invalid email';
-                                          return null;
-                                        },
-                                        delay: widget.isLogin ? 600 : 700,
-                                      )
-                                      .animate()
-                                      .fadeIn(
-                                        delay: Duration(
-                                          milliseconds: widget.isLogin
-                                              ? 600
-                                              : 700,
-                                        ),
-                                      )
-                                      .slideX(begin: -0.2, end: 0),
-
-                                  const SizedBox(height: 14),
-
-                                  // Password field
-                                  _buildTextField(
-                                        controller: _passwordController,
-                                        label: 'Password',
-                                        icon: Icons.lock_outline,
-                                        obscureText: _obscurePassword,
-                                        suffixIcon: IconButton(
-                                          icon: Icon(
-                                            _obscurePassword
-                                                ? Icons.visibility_off
-                                                : Icons.visibility,
-                                            color: Colors.white.withOpacity(
-                                              0.7,
-                                            ),
-                                          ),
-                                          onPressed: () => setState(
-                                            () => _obscurePassword =
-                                                !_obscurePassword,
-                                          ),
-                                        ),
-                                        validator: (v) {
-                                          if (v?.isEmpty ?? true)
-                                            return 'Password required';
-                                          if (v!.length < 6)
-                                            return 'Min 6 characters';
-                                          return null;
-                                        },
-                                        delay: widget.isLogin ? 700 : 800,
-                                      )
-                                      .animate()
-                                      .fadeIn(
-                                        delay: Duration(
-                                          milliseconds: widget.isLogin
-                                              ? 700
-                                              : 800,
-                                        ),
-                                      )
-                                      .slideX(begin: -0.2, end: 0),
-
-                                  if (widget.isLogin) ...[
-                                    const SizedBox(height: 4),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton(
-                                        onPressed: () {},
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 4,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Forgot Password?',
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(
-                                              0.9,
-                                            ),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    ).animate().fadeIn(delay: 800.ms),
-                                  ],
-
-                                  const SizedBox(height: 20),
-
-                                  // Submit button
-                                  _buildSubmitButton()
-                                      .animate()
-                                      .fadeIn(
-                                        delay: Duration(
-                                          milliseconds: widget.isLogin
-                                              ? 900
-                                              : 1000,
-                                        ),
-                                      )
-                                      .slideY(begin: 0.2, end: 0)
-                                      .shimmer(
-                                        delay: 1000.ms,
-                                        duration: 2000.ms,
-                                      ),
-
-                                  const SizedBox(height: 14),
-
-                                  // Toggle auth mode
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        widget.isLogin
-                                            ? "Don't have an account? "
-                                            : 'Already have an account? ',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.8),
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: _toggleAuthMode,
-                                        child: Text(
-                                          widget.isLogin ? 'Sign Up' : 'Login',
-                                          style: const TextStyle(
-                                            color: AppColors.xpGold,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ).animate().fadeIn(
-                                    delay: Duration(
-                                      milliseconds: widget.isLogin
-                                          ? 1000
-                                          : 1100,
+                                  Expanded(
+                                    child: _buildSocialButton(
+                                      icon: Icons.g_mobiledata,
+                                      label: 'Google',
+                                      onTap: _handleGoogleSignIn, // ⭐ UPDATED
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildSocialButton(
+                                      icon: Icons.apple,
+                                      label: 'Apple',
+                                      onTap: () {},
                                     ),
                                   ),
                                 ],
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 400.ms)
+                                  .slideY(begin: 0.2, end: 0),
+
+                              const SizedBox(height: 20),
+
+                              // Divider
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Divider(
+                                      color: Colors.white.withOpacity(0.3),
+                                      thickness: 1,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    child: Text(
+                                      'or',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(
+                                          0.7,
+                                        ),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Divider(
+                                      color: Colors.white.withOpacity(0.3),
+                                      thickness: 1,
+                                    ),
+                                  ),
+                                ],
+                              ).animate().fadeIn(delay: 500.ms),
+
+                              const SizedBox(height: 20),
+
+                              // Name field (for signup)
+                              if (!widget.isLogin) ...[
+                                _buildTextField(
+                                  controller: _nameController,
+                                  label: 'Full Name',
+                                  icon: Icons.person_outline,
+                                  validator: (v) => v?.isEmpty ?? true
+                                      ? 'Name required'
+                                      : null,
+                                  delay: 600,
+                                )
+                                    .animate()
+                                    .fadeIn(delay: 600.ms)
+                                    .slideX(begin: -0.2, end: 0),
+                                const SizedBox(height: 14),
+                              ],
+
+                              // Email field
+                              _buildTextField(
+                                controller: _emailController,
+                                label: 'Email Address',
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (v) {
+                                  if (v?.isEmpty ?? true) {
+                                    return 'Email required';
+                                  }
+                                  if (!v!.contains('@')) {
+                                    return 'Invalid email';
+                                  }
+                                  return null;
+                                },
+                                delay: widget.isLogin ? 600 : 700,
+                              )
+                                  .animate()
+                                  .fadeIn(
+                                delay: Duration(
+                                  milliseconds: widget.isLogin ? 600 : 700,
+                                ),
+                              )
+                                  .slideX(begin: -0.2, end: 0),
+
+                              const SizedBox(height: 14),
+
+                              // Password field
+                              _buildTextField(
+                                controller: _passwordController,
+                                label: 'Password',
+                                icon: Icons.lock_outline,
+                                obscureText: _obscurePassword,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Colors.white.withOpacity(
+                                      0.7,
+                                    ),
+                                  ),
+                                  onPressed: () => setState(
+                                        () => _obscurePassword = !_obscurePassword,
+                                  ),
+                                ),
+                                validator: (v) {
+                                  if (v?.isEmpty ?? true) {
+                                    return 'Password required';
+                                  }
+                                  if (v!.length < 6) {
+                                    return 'Min 6 characters';
+                                  }
+                                  return null;
+                                },
+                                delay: widget.isLogin ? 700 : 800,
+                              )
+                                  .animate()
+                                  .fadeIn(
+                                delay: Duration(
+                                  milliseconds: widget.isLogin ? 700 : 800,
+                                ),
+                              )
+                                  .slideX(begin: -0.2, end: 0),
+
+                              if (widget.isLogin) ...[
+                                const SizedBox(height: 4),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () {},
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Forgot Password?',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(
+                                          0.9,
+                                        ),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ).animate().fadeIn(delay: 800.ms),
+                              ],
+
+                              const SizedBox(height: 20),
+
+                              // Submit button
+                              _buildSubmitButton()
+                                  .animate()
+                                  .fadeIn(
+                                delay: Duration(
+                                  milliseconds: widget.isLogin ? 900 : 1000,
+                                ),
+                              )
+                                  .slideY(begin: 0.2, end: 0)
+                                  .shimmer(
+                                delay: 1000.ms,
+                                duration: 2000.ms,
                               ),
-                            ),
+
+                              const SizedBox(height: 14),
+
+                              // Toggle auth mode
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    widget.isLogin
+                                        ? "Don't have an account? "
+                                        : 'Already have an account? ',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: _toggleAuthMode,
+                                    child: Text(
+                                      widget.isLogin ? 'Sign Up' : 'Login',
+                                      style: const TextStyle(
+                                        color: AppColors.xpGold,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ).animate().fadeIn(
+                                delay: Duration(
+                                  milliseconds: widget.isLogin ? 1000 : 1100,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      )
+                      ),
+                    ),
+                  )
                       .animate()
                       .fadeIn(delay: 400.ms)
                       .scale(begin: const Offset(0.95, 0.95)),
@@ -701,33 +757,33 @@ class _AuthPageState extends ConsumerState<AuthPage>
           child: Center(
             child: _isLoading
                 ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
-                    ),
-                  )
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 3,
+              ),
+            )
                 : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        widget.isLogin ? 'Login & Continue' : 'Create Account',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ],
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  widget.isLogin ? 'Login & Continue' : 'Create Account',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
                   ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ],
+            ),
           ),
         ),
       ),

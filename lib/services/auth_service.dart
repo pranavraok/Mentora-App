@@ -16,16 +16,17 @@ class AuthService {
 
   // Sign up with email
   Future<AuthResponse> signUpWithEmail(
-    String email,
-    String password, {
-    required String name,
-    String? college,
-  }) async {
+      String email,
+      String password, {
+        required String name,
+        String? college,
+      }) async {
     // First, create the auth user
     final response = await _client.auth.signUp(
       email: email,
       password: password,
       data: {'name': name, 'college': college},
+      emailRedirectTo: null, // Email confirmation required
     );
 
     if (response.user != null) {

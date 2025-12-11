@@ -1,11 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 enum NotificationType {
   achievement,
   levelUp,
   projectUnlocked,
-  dailyChallenge,
+  projectCompleted,
+  nodeCompleted,
+  challengeCompleted,
+  dailyChallengeReminder,
+  streakMilestone,
   streakReminder,
+  inactiveReminder,
   system,
 }
 
@@ -17,6 +20,7 @@ class AppNotification {
   final String message;
   final bool isRead;
   final Map<String, dynamic>? data;
+  final String? actionUrl;
   final DateTime createdAt;
 
   AppNotification({
@@ -27,32 +31,89 @@ class AppNotification {
     required this.message,
     this.isRead = false,
     this.data,
+    this.actionUrl,
     required this.createdAt,
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     return AppNotification(
       id: json['id'] as String,
-      userId: json['userId'] as String,
-      type: NotificationType.values.byName(json['type'] as String),
+      userId: json['user_id'] as String,
+      type: _parseType(json['type'] as String),
       title: json['title'] as String,
       message: json['message'] as String,
-      isRead: json['isRead'] as bool? ?? false,
+      isRead: json['read'] as bool? ?? false,
       data: json['data'] as Map<String, dynamic>?,
-      createdAt: json['createdAt'] is Timestamp
-          ? (json['createdAt'] as Timestamp).toDate()
-          : DateTime.parse(json['createdAt'] as String),
+      actionUrl: json['action_url'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
     );
+  }
+
+  static NotificationType _parseType(String type) {
+    try {
+      return NotificationType.values.firstWhere(
+            (e) => e.name.toLowerCase() == type.toLowerCase(),
+        orElse: () => NotificationType.system,
+      );
+    } catch (e) {
+      return NotificationType.system;
+    }
   }
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'userId': userId,
+    'user_id': userId,
     'type': type.name,
     'title': title,
     'message': message,
-    'isRead': isRead,
+    'read': isRead,
     'data': data,
-    'createdAt': createdAt.toIso8601String(),
+    'action_url': actionUrl,
+    'created_at': createdAt.toIso8601String(),
   };
+
+  String get icon {
+    switch (type) {
+      case NotificationType.achievement:
+        return '🏆';
+      case NotificationType.levelUp:
+        return '🎉';
+      case NotificationType.projectUnlocked:
+        return '🔓';
+      case NotificationType.projectCompleted:
+        return '🚀';
+      case NotificationType.nodeCompleted:
+        return '✅';
+      case NotificationType.challengeCompleted:
+        return '⭐';
+      case NotificationType.dailyChallengeReminder:
+        return '⏰';
+      case NotificationType.streakMilestone:
+        return '🔥';
+      case NotificationType.streakReminder:
+        return '🔥';
+      case NotificationType.inactiveReminder:
+        return '👋';
+      case NotificationType.system:
+        return '🔔';
+    }
+  }
+
+  String get timeAgo {
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+
+    if (difference.inSeconds < 60) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${(difference.inDays / 7).floor()}w ago';
+    }
+  }
 }
+

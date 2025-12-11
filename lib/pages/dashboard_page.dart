@@ -12,6 +12,7 @@ import 'package:mentora_app/pages/projects_page.dart';
 import 'package:mentora_app/pages/profile_page.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
+import 'package:mentora_app/config/supabase_config.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -39,6 +40,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     final isAuthenticatedAsync = ref.watch(isAuthenticatedProvider);
     final userAsync = ref.watch(currentUserProvider);
+
     return Scaffold(
       body: isAuthenticatedAsync.when(
         data: (isAuthenticated) {
@@ -254,6 +256,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
+
         return Stack(
           children: [
             // Background gradient
@@ -270,6 +273,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 ),
               ),
             ),
+
             // Floating particles
             ...List.generate(8, (index) {
               return AnimatedBuilder(
@@ -298,6 +302,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 },
               );
             }),
+
             // Main content
             Column(
               children: [
@@ -374,13 +379,15 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                     ),
                   ),
                 ),
+
                 // Scrollable content
                 Expanded(
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      // Profile card
+
+                      // Profile card with real-time avatar
                       SliverToBoxAdapter(
                         child: Animate(
                           effects: [
@@ -392,133 +399,212 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           ],
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    const Color(0xFF667eea).withOpacity(0.9),
-                                    const Color(0xFF764ba2).withOpacity(0.9),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(28),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF667eea).withOpacity(0.4),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 15),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      AnimatedBuilder(
-                                        animation: _controller,
-                                        builder: (context, child) {
-                                          return Transform.translate(
-                                            offset: Offset(
-                                              0,
-                                              math.sin(_controller.value * 2 * math.pi) * 3,
-                                            ),
-                                            child: Container(
-                                              width: 75,
-                                              height: 75,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                gradient: const LinearGradient(
-                                                  colors: [
-                                                    Color(0xFFFFD700),
-                                                    Color(0xFFFFA500),
-                                                  ],
-                                                ),
-                                                border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 4,
-                                                ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: const Color(0xFFFFD700).withOpacity(0.6),
-                                                    blurRadius: 25,
-                                                    spreadRadius: 3,
-                                                  ),
-                                                ],
-                                              ),
-                                              child: const Center(
-                                                child: Text(
-                                                  '🚀',
-                                                  style: TextStyle(fontSize: 38),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
+                            child: Consumer(
+                              builder: (context, ref, child) {
+                                // Watch avatar from Supabase in real-time
+                                final avatarAsync = ref.watch(
+                                  StreamProvider.autoDispose<String>((ref) {
+                                    final supabase = SupabaseConfig.client;
+                                    final authUser = supabase.auth.currentUser;
+
+                                    if (authUser == null) {
+                                      return Stream.value('🚀');
+                                    }
+
+                                    return supabase
+                                        .from('users')
+                                        .stream(primaryKey: ['id'])
+                                        .eq('supabase_uid', authUser.id)
+                                        .map((list) {
+                                      if (list.isEmpty) return '🚀';
+                                      return list.first['avatar'] as String? ?? '🚀';
+                                    });
+                                  }),
+                                );
+
+                                final currentAvatar = avatarAsync.maybeWhen(
+                                  data: (avatar) => avatar,
+                                  orElse: () => '🚀',
+                                );
+
+                                return Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        const Color(0xFF667eea).withOpacity(0.9),
+                                        const Color(0xFF764ba2).withOpacity(0.9),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(28),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF667eea).withOpacity(0.4),
+                                        blurRadius: 30,
+                                        offset: const Offset(0, 15),
                                       ),
-                                      const SizedBox(width: 20),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'Hello, ${user.name}! 👋',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 22,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              user.email,
-                                              style: TextStyle(
-                                                color: Colors.white.withOpacity(0.9),
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 12),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.2),
-                                                borderRadius: BorderRadius.circular(20),
-                                                border: Border.all(
-                                                  color: Colors.white.withOpacity(0.3),
-                                                  width: 1.5,
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          AnimatedBuilder(
+                                            animation: _controller,
+                                            builder: (context, child) {
+                                              return Transform.translate(
+                                                offset: Offset(
+                                                  0,
+                                                  math.sin(_controller.value * 2 * math.pi) * 3,
                                                 ),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Icon(
-                                                    Icons.workspace_premium,
-                                                    color: Color(0xFFFFD700),
-                                                    size: 18,
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  Flexible(
-                                                    child: Text(
-                                                      'Level ${user.level} - ${user.levelTitle}',
-                                                      style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 13,
-                                                        fontWeight: FontWeight.w800,
+                                                child: Container(
+                                                  width: 75,
+                                                  height: 75,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    gradient: const LinearGradient(
+                                                      colors: [
+                                                        Color(0xFFFFD700),
+                                                        Color(0xFFFFA500),
+                                                      ],
+                                                    ),
+                                                    border: Border.all(
+                                                      color: Colors.white,
+                                                      width: 4,
+                                                    ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: const Color(0xFFFFD700).withOpacity(0.6),
+                                                        blurRadius: 25,
+                                                        spreadRadius: 3,
                                                       ),
-                                                      overflow: TextOverflow.ellipsis,
+                                                    ],
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      currentAvatar,
+                                                      style: const TextStyle(fontSize: 38),
                                                     ),
                                                   ),
-                                                ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          const SizedBox(width: 20),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  'Hello, ${user.name}! 👋',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  user.email,
+                                                  style: TextStyle(
+                                                    color: Colors.white.withOpacity(0.9),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white.withOpacity(0.2),
+                                                    borderRadius: BorderRadius.circular(20),
+                                                    border: Border.all(
+                                                      color: Colors.white.withOpacity(0.3),
+                                                      width: 1.5,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.workspace_premium,
+                                                        color: Color(0xFFFFD700),
+                                                        size: 18,
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      Flexible(
+                                                        child: Text(
+                                                          'Level ${user.level} - ${user.levelTitle}',
+                                                          style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 13,
+                                                            fontWeight: FontWeight.w800,
+                                                          ),
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(0.3),
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  'XP Progress',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '${gamificationAsync.maybeWhen(data: (g) => g.totalXp, orElse: () => user.xp)} / ${user.xpForNextLevel} XP',
+                                                  style: TextStyle(
+                                                    color: Colors.white.withOpacity(0.9),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(10),
+                                              child: LinearProgressIndicator(
+                                                value: user.xp / user.xpForNextLevel,
+                                                backgroundColor: Colors.white.withOpacity(0.2),
+                                                valueColor: const AlwaysStoppedAnimation(
+                                                  Color(0xFFFFD700),
+                                                ),
+                                                minHeight: 10,
                                               ),
                                             ),
                                           ],
@@ -526,62 +612,15 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 24),
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: Colors.white.withOpacity(0.3),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Text(
-                                              'XP Progress',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            Text(
-                                              '${gamificationAsync.maybeWhen(data: (g) => g.totalXp, orElse: () => user.xp)} / ${user.xpForNextLevel} XP',
-                                              style: TextStyle(
-                                                color: Colors.white.withOpacity(0.9),
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: LinearProgressIndicator(
-                                            value: user.xp / user.xpForNextLevel,
-                                            backgroundColor: Colors.white.withOpacity(0.2),
-                                            valueColor: const AlwaysStoppedAnimation(
-                                              Color(0xFFFFD700),
-                                            ),
-                                            minHeight: 10,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                           ),
                         ),
                       ),
+
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
                       // Stats cards
                       SliverToBoxAdapter(
                         child: Animate(
@@ -630,8 +669,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           ),
                         ),
                       ),
+
                       const SliverToBoxAdapter(child: SizedBox(height: 28)),
-                      // Today's challenge - REAL DATA
+
+                      // Today's challenge
                       SliverToBoxAdapter(
                         child: Animate(
                           effects: [
@@ -697,7 +738,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           ),
                         ),
                       ),
+
                       const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
                       // Quick Actions
                       SliverToBoxAdapter(
                         child: Animate(
@@ -813,8 +856,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           ),
                         ),
                       ),
+
                       const SliverToBoxAdapter(child: SizedBox(height: 28)),
-                      // Recent activity - REAL DATA
+
+                      // Recent activity
                       SliverToBoxAdapter(
                         child: Animate(
                           effects: [FadeEffect(delay: 600.ms)],
@@ -864,6 +909,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                     if (activities.isEmpty) {
                                       return _buildNoActivityCard();
                                     }
+
                                     return Column(
                                       children: activities.take(3).map((activity) {
                                         return Padding(
@@ -1001,7 +1047,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 borderRadius: BorderRadius.circular(10),
                 child: LinearProgressIndicator(
                   value: challenge.progress.clamp(0.0, 1.0),
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.white.withOpacity(0.3),
                   valueColor: const AlwaysStoppedAnimation(Colors.white),
                   minHeight: 10,
                 ),
@@ -1091,7 +1137,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   Widget _buildActivityItemFromModel(activity) {
     final iconData = _getIconFromString(activity.icon ?? 'check_circle_rounded');
     final color = _getColorFromString(activity.color ?? '0xFF43e97b');
-
     return _buildActivityItem(
       activity.title,
       activity.timeAgo,

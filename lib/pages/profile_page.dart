@@ -1,13 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:mentora_app/providers/app_providers.dart';
-import 'package:mentora_app/widgets/level_badge.dart';
-import 'package:mentora_app/pages/landing_page.dart';
+import 'package:mentora_app/config/supabase_config.dart';
+import 'package:mentora_app/providers/notification_provider.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
 import 'dart:math' as math;
 import 'dart:ui';
+
+// User data provider
+final userProfileProvider = StreamProvider.autoDispose<Map<String, dynamic>>((ref) {
+  final supabase = SupabaseConfig.client;
+  final user = supabase.auth.currentUser;
+
+  if (user == null) {
+    return Stream.value({});
+  }
+
+  return supabase
+      .from('users')
+      .select('id, supabase_uid, name, email, photo_url, avatar, college, major, graduation_year, career_goal, current_level, total_xp, total_coins, streak_days, last_activity')
+      .eq('supabase_uid', user.id)
+      .single()
+      .asStream();
+});
+
+// Achievements provider
+final userAchievementsProvider = StreamProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+  final supabase = SupabaseConfig.client;
+  final user = supabase.auth.currentUser;
+
+  if (user == null) {
+    return Stream.value([]);
+  }
+
+  return supabase
+      .from('users')
+      .select('id')
+      .eq('supabase_uid', user.id)
+      .single()
+      .asStream()
+      .asyncExpand((userRow) {
+    final userId = userRow['id'] as String;
+    return supabase
+        .from('achievements')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .order('unlocked_at', ascending: false)
+        .limit(6);
+  });
+});
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -19,8 +61,8 @@ class ProfilePage extends ConsumerStatefulWidget {
 class _ProfilePageState extends ConsumerState<ProfilePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _floatingController;
+  final _supabase = SupabaseConfig.client;
   bool _showAvatarPicker = false;
-  String _selectedAvatar = '🚀'; // Default avatar
 
   // Cool avatar options
   final List<String> _avatarEmojis = [
@@ -57,16 +99,181 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
     super.dispose();
   }
 
+  Future<void> _updateAvatar(String emoji, String userId) async {
+    try {
+      await _supabase.from('users').update({'avatar': emoji}).eq('id', userId);
+
+      // Force refresh the provider
+      ref.invalidate(userProfileProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Avatar updated!'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error updating avatar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update avatar: $e')),
+        );
+      }
+    }
+  }
+
+  void _showEditProfileDialog(Map<String, dynamic> user) {
+    final nameController = TextEditingController(text: user['name']);
+    final collegeController = TextEditingController(text: user['college']);
+    final majorController = TextEditingController(text: user['major']);
+    final careerGoalController = TextEditingController(text: user['career_goal']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFF667eea)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: collegeController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'College',
+                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFF667eea)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: majorController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Major',
+                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFF667eea)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: careerGoalController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Career Goal',
+                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Color(0xFF667eea)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await _supabase.from('users').update({
+                  'name': nameController.text,
+                  'college': collegeController.text,
+                  'major': majorController.text,
+                  'career_goal': careerGoalController.text,
+                }).eq('id', user['id']);
+
+                // Refresh the provider
+                ref.invalidate(userProfileProvider);
+
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile updated successfully!')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save', style: TextStyle(color: Color(0xFF43e97b))),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userAsync = ref.watch(currentUserProvider);
-    return userAsync.when(
+    final userProfileAsync = ref.watch(userProfileProvider);
+    final achievementsAsync = ref.watch(userAchievementsProvider);
+    final unreadCountAsync = ref.watch(unreadNotificationCountProvider);
+
+    return userProfileAsync.when(
       data: (user) {
-        if (user == null) return const SizedBox();
+        if (user.isEmpty) return const SizedBox();
+
+        final currentAvatar = user['avatar'] ?? '🚀';
+        final userName = user['name'] ?? 'User';
+        final userEmail = user['email'] ?? '';
+        final level = user['current_level'] ?? 1;
+        final xp = user['total_xp'] ?? 0;
+        final coins = user['total_coins'] ?? 0;
+        final streak = user['streak_days'] ?? 0;
+        final careerGoal = user['career_goal'];
+        final college = user['college'];
+        final major = user['major'];
+
         return Scaffold(
           body: Stack(
             children: [
-              // ✅ SAME BACKGROUND AS OTHER PAGES
+              // Background
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -81,7 +288,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                 ),
               ),
 
-              // ✅ FLOATING BLUR CIRCLES
+              // Floating blur circles
               ...List.generate(8, (index) {
                 return AnimatedBuilder(
                   animation: _floatingController,
@@ -113,7 +320,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
               // Main content
               Column(
                 children: [
-                  // ✅ GLASSMORPHIC HEADER WITH LOGO + NOTIFICATIONS + SETTINGS
+                  // Header
                   ClipRRect(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -141,7 +348,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // ✅ LOGO
                                 SizedBox(
                                   height: 60,
                                   child: Image.asset(
@@ -149,23 +355,32 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                     fit: BoxFit.contain,
                                   ),
                                 ),
-
-                                // ✅ GLASSMORPHIC ACTIONS
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    _buildGlassButton(
-                                      icon: Icons.notifications_rounded,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const NotificationsPage(),
-                                          ),
-                                        );
-                                      },
-                                      hasNotification: true,
+                                    unreadCountAsync.when(
+                                      data: (count) => _buildGlassButton(
+                                        icon: Icons.notifications_rounded,
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => const NotificationsPage(),
+                                            ),
+                                          );
+                                        },
+                                        hasNotification: count > 0,
+                                      ),
+                                      loading: () => _buildGlassButton(
+                                        icon: Icons.notifications_rounded,
+                                        onTap: () {},
+                                        hasNotification: false,
+                                      ),
+                                      error: (_, __) => _buildGlassButton(
+                                        icon: Icons.notifications_rounded,
+                                        onTap: () {},
+                                        hasNotification: false,
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     _buildGlassButton(
@@ -174,8 +389,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) =>
-                                                const SettingsPage(),
+                                            builder: (context) => const SettingsPage(),
                                           ),
                                         );
                                       },
@@ -193,121 +407,85 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                   // Scrollable content
                   Expanded(
                     child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
                       child: Column(
                         children: [
                           const SizedBox(height: 30),
 
-                          // Avatar section with floating animation
+                          // Avatar section
                           AnimatedBuilder(
-                                animation: _floatingController,
-                                builder: (context, child) {
-                                  return Transform.translate(
-                                    offset: Offset(
-                                      0,
-                                      math.sin(
-                                            _floatingController.value *
-                                                2 *
-                                                math.pi,
-                                          ) *
-                                          8,
-                                    ),
-                                    child: child,
-                                  );
-                                },
-                                child: GestureDetector(
-                                  onTap: () => setState(
-                                    () =>
-                                        _showAvatarPicker = !_showAvatarPicker,
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        width: 140,
-                                        height: 140,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFFFFD700),
-                                              Color(0xFFFFA500),
-                                            ],
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(
-                                                0xFFFFD700,
-                                              ).withOpacity(0.5),
-                                              blurRadius: 40,
-                                              spreadRadius: 10,
-                                            ),
-                                          ],
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 4,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            _selectedAvatar,
-                                            style: const TextStyle(
-                                              fontSize: 70,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        right: 0,
-                                        bottom: 0,
-                                        child: Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Color(0xFF667eea),
-                                                Color(0xFF764ba2),
-                                              ],
-                                            ),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: 3,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.edit,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                            animation: _floatingController,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(
+                                  0,
+                                  math.sin(_floatingController.value * 2 * math.pi) * 8,
                                 ),
-                              )
-                              .animate()
-                              .fadeIn(delay: 200.ms)
-                              .scale(begin: const Offset(0.8, 0.8)),
+                                child: child,
+                              );
+                            },
+                            child: GestureDetector(
+                              onTap: () => setState(() => _showAvatarPicker = !_showAvatarPicker),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    width: 140,
+                                    height: 140,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFFFD700).withOpacity(0.5),
+                                          blurRadius: 40,
+                                          spreadRadius: 10,
+                                        ),
+                                      ],
+                                      border: Border.all(color: Colors.white, width: 4),
+                                    ),
+                                    child: Center(
+                                      child: Text(currentAvatar, style: const TextStyle(fontSize: 70)),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                        ),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 3),
+                                      ),
+                                      child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.8, 0.8)),
 
                           const SizedBox(height: 20),
 
                           // Name and email
                           Text(
-                                user.name,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 28,
-                                ),
-                              )
-                              .animate()
-                              .fadeIn(delay: 300.ms)
-                              .slideY(begin: 0.2, end: 0),
+                            userName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 28,
+                            ),
+                          ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
 
                           const SizedBox(height: 8),
 
                           Text(
-                            user.email,
+                            userEmail,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.8),
                               fontSize: 16,
@@ -317,14 +495,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                           const SizedBox(height: 24),
 
                           // Level badge
-                          LevelBadge(
-                                level: user.level,
-                                title: user.levelTitle,
-                                size: 80,
-                              )
-                              .animate()
-                              .fadeIn(delay: 500.ms)
-                              .scale(begin: const Offset(0.8, 0.8)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Level $level',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.8, 0.8)),
 
                           const SizedBox(height: 32),
 
@@ -336,13 +523,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.stars,
-                                    value: '${user.xp}',
+                                    value: '$xp',
                                     label: 'Total XP',
                                     gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFFD700),
-                                        Color(0xFFFFA500),
-                                      ],
+                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                                     ),
                                     delay: 600,
                                   ),
@@ -351,13 +535,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.local_fire_department,
-                                    value: '${user.streak}',
+                                    value: '$streak',
                                     label: 'Day Streak',
                                     gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFF6B6B),
-                                        Color(0xFFFF8E53),
-                                      ],
+                                      colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
                                     ),
                                     delay: 700,
                                   ),
@@ -366,13 +547,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.monetization_on,
-                                    value: '${user.coins}',
+                                    value: '$coins',
                                     label: 'Coins',
                                     gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF667eea),
-                                        Color(0xFF764ba2),
-                                      ],
+                                      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                                     ),
                                     delay: 800,
                                   ),
@@ -383,31 +561,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                           const SizedBox(height: 32),
 
-                          // Avatar picker (if shown)
+                          // Avatar picker
                           if (_showAvatarPicker)
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(24),
                                 child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                    sigmaX: 10,
-                                    sigmaY: 10,
-                                  ),
+                                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                                   child: Container(
                                     width: double.infinity,
                                     height: 180,
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
-                                          const Color(
-                                            0xFF667eea,
-                                          ).withOpacity(0.3),
-                                          const Color(
-                                            0xFF764ba2,
-                                          ).withOpacity(0.2),
+                                          const Color(0xFF667eea).withOpacity(0.3),
+                                          const Color(0xFF764ba2).withOpacity(0.2),
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(24),
@@ -421,11 +590,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                         Padding(
                                           padding: const EdgeInsets.all(16),
                                           child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               const Text(
-                                                '🎨 Choose Your Avatar',
+                                                'Choose Your Avatar',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 18,
@@ -433,73 +601,44 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                                 ),
                                               ),
                                               IconButton(
-                                                icon: const Icon(
-                                                  Icons.close,
-                                                  color: Colors.white,
-                                                ),
-                                                onPressed: () => setState(
-                                                  () =>
-                                                      _showAvatarPicker = false,
-                                                ),
+                                                icon: const Icon(Icons.close, color: Colors.white),
+                                                onPressed: () => setState(() => _showAvatarPicker = false),
                                               ),
                                             ],
                                           ),
                                         ),
                                         Expanded(
                                           child: GridView.builder(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16,
+                                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 8,
+                                              mainAxisSpacing: 8,
+                                              crossAxisSpacing: 8,
                                             ),
-                                            gridDelegate:
-                                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                                  crossAxisCount: 8,
-                                                  mainAxisSpacing: 8,
-                                                  crossAxisSpacing: 8,
-                                                ),
                                             itemCount: _avatarEmojis.length,
                                             itemBuilder: (context, index) {
-                                              final emoji =
-                                                  _avatarEmojis[index];
-                                              final isSelected =
-                                                  emoji == _selectedAvatar;
+                                              final emoji = _avatarEmojis[index];
+                                              final isSelected = emoji == currentAvatar;
                                               return GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    _selectedAvatar = emoji;
-                                                    _showAvatarPicker = false;
-                                                  });
+                                                onTap: () async {
+                                                  await _updateAvatar(emoji, user['id']);
+                                                  setState(() => _showAvatarPicker = false);
                                                 },
                                                 child: Container(
                                                   decoration: BoxDecoration(
                                                     color: isSelected
-                                                        ? const Color(
-                                                            0xFFFFD700,
-                                                          ).withOpacity(0.3)
-                                                        : Colors.white
-                                                              .withOpacity(0.1),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
+                                                        ? const Color(0xFFFFD700).withOpacity(0.3)
+                                                        : Colors.white.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(12),
                                                     border: Border.all(
                                                       color: isSelected
-                                                          ? const Color(
-                                                              0xFFFFD700,
-                                                            )
-                                                          : Colors.white
-                                                                .withOpacity(
-                                                                  0.2,
-                                                                ),
+                                                          ? const Color(0xFFFFD700)
+                                                          : Colors.white.withOpacity(0.2),
                                                       width: isSelected ? 2 : 1,
                                                     ),
                                                   ),
                                                   child: Center(
-                                                    child: Text(
-                                                      emoji,
-                                                      style: const TextStyle(
-                                                        fontSize: 24,
-                                                      ),
-                                                    ),
+                                                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
                                                   ),
                                                 ),
                                               );
@@ -516,7 +655,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
                           const SizedBox(height: 24),
 
-                          // ✅ IMPROVED DARKER SECTION - More eye-appealing
+                          // Darker section
                           ClipRRect(
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(40),
@@ -541,216 +680,115 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                   ),
                                   border: Border(
                                     top: BorderSide(
-                                      color: const Color(
-                                        0xFFFFD700,
-                                      ).withOpacity(0.3),
+                                      color: const Color(0xFFFFD700).withOpacity(0.3),
                                       width: 2,
                                     ),
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFFFFD700,
-                                      ).withOpacity(0.1),
-                                      blurRadius: 40,
-                                      spreadRadius: 5,
-                                    ),
-                                  ],
                                 ),
                                 child: Column(
                                   children: [
                                     const SizedBox(height: 40),
 
                                     // Career info cards
-                                    if (user.careerGoal != null)
+                                    if (careerGoal != null)
                                       _buildInfoCard(
-                                            icon: Icons.flag,
-                                            title: 'Career Goal',
-                                            value: user.careerGoal!,
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Color(0xFF667eea),
-                                                Color(0xFF764ba2),
-                                              ],
-                                            ),
-                                          )
-                                          .animate()
-                                          .fadeIn(delay: 900.ms)
-                                          .slideX(begin: -0.2, end: 0),
+                                        icon: Icons.flag,
+                                        title: 'Career Goal',
+                                        value: careerGoal,
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                        ),
+                                      ).animate().fadeIn(delay: 900.ms).slideX(begin: -0.2, end: 0),
 
-                                    if (user.education != null)
+                                    if (college != null)
                                       _buildInfoCard(
-                                            icon: Icons.school,
-                                            title: 'Education',
-                                            value: user.education!,
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Color(0xFF4facfe),
-                                                Color(0xFF00f2fe),
-                                              ],
-                                            ),
-                                          )
-                                          .animate()
-                                          .fadeIn(delay: 1000.ms)
-                                          .slideX(begin: -0.2, end: 0),
+                                        icon: Icons.school,
+                                        title: 'College',
+                                        value: '$college${major != null ? " • $major" : ""}',
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                                        ),
+                                      ).animate().fadeIn(delay: 1000.ms).slideX(begin: -0.2, end: 0),
 
-                                    _buildInfoCard(
-                                          icon: Icons.schedule,
-                                          title: 'Weekly Commitment',
-                                          value:
-                                              '${user.weeklyHours} hours/week',
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF43e97b),
-                                              Color(0xFF38f9d7),
+                                    const SizedBox(height: 32),
+
+                                    // Achievements section
+                                    achievementsAsync.when(
+                                      data: (achievements) {
+                                        if (achievements.isEmpty) return const SizedBox();
+
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.all(10),
+                                                    decoration: BoxDecoration(
+                                                      gradient: const LinearGradient(
+                                                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                                      ),
+                                                      borderRadius: BorderRadius.circular(14),
+                                                    ),
+                                                    child: const Icon(Icons.emoji_events, color: Colors.white, size: 22),
+                                                  ),
+                                                  const SizedBox(width: 14),
+                                                  const Text(
+                                                    'Achievements',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 22,
+                                                      fontWeight: FontWeight.w900,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 20),
+                                              Wrap(
+                                                spacing: 12,
+                                                runSpacing: 12,
+                                                children: achievements.take(6).map((achievement) {
+                                                  return Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        colors: [
+                                                          const Color(0xFFFFD700).withOpacity(0.3),
+                                                          const Color(0xFFFFA500).withOpacity(0.2),
+                                                        ],
+                                                      ),
+                                                      borderRadius: BorderRadius.circular(16),
+                                                      border: Border.all(
+                                                        color: const Color(0xFFFFD700).withOpacity(0.5),
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Text('🏆', style: TextStyle(fontSize: 20)),
+                                                        const SizedBox(width: 8),
+                                                        Text(
+                                                          achievement['title'],
+                                                          style: const TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight: FontWeight.w700,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                              ),
                                             ],
                                           ),
-                                        )
-                                        .animate()
-                                        .fadeIn(delay: 1100.ms)
-                                        .slideX(begin: -0.2, end: 0),
-
-                                    // Skills section
-                                    if (user.skills.isNotEmpty) ...[
-                                      const SizedBox(height: 32),
-                                      Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 24,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  children: [
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            10,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        gradient:
-                                                            const LinearGradient(
-                                                              colors: [
-                                                                Color(
-                                                                  0xFFf093fb,
-                                                                ),
-                                                                Color(
-                                                                  0xFFf5576c,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              14,
-                                                            ),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            color: const Color(
-                                                              0xFFf093fb,
-                                                            ).withOpacity(0.4),
-                                                            blurRadius: 15,
-                                                            spreadRadius: 2,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      child: const Icon(
-                                                        Icons.star,
-                                                        color: Colors.white,
-                                                        size: 22,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 14),
-                                                    ShaderMask(
-                                                      shaderCallback: (bounds) =>
-                                                          const LinearGradient(
-                                                            colors: [
-                                                              Color(0xFFf093fb),
-                                                              Color(0xFFf5576c),
-                                                            ],
-                                                          ).createShader(
-                                                            bounds,
-                                                          ),
-                                                      child: const Text(
-                                                        'Skills & Expertise',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 22,
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 20),
-                                                Wrap(
-                                                  spacing: 10,
-                                                  runSpacing: 10,
-                                                  children: user.skills.map((
-                                                    skill,
-                                                  ) {
-                                                    return Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 18,
-                                                            vertical: 12,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        gradient:
-                                                            LinearGradient(
-                                                              colors: [
-                                                                const Color(
-                                                                  0xFF667eea,
-                                                                ).withOpacity(
-                                                                  0.5,
-                                                                ),
-                                                                const Color(
-                                                                  0xFF764ba2,
-                                                                ).withOpacity(
-                                                                  0.4,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              20,
-                                                            ),
-                                                        border: Border.all(
-                                                          color: const Color(
-                                                            0xFF667eea,
-                                                          ).withOpacity(0.6),
-                                                          width: 2,
-                                                        ),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            color: const Color(
-                                                              0xFF667eea,
-                                                            ).withOpacity(0.3),
-                                                            blurRadius: 12,
-                                                            spreadRadius: 1,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      child: Text(
-                                                        skill,
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                          fontSize: 15,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                          .animate()
-                                          .fadeIn(delay: 1200.ms)
-                                          .slideY(begin: 0.2, end: 0),
-                                    ],
+                                        ).animate().fadeIn(delay: 1200.ms).slideY(begin: 0.2, end: 0);
+                                      },
+                                      loading: () => const SizedBox(),
+                                      error: (_, __) => const SizedBox(),
+                                    ),
 
                                     const SizedBox(height: 40),
 
@@ -759,137 +797,62 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                       icon: Icons.edit,
                                       title: 'Edit Profile',
                                       subtitle: 'Update your information',
-                                      onTap: () {},
+                                      onTap: () => _showEditProfileDialog(user),
                                     ).animate().fadeIn(delay: 1300.ms),
-
-                                    _buildActionButton(
-                                      icon: Icons.notifications,
-                                      title: 'Notifications',
-                                      subtitle: 'Manage your alerts',
-                                      onTap: () {},
-                                    ).animate().fadeIn(delay: 1400.ms),
-
-                                    _buildActionButton(
-                                      icon: Icons.help,
-                                      title: 'Help & Support',
-                                      subtitle: 'Get assistance',
-                                      onTap: () {},
-                                    ).animate().fadeIn(delay: 1500.ms),
-
-                                    const SizedBox(height: 24),
-
-                                    // Divider with gradient
-                                    Container(
-                                      height: 1,
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 24,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Colors.transparent,
-                                            Colors.white.withOpacity(0.2),
-                                            Colors.transparent,
-                                          ],
-                                        ),
-                                      ),
-                                    ),
 
                                     const SizedBox(height: 24),
 
                                     // Logout button
                                     Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 24,
-                                          ),
-                                          child: GestureDetector(
-                                            onTap: () async {
-                                              await ref
-                                                  .read(userNotifierProvider)
-                                                  .logout();
-                                              if (context.mounted) {
-                                                Navigator.pushAndRemoveUntil(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        const LandingPage(),
-                                                  ),
-                                                  (route) => false,
-                                                );
-                                              }
-                                            },
-                                            child: Container(
-                                              width: double.infinity,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 18,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  colors: [
-                                                    const Color(
-                                                      0xFFFF6B6B,
-                                                    ).withOpacity(0.4),
-                                                    const Color(
-                                                      0xFFFF8E53,
-                                                    ).withOpacity(0.3),
-                                                  ],
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(18),
-                                                border: Border.all(
-                                                  color: const Color(
-                                                    0xFFFF6B6B,
-                                                  ).withOpacity(0.6),
-                                                  width: 2,
-                                                ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: const Color(
-                                                      0xFFFF6B6B,
-                                                    ).withOpacity(0.3),
-                                                    blurRadius: 15,
-                                                    spreadRadius: 2,
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.all(8),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                        0xFFFF6B6B,
-                                                      ).withOpacity(0.3),
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.logout,
-                                                      color: Colors.white,
-                                                      size: 20,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  const Text(
-                                                    'Logout',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 17,
-                                                      fontWeight:
-                                                          FontWeight.w900,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          await _supabase.auth.signOut();
+                                          if (mounted) {
+                                            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                                          }
+                                        },
+                                        child: Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(vertical: 18),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                const Color(0xFFFF6B6B).withOpacity(0.4),
+                                                const Color(0xFFFF8E53).withOpacity(0.3),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(18),
+                                            border: Border.all(
+                                              color: const Color(0xFFFF6B6B).withOpacity(0.6),
+                                              width: 2,
                                             ),
                                           ),
-                                        )
-                                        .animate()
-                                        .fadeIn(delay: 1600.ms)
-                                        .shake(delay: 1600.ms),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFFF6B6B).withOpacity(0.3),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(Icons.logout, color: Colors.white, size: 20),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              const Text(
+                                                'Logout',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ).animate().fadeIn(delay: 1600.ms).shake(delay: 1600.ms),
+                                    ),
 
                                     const SizedBox(height: 50),
                                   ],
@@ -970,13 +933,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                       color: const Color(0xFFFF6B6B),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF6B6B).withOpacity(0.5),
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ],
                     ),
                   ),
                 ),
@@ -1076,13 +1032,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                 color: gradient.colors[0].withOpacity(0.4),
                 width: 2,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: gradient.colors[0].withOpacity(0.2),
-                  blurRadius: 15,
-                  spreadRadius: 1,
-                ),
-              ],
             ),
             child: Row(
               children: [
@@ -1091,13 +1040,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                   decoration: BoxDecoration(
                     gradient: gradient,
                     borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: gradient.colors.first.withOpacity(0.4),
-                        blurRadius: 15,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
                   ),
                   child: Icon(icon, color: Colors.white, size: 26),
                 ),
@@ -1112,7 +1054,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                           color: Colors.white.withOpacity(0.7),
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -1176,12 +1117,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                           colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                         ),
                         borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF667eea).withOpacity(0.4),
-                            blurRadius: 12,
-                          ),
-                        ],
                       ),
                       child: Icon(icon, color: Colors.white, size: 24),
                     ),

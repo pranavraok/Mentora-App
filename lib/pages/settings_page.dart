@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:mentora_app/config/supabase_config.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -14,16 +16,17 @@ class SettingsPage extends ConsumerStatefulWidget {
 class _SettingsPageState extends ConsumerState<SettingsPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _floatingController;
+  final _supabase = SupabaseConfig.client;
 
   // Settings states
   bool _notificationsEnabled = true;
   bool _soundEnabled = true;
   bool _dailyReminders = true;
   bool _weeklyProgress = true;
-  bool _darkMode = true;
-  bool _autoPlay = false;
-  String _language = 'English';
-  String _theme = 'Dark';
+  bool _isLoading = true;
+  String? _userId;
+  String? _userEmail;
+  String? _userName;
 
   @override
   void initState() {
@@ -32,6 +35,75 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
+
+    _loadUserSettings();
+  }
+
+  Future<void> _loadUserSettings() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      // Get user data
+      final userData = await _supabase
+          .from('users')
+          .select('id, name, email')
+          .eq('supabase_uid', user.id)
+          .single();
+
+      // Get user preferences
+      final prefs = await _supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', userData['id'])
+          .maybeSingle();
+
+      setState(() {
+        _userId = userData['id'];
+        _userName = userData['name'];
+        _userEmail = userData['email'];
+
+        // Load preferences from database
+        if (prefs != null) {
+          _notificationsEnabled = prefs['push_notifications_enabled'] ?? true;
+          _soundEnabled = prefs['sound_enabled'] ?? true;
+          _dailyReminders = prefs['daily_reminders'] ?? true;
+          _weeklyProgress = prefs['weekly_progress'] ?? true;
+        }
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading user settings: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _savePreference(Map<String, dynamic> updates) async {
+    if (_userId == null) return;
+
+    try {
+      await _supabase
+          .from('user_preferences')
+          .update(updates)
+          .eq('user_id', _userId!);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Setting saved'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error saving preference: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save setting: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -45,7 +117,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     return Scaffold(
       body: Stack(
         children: [
-          // ✅ SAME BACKGROUND
+          // Background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -60,7 +132,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             ),
           ),
 
-          // ✅ FLOATING BLUR CIRCLES
+          // Floating blur circles
           ...List.generate(8, (index) {
             return AnimatedBuilder(
               animation: _floatingController,
@@ -92,7 +164,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           // Main content
           Column(
             children: [
-              // ✅ GLASSMORPHIC HEADER
+              // Header
               ClipRRect(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -120,28 +192,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Back button
                             _buildGlassButton(
                               icon: Icons.arrow_back_rounded,
                               onTap: () => Navigator.pop(context),
                             ),
-
-                            // Title
-                            ShaderMask(
-                              shaderCallback: (bounds) => const LinearGradient(
-                                colors: [Colors.white, Colors.white],
-                              ).createShader(bounds),
-                              child: const Text(
-                                'Settings',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                ),
+                            const Text(
+                              'Settings',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
-
-                            // Placeholder for alignment
                             const SizedBox(width: 48),
                           ],
                         ),
@@ -153,272 +215,219 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
               // Scrollable content
               Expanded(
-                child: SingleChildScrollView(
+                child: _isLoading
+                    ? const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
+                    : SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   child: Column(
                     children: [
                       const SizedBox(height: 24),
 
-                      // 🔔 NOTIFICATIONS SECTION
+                      // ACCOUNT SECTION
                       _buildSectionTitle(
-                            icon: Icons.notifications_rounded,
-                            title: 'Notifications',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            ),
-                          )
+                        icon: Icons.person_rounded,
+                        title: 'Account',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 200.ms)
                           .slideX(begin: -0.2, end: 0),
 
-                      _buildSwitchTile(
-                            icon: Icons.notifications_active,
-                            title: 'Push Notifications',
-                            subtitle: 'Receive notifications from the app',
-                            value: _notificationsEnabled,
-                            onChanged: (value) =>
-                                setState(() => _notificationsEnabled = value),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            ),
-                          )
+                      _buildAccountCard()
                           .animate()
                           .fadeIn(delay: 300.ms)
                           .slideX(begin: -0.2, end: 0),
 
-                      _buildSwitchTile(
-                            icon: Icons.volume_up_rounded,
-                            title: 'Sound',
-                            subtitle: 'Enable notification sounds',
-                            value: _soundEnabled,
-                            onChanged: (value) =>
-                                setState(() => _soundEnabled = value),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            ),
-                          )
+                      const SizedBox(height: 32),
+
+                      // NOTIFICATIONS SECTION
+                      _buildSectionTitle(
+                        icon: Icons.notifications_rounded,
+                        title: 'Notifications',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 400.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       _buildSwitchTile(
-                            icon: Icons.alarm_rounded,
-                            title: 'Daily Reminders',
-                            subtitle: 'Get reminded to study daily',
-                            value: _dailyReminders,
-                            onChanged: (value) =>
-                                setState(() => _dailyReminders = value),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            ),
-                          )
+                        icon: Icons.notifications_active,
+                        title: 'Push Notifications',
+                        subtitle: 'Receive notifications from the app',
+                        value: _notificationsEnabled,
+                        onChanged: (value) {
+                          setState(() => _notificationsEnabled = value);
+                          _savePreference({'push_notifications_enabled': value});
+                        },
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 500.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       _buildSwitchTile(
-                            icon: Icons.bar_chart_rounded,
-                            title: 'Weekly Progress',
-                            subtitle: 'Receive weekly progress reports',
-                            value: _weeklyProgress,
-                            onChanged: (value) =>
-                                setState(() => _weeklyProgress = value),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                            ),
-                          )
+                        icon: Icons.volume_up_rounded,
+                        title: 'Sound',
+                        subtitle: 'Enable notification sounds',
+                        value: _soundEnabled,
+                        onChanged: (value) {
+                          setState(() => _soundEnabled = value);
+                          _savePreference({'sound_enabled': value});
+                        },
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 600.ms)
                           .slideX(begin: -0.2, end: 0),
 
-                      const SizedBox(height: 32),
-
-                      // 🎨 APPEARANCE SECTION
-                      _buildSectionTitle(
-                            icon: Icons.palette_rounded,
-                            title: 'Appearance',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                            ),
-                          )
+                      _buildSwitchTile(
+                        icon: Icons.alarm_rounded,
+                        title: 'Daily Reminders',
+                        subtitle: 'Get reminded to study daily',
+                        value: _dailyReminders,
+                        onChanged: (value) {
+                          setState(() => _dailyReminders = value);
+                          _savePreference({'daily_reminders': value});
+                        },
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 700.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       _buildSwitchTile(
-                            icon: Icons.dark_mode_rounded,
-                            title: 'Dark Mode',
-                            subtitle: 'Use dark theme',
-                            value: _darkMode,
-                            onChanged: (value) =>
-                                setState(() => _darkMode = value),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                            ),
-                          )
+                        icon: Icons.bar_chart_rounded,
+                        title: 'Weekly Progress',
+                        subtitle: 'Receive weekly progress reports',
+                        value: _weeklyProgress,
+                        onChanged: (value) {
+                          setState(() => _weeklyProgress = value);
+                          _savePreference({'weekly_progress': value});
+                        },
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 800.ms)
                           .slideX(begin: -0.2, end: 0),
 
-                      _buildTile(
-                            icon: Icons.color_lens_rounded,
-                            title: 'Theme',
-                            subtitle: _theme,
-                            onTap: () => _showThemeDialog(),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                            ),
-                          )
+                      const SizedBox(height: 32),
+
+                      // SUPPORT SECTION
+                      _buildSectionTitle(
+                        icon: Icons.help_rounded,
+                        title: 'Support & About',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 900.ms)
                           .slideX(begin: -0.2, end: 0),
 
-                      const SizedBox(height: 32),
-
-                      // 🌍 GENERAL SECTION
-                      _buildSectionTitle(
-                            icon: Icons.settings_rounded,
-                            title: 'General',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                            ),
-                          )
+                      _buildTile(
+                        icon: Icons.privacy_tip_rounded,
+                        title: 'Privacy Policy',
+                        subtitle: 'Read our privacy policy',
+                        onTap: () => _launchURL('https://mentora.app/privacy'),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 1000.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       _buildTile(
-                            icon: Icons.language_rounded,
-                            title: 'Language',
-                            subtitle: _language,
-                            onTap: () => _showLanguageDialog(),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                            ),
-                          )
+                        icon: Icons.description_rounded,
+                        title: 'Terms of Service',
+                        subtitle: 'Read terms and conditions',
+                        onTap: () => _launchURL('https://mentora.app/terms'),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 1100.ms)
                           .slideX(begin: -0.2, end: 0),
 
-                      _buildSwitchTile(
-                            icon: Icons.play_circle_rounded,
-                            title: 'Auto-play Videos',
-                            subtitle: 'Automatically play next video',
-                            value: _autoPlay,
-                            onChanged: (value) =>
-                                setState(() => _autoPlay = value),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                            ),
-                          )
+                      _buildTile(
+                        icon: Icons.info_rounded,
+                        title: 'About',
+                        subtitle: 'Version 1.0.0',
+                        onTap: () => _showAboutDialog(),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 1200.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       const SizedBox(height: 32),
 
-                      // 📱 SUPPORT SECTION
+                      // DANGER ZONE
                       _buildSectionTitle(
-                            icon: Icons.help_rounded,
-                            title: 'Support & About',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                            ),
-                          )
+                        icon: Icons.warning_rounded,
+                        title: 'Danger Zone',
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 1300.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       _buildTile(
-                            icon: Icons.privacy_tip_rounded,
-                            title: 'Privacy Policy',
-                            subtitle: 'Read our privacy policy',
-                            onTap: () {},
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                            ),
-                          )
+                        icon: Icons.delete_forever_rounded,
+                        title: 'Clear Cache',
+                        subtitle: 'Free up storage space',
+                        onTap: () => _showClearCacheDialog(),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 1400.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       _buildTile(
-                            icon: Icons.description_rounded,
-                            title: 'Terms of Service',
-                            subtitle: 'Read terms and conditions',
-                            onTap: () {},
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                            ),
-                          )
+                        icon: Icons.logout_rounded,
+                        title: 'Sign Out',
+                        subtitle: 'Sign out of your account',
+                        onTap: () => _showSignOutDialog(),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 1500.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       _buildTile(
-                            icon: Icons.info_rounded,
-                            title: 'About',
-                            subtitle: 'Version 1.0.0',
-                            onTap: () => _showAboutDialog(),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                            ),
-                          )
+                        icon: Icons.delete_outline_rounded,
+                        title: 'Delete Account',
+                        subtitle: 'Permanently delete your account',
+                        onTap: () => _showDeleteAccountDialog(),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                        ),
+                      )
                           .animate()
                           .fadeIn(delay: 1600.ms)
-                          .slideX(begin: -0.2, end: 0),
-
-                      const SizedBox(height: 32),
-
-                      // ⚠️ DANGER ZONE
-                      _buildSectionTitle(
-                            icon: Icons.warning_rounded,
-                            title: 'Danger Zone',
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: 1700.ms)
-                          .slideX(begin: -0.2, end: 0),
-
-                      _buildTile(
-                            icon: Icons.delete_forever_rounded,
-                            title: 'Clear Cache',
-                            subtitle: 'Free up storage space',
-                            onTap: () => _showClearCacheDialog(),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: 1800.ms)
-                          .slideX(begin: -0.2, end: 0),
-
-                      _buildTile(
-                            icon: Icons.lock_reset_rounded,
-                            title: 'Reset Progress',
-                            subtitle: 'Reset all learning progress',
-                            onTap: () => _showResetDialog(),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: 1900.ms)
-                          .slideX(begin: -0.2, end: 0),
-
-                      _buildTile(
-                            icon: Icons.delete_outline_rounded,
-                            title: 'Delete Account',
-                            subtitle: 'Permanently delete your account',
-                            onTap: () => _showDeleteAccountDialog(),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-                            ),
-                          )
-                          .animate()
-                          .fadeIn(delay: 2000.ms)
                           .slideX(begin: -0.2, end: 0),
 
                       const SizedBox(height: 50),
@@ -429,6 +438,88 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAccountCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF667eea).withOpacity(0.2),
+                  const Color(0xFF764ba2).withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: const Color(0xFF667eea).withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _userName?.substring(0, 1).toUpperCase() ?? 'U',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _userName ?? 'User',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _userEmail ?? '',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.verified_rounded,
+                  color: Color(0xFF43e97b),
+                  size: 24,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -488,9 +579,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: (gradient as LinearGradient).colors[0].withOpacity(
-                    0.4,
-                  ),
+                  color: (gradient as LinearGradient).colors[0].withOpacity(0.4),
                   blurRadius: 15,
                   spreadRadius: 2,
                 ),
@@ -499,15 +588,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 14),
-          ShaderMask(
-            shaderCallback: (bounds) => gradient.createShader(bounds),
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-              ),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
@@ -692,131 +778,46 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     );
   }
 
-  void _showThemeDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Choose Theme'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Dark'),
-              leading: Radio<String>(
-                value: 'Dark',
-                groupValue: _theme,
-                onChanged: (value) {
-                  setState(() => _theme = value!);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            ListTile(
-              title: const Text('Light'),
-              leading: Radio<String>(
-                value: 'Light',
-                groupValue: _theme,
-                onChanged: (value) {
-                  setState(() => _theme = value!);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            ListTile(
-              title: const Text('System'),
-              leading: Radio<String>(
-                value: 'System',
-                groupValue: _theme,
-                onChanged: (value) {
-                  setState(() => _theme = value!);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Choose Language'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('English'),
-              leading: Radio<String>(
-                value: 'English',
-                groupValue: _language,
-                onChanged: (value) {
-                  setState(() => _language = value!);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            ListTile(
-              title: const Text('Spanish'),
-              leading: Radio<String>(
-                value: 'Spanish',
-                groupValue: _language,
-                onChanged: (value) {
-                  setState(() => _language = value!);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            ListTile(
-              title: const Text('French'),
-              leading: Radio<String>(
-                value: 'French',
-                groupValue: _language,
-                onChanged: (value) {
-                  setState(() => _language = value!);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            ListTile(
-              title: const Text('Hindi'),
-              leading: Radio<String>(
-                value: 'Hindi',
-                groupValue: _language,
-                onChanged: (value) {
-                  setState(() => _language = value!);
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open link')),
+        );
+      }
+    }
   }
 
   void _showAboutDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('About Mentora'),
-        content: const Column(
+        backgroundColor: const Color(0xFF1a1a2e),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'About Mentora',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Version: 1.0.0'),
-            SizedBox(height: 8),
-            Text('Mentora - Your AI Learning Companion'),
-            SizedBox(height: 8),
-            Text('© 2025 Mentora. All rights reserved.'),
+            Text('Version: 1.0.0', style: TextStyle(color: Colors.white.withOpacity(0.8))),
+            const SizedBox(height: 8),
+            Text('Mentora - Your AI Learning Companion',
+                style: TextStyle(color: Colors.white.withOpacity(0.8))),
+            const SizedBox(height: 8),
+            Text('© 2025 Mentora. All rights reserved.',
+                style: TextStyle(color: Colors.white.withOpacity(0.8))),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Close', style: TextStyle(color: Color(0xFF667eea))),
           ),
         ],
       ),
@@ -827,9 +828,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Cache'),
-        content: const Text(
+        backgroundColor: const Color(0xFF1a1a2e),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Clear Cache', style: TextStyle(color: Colors.white)),
+        content: Text(
           'Are you sure you want to clear the cache? This will free up storage space.',
+          style: TextStyle(color: Colors.white.withOpacity(0.8)),
         ),
         actions: [
           TextButton(
@@ -843,20 +847,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                 const SnackBar(content: Text('Cache cleared successfully!')),
               );
             },
-            child: const Text('Clear'),
+            child: const Text('Clear', style: TextStyle(color: Color(0xFF43e97b))),
           ),
         ],
       ),
     );
   }
 
-  void _showResetDialog() {
+  void _showSignOutDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reset Progress'),
-        content: const Text(
-          'Are you sure you want to reset all your learning progress? This action cannot be undone.',
+        backgroundColor: const Color(0xFF1a1a2e),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Are you sure you want to sign out?',
+          style: TextStyle(color: Colors.white.withOpacity(0.8)),
         ),
         actions: [
           TextButton(
@@ -864,14 +871,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Progress reset!')));
+            onPressed: () async {
+              await _supabase.auth.signOut();
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+              }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Reset'),
+            child: const Text('Sign Out'),
           ),
         ],
       ),
@@ -882,9 +889,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text(
+        backgroundColor: const Color(0xFF1a1a2e),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Account', style: TextStyle(color: Colors.white)),
+        content: Text(
           'Are you sure you want to delete your account? This action is permanent and cannot be undone.',
+          style: TextStyle(color: Colors.white.withOpacity(0.8)),
         ),
         actions: [
           TextButton(
@@ -892,11 +902,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Account deletion initiated')),
-              );
+            onPressed: () async {
+              if (_userId != null) {
+                try {
+                  // Delete user data from Supabase
+                  await _supabase.from('users').delete().eq('id', _userId!);
+                  await _supabase.auth.signOut();
+
+                  if (mounted) {
+                    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Account deleted successfully')),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error deleting account: $e')),
+                    );
+                  }
+                }
+              }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),

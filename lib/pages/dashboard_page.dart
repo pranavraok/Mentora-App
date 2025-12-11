@@ -4,15 +4,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mentora_app/pages/leaderboard_page.dart';
 import 'package:mentora_app/pages/resume_checker_page.dart';
 import 'package:mentora_app/providers/gamification_provider.dart';
-
 import 'package:mentora_app/providers/app_providers.dart';
-
+import 'package:mentora_app/providers/daily_challenge_provider.dart';
+import 'package:mentora_app/providers/user_activity_provider.dart';
 import 'package:mentora_app/pages/roadmap_page.dart';
 import 'package:mentora_app/pages/projects_page.dart';
 import 'package:mentora_app/pages/profile_page.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
-
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -20,13 +19,12 @@ class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  ConsumerState createState() => _DashboardPageState();
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _selectedIndex = 0;
-
-  final List _pages = const [
+  final List<Widget> _pages = const [
     DashboardHome(),
     RoadmapPage(),
     ProjectsPage(),
@@ -41,12 +39,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     final isAuthenticatedAsync = ref.watch(isAuthenticatedProvider);
     final userAsync = ref.watch(currentUserProvider);
-
     return Scaffold(
       body: isAuthenticatedAsync.when(
         data: (isAuthenticated) {
           if (!isAuthenticated) {
-            // Not authenticated - show login prompt
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -62,19 +58,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             );
           }
 
-          // Authenticated - show dashboard
           return userAsync.when(
             data: (user) => user == null
                 ? const Center(child: CircularProgressIndicator())
                 : Column(
-                    children: [
-                      Expanded(
-                        child: _pages[_selectedIndex] is DashboardHome
-                            ? DashboardHome(onNavigate: _navigateToPage)
-                            : _pages[_selectedIndex],
-                      ),
-                    ],
-                  ),
+              children: [
+                Expanded(
+                  child: _pages[_selectedIndex] is DashboardHome
+                      ? DashboardHome(onNavigate: _navigateToPage)
+                      : _pages[_selectedIndex],
+                ),
+              ],
+            ),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('Error: $e')),
           );
@@ -129,7 +124,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
-
     return GestureDetector(
       onTap: () => setState(() => _selectedIndex = index),
       child: AnimatedContainer(
@@ -142,8 +136,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                )
+            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+          )
               : null,
           borderRadius: BorderRadius.circular(16),
         ),
@@ -171,11 +165,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 class DashboardHome extends ConsumerStatefulWidget {
   final Function(int)? onNavigate;
-
   const DashboardHome({super.key, this.onNavigate});
 
   @override
-  ConsumerState createState() => _DashboardHomeState();
+  ConsumerState<DashboardHome> createState() => _DashboardHomeState();
 }
 
 class _DashboardHomeState extends ConsumerState<DashboardHome>
@@ -189,35 +182,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-
-    // Load dashboard data from Supabase on init
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDashboardData();
-    });
   }
 
   void _navigateTo(int index) {
     widget.onNavigate?.call(index);
-  }
-
-  Future<void> _loadDashboardData() async {
-    try {
-      // Force refresh of current user data
-      // ignore: unused_result
-      ref.refresh(currentUserProvider);
-
-      // Force refresh of roadmap nodes
-      // ignore: unused_result
-      ref.refresh(roadmapNodesSupabaseProvider);
-
-      // Force refresh of user skills
-      // ignore: unused_result
-      ref.refresh(userSkillsSupabaseProvider);
-
-      print('Dashboard data loaded from Supabase');
-    } catch (e) {
-      print('Error loading dashboard data: $e');
-    }
   }
 
   @override
@@ -227,11 +195,11 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 
   Widget _buildActionCard(
-    String title,
-    IconData icon,
-    Gradient gradient, {
-    required VoidCallback onTap,
-  }) {
+      String title,
+      IconData icon,
+      Gradient gradient, {
+        required VoidCallback onTap,
+      }) {
     return Container(
       height: 110,
       decoration: BoxDecoration(
@@ -279,13 +247,13 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
-    // NOTE: Gamification wired to Supabase realtime via provider
     final gamificationAsync = ref.watch(gamificationProvider);
+    final challengeAsync = ref.watch(dailyChallengeProvider);
+    final activitiesAsync = ref.watch(recentActivitiesProvider);
 
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
-
         return Stack(
           children: [
             // Background gradient
@@ -302,7 +270,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 ),
               ),
             ),
-
             // Floating particles
             ...List.generate(8, (index) {
               return AnimatedBuilder(
@@ -331,7 +298,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 },
               );
             }),
-
             // Main content
             Column(
               children: [
@@ -380,7 +346,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const NotificationsPage(),
+                                          const NotificationsPage(),
                                         ),
                                       );
                                     },
@@ -394,7 +360,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const SettingsPage(),
+                                          const SettingsPage(),
                                         ),
                                       );
                                     },
@@ -408,14 +374,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                     ),
                   ),
                 ),
-
                 // Scrollable content
                 Expanded(
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
                       // Profile card
                       SliverToBoxAdapter(
                         child: Animate(
@@ -442,9 +406,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                 borderRadius: BorderRadius.circular(28),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFF667eea,
-                                    ).withOpacity(0.4),
+                                    color: const Color(0xFF667eea).withOpacity(0.4),
                                     blurRadius: 30,
                                     offset: const Offset(0, 15),
                                   ),
@@ -460,12 +422,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           return Transform.translate(
                                             offset: Offset(
                                               0,
-                                              math.sin(
-                                                    _controller.value *
-                                                        2 *
-                                                        math.pi,
-                                                  ) *
-                                                  3,
+                                              math.sin(_controller.value * 2 * math.pi) * 3,
                                             ),
                                             child: Container(
                                               width: 75,
@@ -484,9 +441,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                                 ),
                                                 boxShadow: [
                                                   BoxShadow(
-                                                    color: const Color(
-                                                      0xFFFFD700,
-                                                    ).withOpacity(0.6),
+                                                    color: const Color(0xFFFFD700).withOpacity(0.6),
                                                     blurRadius: 25,
                                                     spreadRadius: 3,
                                                   ),
@@ -495,9 +450,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                               child: const Center(
                                                 child: Text(
                                                   '🚀',
-                                                  style: TextStyle(
-                                                    fontSize: 38,
-                                                  ),
+                                                  style: TextStyle(fontSize: 38),
                                                 ),
                                               ),
                                             ),
@@ -507,8 +460,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       const SizedBox(width: 20),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
@@ -525,9 +477,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Text(
                                               user.email,
                                               style: TextStyle(
-                                                color: Colors.white.withOpacity(
-                                                  0.9,
-                                                ),
+                                                color: Colors.white.withOpacity(0.9),
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -536,20 +486,15 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             ),
                                             const SizedBox(height: 12),
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 6,
-                                                  ),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 6,
+                                              ),
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(
-                                                  0.2,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(20),
+                                                color: Colors.white.withOpacity(0.2),
+                                                borderRadius: BorderRadius.circular(20),
                                                 border: Border.all(
-                                                  color: Colors.white
-                                                      .withOpacity(0.3),
+                                                  color: Colors.white.withOpacity(0.3),
                                                   width: 1.5,
                                                 ),
                                               ),
@@ -568,11 +513,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                                       style: const TextStyle(
                                                         color: Colors.white,
                                                         fontSize: 13,
-                                                        fontWeight:
-                                                            FontWeight.w800,
+                                                        fontWeight: FontWeight.w800,
                                                       ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                 ],
@@ -597,8 +540,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                     child: Column(
                                       children: [
                                         Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             const Text(
                                               'XP Progress',
@@ -611,9 +553,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Text(
                                               '${gamificationAsync.maybeWhen(data: (g) => g.totalXp, orElse: () => user.xp)} / ${user.xpForNextLevel} XP',
                                               style: TextStyle(
-                                                color: Colors.white.withOpacity(
-                                                  0.9,
-                                                ),
+                                                color: Colors.white.withOpacity(0.9),
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -622,18 +562,13 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         ),
                                         const SizedBox(height: 12),
                                         ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
+                                          borderRadius: BorderRadius.circular(10),
                                           child: LinearProgressIndicator(
-                                            value:
-                                                user.xp / user.xpForNextLevel,
-                                            backgroundColor: Colors.white
-                                                .withOpacity(0.2),
-                                            valueColor:
-                                                const AlwaysStoppedAnimation(
-                                                  Color(0xFFFFD700),
-                                                ),
+                                            value: user.xp / user.xpForNextLevel,
+                                            backgroundColor: Colors.white.withOpacity(0.2),
+                                            valueColor: const AlwaysStoppedAnimation(
+                                              Color(0xFFFFD700),
+                                            ),
                                             minHeight: 10,
                                           ),
                                         ),
@@ -646,9 +581,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           ),
                         ),
                       ),
-
                       const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
                       // Stats cards
                       SliverToBoxAdapter(
                         child: Animate(
@@ -663,14 +596,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.local_fire_department_rounded,
-                                    value:
-                                        '${gamificationAsync.maybeWhen(data: (g) => g.streakDays, orElse: () => user.streak)}',
+                                    value: '${gamificationAsync.maybeWhen(data: (g) => g.streakDays, orElse: () => user.streak)}',
                                     label: 'Day Streak',
                                     gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFF6B6B),
-                                        Color(0xFFEE5A6F),
-                                      ],
+                                      colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
                                     ),
                                   ),
                                 ),
@@ -678,14 +607,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.monetization_on_rounded,
-                                    value:
-                                        '${gamificationAsync.maybeWhen(data: (g) => g.totalCoins, orElse: () => user.coins)}',
+                                    value: '${gamificationAsync.maybeWhen(data: (g) => g.totalCoins, orElse: () => user.coins)}',
                                     label: 'Coins',
                                     gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFFFFD700),
-                                        Color(0xFFFFA500),
-                                      ],
+                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                                     ),
                                   ),
                                 ),
@@ -693,14 +618,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.emoji_events_rounded,
-                                    value:
-                                        '${gamificationAsync.maybeWhen(data: (g) => g.achievementCount, orElse: () => user.achievements.length)}',
+                                    value: '${gamificationAsync.maybeWhen(data: (g) => g.achievementCount, orElse: () => user.achievements.length)}',
                                     label: 'Badges',
                                     gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF667eea),
-                                        Color(0xFF764ba2),
-                                      ],
+                                      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                                     ),
                                   ),
                                 ),
@@ -709,10 +630,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           ),
                         ),
                       ),
-
                       const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                      // Today's challenge
+                      // Today's challenge - REAL DATA
                       SliverToBoxAdapter(
                         child: Animate(
                           effects: [
@@ -734,17 +653,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFFD700),
-                                            Color(0xFFFFA500),
-                                          ],
+                                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                                         ),
                                         borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(
-                                              0xFFFFD700,
-                                            ).withOpacity(0.5),
+                                            color: const Color(0xFFFFD700).withOpacity(0.5),
                                             blurRadius: 15,
                                             offset: const Offset(0, 5),
                                           ),
@@ -768,145 +682,22 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(22),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        const Color(
-                                          0xFFFFD700,
-                                        ).withOpacity(0.25),
-                                        const Color(
-                                          0xFFFFA500,
-                                        ).withOpacity(0.15),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: const Color(
-                                        0xFFFFD700,
-                                      ).withOpacity(0.5),
-                                      width: 2,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFFFFD700,
-                                        ).withOpacity(0.3),
-                                        blurRadius: 25,
-                                        offset: const Offset(0, 10),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(
-                                                0.2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                            ),
-                                            child: const Icon(
-                                              Icons.auto_awesome_rounded,
-                                              color: Colors.white,
-                                              size: 26,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          const Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Complete 3 Lessons',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 6),
-                                                Text(
-                                                  'Earn 500 XP + 50 Coins 🎁',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 20),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text(
-                                                '2/3 completed',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                              Text(
-                                                '6 hours left ⏱️',
-                                                style: TextStyle(
-                                                  color: Colors.white
-                                                      .withOpacity(0.9),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 10),
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                            child:
-                                                const LinearProgressIndicator(
-                                                  value: 0.66,
-                                                  backgroundColor: Colors.white,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation(
-                                                        Colors.white,
-                                                      ),
-                                                  minHeight: 10,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                challengeAsync.when(
+                                  data: (challenge) {
+                                    if (challenge == null) {
+                                      return _buildNoChallengeCard();
+                                    }
+                                    return _buildChallengeCard(challenge);
+                                  },
+                                  loading: () => _buildLoadingChallengeCard(),
+                                  error: (_, __) => _buildNoChallengeCard(),
                                 ),
                               ],
                             ),
                           ),
                         ),
                       ),
-
                       const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
                       // Quick Actions
                       SliverToBoxAdapter(
                         child: Animate(
@@ -923,17 +714,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFF667eea),
-                                            Color(0xFF764ba2),
-                                          ],
+                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                                         ),
                                         borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(
-                                              0xFF667eea,
-                                            ).withOpacity(0.5),
+                                            color: const Color(0xFF667eea).withOpacity(0.5),
                                             blurRadius: 15,
                                             offset: const Offset(0, 5),
                                           ),
@@ -964,10 +750,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         'View\nRoadmap',
                                         Icons.map_rounded,
                                         const LinearGradient(
-                                          colors: [
-                                            Color(0xFF667eea),
-                                            Color(0xFF764ba2),
-                                          ],
+                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                                         ),
                                         onTap: () => _navigateTo(1),
                                       ),
@@ -978,10 +761,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         'Start\nProject',
                                         Icons.rocket_launch_rounded,
                                         const LinearGradient(
-                                          colors: [
-                                            Color(0xFF43e97b),
-                                            Color(0xFF38f9d7),
-                                          ],
+                                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
                                         ),
                                         onTap: () => _navigateTo(2),
                                       ),
@@ -996,17 +776,13 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         'Resume\nCheck',
                                         Icons.description_rounded,
                                         const LinearGradient(
-                                          colors: [
-                                            Color(0xFFf093fb),
-                                            Color(0xFFf5576c),
-                                          ],
+                                          colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
                                         ),
                                         onTap: () {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const ResumeCheckerPageWithBackButton(),
+                                              builder: (_) => const ResumeCheckerPageWithBackButton(),
                                             ),
                                           );
                                         },
@@ -1018,17 +794,13 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         'Leader\nboard',
                                         Icons.leaderboard_rounded,
                                         const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFFD700),
-                                            Color(0xFFFFA500),
-                                          ],
+                                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                                         ),
                                         onTap: () {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const LeaderboardPageWithBackButton(),
+                                              builder: (_) => const LeaderboardPageWithBackButton(),
                                             ),
                                           );
                                         },
@@ -1041,10 +813,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           ),
                         ),
                       ),
-
                       const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                      // Recent activity
+                      // Recent activity - REAL DATA
                       SliverToBoxAdapter(
                         child: Animate(
                           effects: [FadeEffect(delay: 600.ms)],
@@ -1060,17 +830,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFF4facfe),
-                                            Color(0xFF00f2fe),
-                                          ],
+                                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
                                         ),
                                         borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(
-                                              0xFF4facfe,
-                                            ).withOpacity(0.5),
+                                            color: const Color(0xFF4facfe).withOpacity(0.5),
                                             blurRadius: 15,
                                             offset: const Offset(0, 5),
                                           ),
@@ -1094,28 +859,24 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                _buildActivityItem(
-                                  'Completed "Intro to Programming"',
-                                  '2 hours ago',
-                                  Icons.check_circle_rounded,
-                                  const Color(0xFF43e97b),
-                                  '+250 XP',
-                                ),
-                                const SizedBox(height: 12),
-                                _buildActivityItem(
-                                  'Started "Calculator App"',
-                                  '1 day ago',
-                                  Icons.play_circle_rounded,
-                                  const Color(0xFF4facfe),
-                                  null,
-                                ),
-                                const SizedBox(height: 12),
-                                _buildActivityItem(
-                                  'Earned "Scholar" Badge 🏆',
-                                  '2 days ago',
-                                  Icons.emoji_events_rounded,
-                                  const Color(0xFFFFD700),
-                                  '+500 XP',
+                                activitiesAsync.when(
+                                  data: (activities) {
+                                    if (activities.isEmpty) {
+                                      return _buildNoActivityCard();
+                                    }
+                                    return Column(
+                                      children: activities.take(3).map((activity) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 12),
+                                          child: _buildActivityItemFromModel(activity),
+                                        );
+                                      }).toList(),
+                                    );
+                                  },
+                                  loading: () => const Center(
+                                    child: CircularProgressIndicator(color: Color(0xFF4facfe)),
+                                  ),
+                                  error: (_, __) => _buildNoActivityCard(),
                                 ),
                                 const SizedBox(height: 32),
                               ],
@@ -1138,6 +899,261 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
         child: Text('Error: $e', style: const TextStyle(color: Colors.red)),
       ),
     );
+  }
+
+  Widget _buildChallengeCard(challenge) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFFFD700).withOpacity(0.25),
+            const Color(0xFFFFA500).withOpacity(0.15),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFFFD700).withOpacity(0.5),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFD700).withOpacity(0.3),
+            blurRadius: 25,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      challenge.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Earn ${challenge.xpReward} XP + ${challenge.coinReward} Coins 🎁',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${challenge.currentValue}/${challenge.targetValue} completed',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    '${challenge.timeLeftString} ⏱️',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: challenge.progress.clamp(0.0, 1.0),
+                  backgroundColor: Colors.white,
+                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+                  minHeight: 10,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoChallengeCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFFFD700).withOpacity(0.15),
+            const Color(0xFFFFA500).withOpacity(0.10),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFFFD700).withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          children: [
+            const Icon(
+              Icons.calendar_today_rounded,
+              color: Colors.white,
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No active challenge',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Check back tomorrow for new challenges!',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingChallengeCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFFFD700).withOpacity(0.25),
+            const Color(0xFFFFA500).withOpacity(0.15),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFFFD700).withOpacity(0.5),
+          width: 2,
+        ),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildActivityItemFromModel(activity) {
+    final iconData = _getIconFromString(activity.icon ?? 'check_circle_rounded');
+    final color = _getColorFromString(activity.color ?? '0xFF43e97b');
+
+    return _buildActivityItem(
+      activity.title,
+      activity.timeAgo,
+      iconData,
+      color,
+      activity.badgeText,
+    );
+  }
+
+  Widget _buildNoActivityCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1.5,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          children: [
+            const Icon(
+              Icons.history_rounded,
+              color: Colors.white54,
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No recent activity',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getIconFromString(String iconName) {
+    switch (iconName) {
+      case 'check_circle_rounded':
+        return Icons.check_circle_rounded;
+      case 'play_circle_rounded':
+        return Icons.play_circle_rounded;
+      case 'emoji_events_rounded':
+        return Icons.emoji_events_rounded;
+      default:
+        return Icons.star_rounded;
+    }
+  }
+
+  Color _getColorFromString(String colorHex) {
+    try {
+      return Color(int.parse(colorHex));
+    } catch (e) {
+      return const Color(0xFF43e97b);
+    }
   }
 
   Widget _buildGlassButton({
@@ -1257,12 +1273,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 
   Widget _buildActivityItem(
-    String title,
-    String time,
-    IconData icon,
-    Color color,
-    String? badge,
-  ) {
+      String title,
+      String time,
+      IconData icon,
+      Color color,
+      String? badge,
+      ) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(

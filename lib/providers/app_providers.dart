@@ -115,109 +115,112 @@ class UserNotifier {
 // =====================================================
 // ROADMAP NODES - From Supabase
 // =====================================================
-final roadmapNodesSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>(
-      (ref) async {
-    print('🔍 Starting to fetch roadmap nodes...');
+final roadmapNodesSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  print('🔍 Starting to fetch roadmap nodes...');
 
-    try {
-      final currentUser = SupabaseConfig.client.auth.currentUser;
+  try {
+    final currentUser = SupabaseConfig.client.auth.currentUser;
 
-      if (currentUser == null) {
-        print('❌ No authenticated user found in Supabase');
-        return [];
-      }
-
-      print('✅ Authenticated user: ${currentUser.id}');
-
-      // Get user ID from Supabase users table
-      final userResponse = await SupabaseConfig.client
-          .from('users')
-          .select('id')
-          .eq('supabase_uid', currentUser.id)
-          .maybeSingle();
-
-      if (userResponse == null) {
-        print('❌ User not found in database for supabase_uid: ${currentUser.id}');
-        return [];
-      }
-
-      final userId = userResponse['id'] as String;
-      print('✅ Found user in database with ID: $userId');
-
-      // Fetch roadmap nodes
-      final response = await SupabaseConfig.client
-          .from('roadmap_nodes')
-          .select()
-          .eq('user_id', userId)
-          .order('order_index', ascending: true);
-
-      print('✅ Raw response from Supabase: $response');
-      print('✅ Response type: ${response.runtimeType}');
-      print('✅ Fetched ${response.length} roadmap nodes from Supabase');
-
-      // Print first node for debugging
-      if (response.isNotEmpty) {
-        print('📋 First node sample:');
-        print('   Title: ${response[0]['title']}');
-        print('   Type: ${response[0]['node_type']}');
-        print('   Status: ${response[0]['status']}');
-      } else {
-        print('⚠️ No nodes found for user: $userId');
-      }
-
-      // Convert to List<Map<String, dynamic>>
-      final nodesList = List<Map<String, dynamic>>.from(response);
-      print('✅ Converted to List<Map<String, dynamic>> with ${nodesList.length} items');
-
-      return nodesList;
-    } catch (e, stackTrace) {
-      print('❌ Error fetching roadmap nodes: $e');
-      print('Stack trace: $stackTrace');
+    if (currentUser == null) {
+      print('❌ No authenticated user found in Supabase');
       return [];
     }
-  },
-);
+
+    print('✅ Authenticated user: ${currentUser.id}');
+
+    // Get user ID from Supabase users table
+    final userResponse = await SupabaseConfig.client
+        .from('users')
+        .select('id')
+        .eq('supabase_uid', currentUser.id)
+        .maybeSingle();
+
+    if (userResponse == null) {
+      print('❌ User not found in database for supabase_uid: ${currentUser.id}');
+      return [];
+    }
+
+    final userId = userResponse['id'] as String;
+    print('✅ Found user in database with ID: $userId');
+
+    // Fetch roadmap nodes
+    final response = await SupabaseConfig.client
+        .from('roadmap_nodes')
+        .select()
+        .eq('user_id', userId)
+        .order('order_index', ascending: true);
+
+    print('✅ Raw response from Supabase: $response');
+    print('✅ Response type: ${response.runtimeType}');
+    print('✅ Fetched ${response.length} roadmap nodes from Supabase');
+
+    // Print first node for debugging
+    if (response.isNotEmpty) {
+      print('📋 First node sample:');
+      print('   Title: ${response[0]['title']}');
+      print('   Type: ${response[0]['node_type']}');
+      print('   Status: ${response[0]['status']}');
+    } else {
+      print('⚠️ No nodes found for user: $userId');
+    }
+
+    // Convert to List<Map<String, dynamic>>
+    final nodesList = List<Map<String, dynamic>>.from(response);
+    print(
+      '✅ Converted to List<Map<String, dynamic>> with ${nodesList.length} items',
+    );
+
+    return nodesList;
+  } catch (e, stackTrace) {
+    print('❌ Error fetching roadmap nodes: $e');
+    print('Stack trace: $stackTrace');
+    return [];
+  }
+});
 
 // =====================================================
 // USER SKILLS - From Supabase
 // =====================================================
-final userSkillsSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>(
-      (ref) async {
-    final currentUser = SupabaseConfig.client.auth.currentUser;
-    if (currentUser == null) return [];
+final userSkillsSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  final currentUser = SupabaseConfig.client.auth.currentUser;
+  if (currentUser == null) return [];
 
-    try {
-      // Get user ID from Supabase
-      final userResponse = await SupabaseConfig.client
-          .from('users')
-          .select('id')
-          .eq('supabase_uid', currentUser.id)
-          .maybeSingle();
+  try {
+    // Get user ID from Supabase
+    final userResponse = await SupabaseConfig.client
+        .from('users')
+        .select('id')
+        .eq('supabase_uid', currentUser.id)
+        .maybeSingle();
 
-      if (userResponse == null) return [];
+    if (userResponse == null) return [];
 
-      final userId = userResponse['id'] as String;
+    final userId = userResponse['id'] as String;
 
-      // Fetch user skills
-      final skills = await SupabaseConfig.client
-          .from('user_skills')
-          .select()
-          .eq('user_id', userId);
+    // Fetch user skills
+    final skills = await SupabaseConfig.client
+        .from('user_skills')
+        .select()
+        .eq('user_id', userId);
 
-      return List<Map<String, dynamic>>.from(skills);
-    } catch (e) {
-      print('❌ Error fetching user skills from Supabase: $e');
-      return [];
-    }
-  },
-);
+    return List<Map<String, dynamic>>.from(skills);
+  } catch (e) {
+    print('❌ Error fetching user skills from Supabase: $e');
+    return [];
+  }
+});
 
-final roadmapNodesProvider = FutureProvider.family<List<RoadmapNode>, String>(
-      (ref, userId) async {
-    final service = ref.watch(roadmapServiceProvider);
-    return await service.getRoadmapNodes(userId);
-  },
-);
+final roadmapNodesProvider = FutureProvider.family<List<RoadmapNode>, String>((
+  ref,
+  userId,
+) async {
+  final service = ref.watch(roadmapServiceProvider);
+  return await service.getRoadmapNodes(userId);
+});
 
 final projectsProvider = FutureProvider<List<Project>>((ref) async {
   final service = ref.watch(projectServiceProvider);
@@ -231,9 +234,71 @@ final achievementsProvider = FutureProvider<List<Achievement>>((ref) async {
 
 // ✅ FIXED: Changed return type to UserAchievement
 final userAchievementsProvider =
-FutureProvider.family<List<UserAchievement>, String>((ref, userId) async {
-  final service = ref.watch(achievementServiceProvider);
-  return await service.getUserAchievements(userId);
+    FutureProvider.family<List<UserAchievement>, String>((ref, userId) async {
+      final service = ref.watch(achievementServiceProvider);
+      return await service.getUserAchievements(userId);
+    });
+
+// NOTE: Leaderboard data from Supabase ordered by XP DESC
+// Fetches ALL users with proper error handling and data validation
+final leaderboardProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
+  try {
+    print('[LeaderboardProvider] Starting leaderboard fetch...');
+
+    // Direct query to get all users without any restrictions
+    final response = await SupabaseConfig.client
+        .from('users')
+        .select()
+        .order('total_xp', ascending: false);
+
+    print('[LeaderboardProvider] Raw response type: ${response.runtimeType}');
+
+    final rows = response as List;
+
+    print(
+      '[LeaderboardProvider] Fetched ${rows.length} total users from Supabase',
+    );
+
+    // Print ALL rows
+    for (var row in rows) {
+      print('[LeaderboardProvider] Raw row: $row');
+    }
+
+    if (rows.isEmpty) {
+      print('[LeaderboardProvider] No users found in database');
+      return [];
+    }
+
+    // Ensure all required fields are present with defaults
+    final leaderboardData = rows.map((user) {
+      print(
+        '[LeaderboardProvider] Processing user: ${user['name']} with XP: ${user['total_xp']}',
+      );
+      return {
+        'id': user['id'] as String? ?? '',
+        'name': user['name'] as String? ?? 'Unknown',
+        'college': user['college'] as String?,
+        'total_xp': (user['total_xp'] as num?)?.toInt() ?? 0,
+        'total_coins': (user['total_coins'] as num?)?.toInt() ?? 0,
+        'streak_days': (user['streak_days'] as num?)?.toInt() ?? 0,
+      };
+    }).toList();
+
+    print(
+      '[LeaderboardProvider] Transformed ${leaderboardData.length} users for display',
+    );
+    print(
+      '[LeaderboardProvider] Top user: ${leaderboardData.isNotEmpty ? leaderboardData[0]['name'] : 'N/A'} with ${leaderboardData.isNotEmpty ? leaderboardData[0]['total_xp'] : 0} XP',
+    );
+
+    return leaderboardData;
+  } catch (e, st) {
+    print('[LeaderboardProvider] ERROR fetching leaderboard: $e');
+    print('[LeaderboardProvider] Stack trace: $st');
+    rethrow;
+  }
 });
 
 final isAuthenticatedProvider = StreamProvider<bool>((ref) {

@@ -66,11 +66,24 @@ function generateHash(content: string): string {
 }
 
 serve(async (req: Request) => {
+  // Handle CORS preflight request
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
   }
 
   try {
+    // Only allow POST requests
+    if (req.method !== "POST") {
+      return errorResponse("Only POST method allowed", 405);
+    }
     const supabase = createServiceClient();
     const { authUser, profile } = await getAuthenticatedUser(req, supabase);
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mentora_app/pages/leaderboard_page.dart';
 import 'package:mentora_app/pages/resume_checker_page.dart';
+import 'package:mentora_app/providers/gamification_provider.dart';
 
 import 'package:mentora_app/providers/app_providers.dart';
 
@@ -203,15 +204,15 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     try {
       // Force refresh of current user data
       // ignore: unused_result
-      await ref.refresh(currentUserProvider);
+      ref.refresh(currentUserProvider);
 
       // Force refresh of roadmap nodes
       // ignore: unused_result
-      await ref.refresh(roadmapNodesSupabaseProvider);
+      ref.refresh(roadmapNodesSupabaseProvider);
 
       // Force refresh of user skills
       // ignore: unused_result
-      await ref.refresh(userSkillsSupabaseProvider);
+      ref.refresh(userSkillsSupabaseProvider);
 
       print('Dashboard data loaded from Supabase');
     } catch (e) {
@@ -278,6 +279,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
+    // NOTE: Gamification wired to Supabase realtime via provider
+    final gamificationAsync = ref.watch(gamificationProvider);
 
     return userAsync.when(
       data: (user) {
@@ -606,7 +609,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                               ),
                                             ),
                                             Text(
-                                              '${user.xp} / ${user.xpForNextLevel} XP',
+                                              '${gamificationAsync.maybeWhen(data: (g) => g.totalXp, orElse: () => user.xp)} / ${user.xpForNextLevel} XP',
                                               style: TextStyle(
                                                 color: Colors.white.withOpacity(
                                                   0.9,
@@ -660,7 +663,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.local_fire_department_rounded,
-                                    value: '${user.streak}',
+                                    value:
+                                        '${gamificationAsync.maybeWhen(data: (g) => g.streakDays, orElse: () => user.streak)}',
                                     label: 'Day Streak',
                                     gradient: const LinearGradient(
                                       colors: [
@@ -674,7 +678,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.monetization_on_rounded,
-                                    value: '${user.coins}',
+                                    value:
+                                        '${gamificationAsync.maybeWhen(data: (g) => g.totalCoins, orElse: () => user.coins)}',
                                     label: 'Coins',
                                     gradient: const LinearGradient(
                                       colors: [
@@ -688,7 +693,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                 Expanded(
                                   child: _buildStatCard(
                                     icon: Icons.emoji_events_rounded,
-                                    value: '${user.achievements.length}',
+                                    value:
+                                        '${gamificationAsync.maybeWhen(data: (g) => g.achievementCount, orElse: () => user.achievements.length)}',
                                     label: 'Badges',
                                     gradient: const LinearGradient(
                                       colors: [

@@ -3,78 +3,58 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
+import 'package:mentora_app/providers/app_providers.dart';
+import 'package:mentora_app/config/supabase_config.dart';
 
-class LeaderboardPage extends StatefulWidget {
+class LeaderboardPage extends ConsumerStatefulWidget {
   const LeaderboardPage({super.key});
 
   @override
-  State<LeaderboardPage> createState() => _LeaderboardPageState();
+  ConsumerState<LeaderboardPage> createState() => _LeaderboardPageState();
 }
 
-class _LeaderboardPageState extends State<LeaderboardPage>
+class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
-
-  final List<_PlayerEntry> _players = const [
-    _PlayerEntry(
-      name: 'You',
-      xp: 12450,
-      level: 12,
-      rank: 1,
-      streak: 18,
-      avatarEmoji: '🚀',
-    ),
-    _PlayerEntry(
-      name: 'CodeNinja',
-      xp: 11800,
-      level: 11,
-      rank: 2,
-      streak: 14,
-      avatarEmoji: '👤',
-    ),
-    _PlayerEntry(
-      name: 'BugHunter',
-      xp: 11230,
-      level: 11,
-      rank: 3,
-      streak: 9,
-      avatarEmoji: '🕵️‍♂️',
-    ),
-    _PlayerEntry(
-      name: 'PixelWizard',
-      xp: 9800,
-      level: 10,
-      rank: 4,
-      streak: 6,
-      avatarEmoji: '🧙‍♂️',
-    ),
-    _PlayerEntry(
-      name: 'StackMaster',
-      xp: 9300,
-      level: 9,
-      rank: 5,
-      streak: 5,
-      avatarEmoji: '📚',
-    ),
-    _PlayerEntry(
-      name: 'AsyncAce',
-      xp: 8700,
-      level: 9,
-      rank: 6,
-      streak: 4,
-      avatarEmoji: '⚡',
-    ),
-  ];
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
+    // Get current user ID for highlighting
+    _fetchCurrentUserId();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
+  }
+
+  Future<void> _fetchCurrentUserId() async {
+    final sessionUser = SupabaseConfig.client.auth.currentUser;
+    if (sessionUser == null) return;
+
+    final userRow = await SupabaseConfig.client
+        .from('users')
+        .select('id')
+        .eq('supabase_uid', sessionUser.id)
+        .maybeSingle();
+
+    if (userRow != null && mounted) {
+      setState(() => _currentUserId = userRow['id'] as String);
+    }
+  }
+
+  int _calculateLevel(int xp) {
+    return (xp / 1000).floor() + 1;
+  }
+
+  String _getAvatarEmoji(String name) {
+    // Simple emoji assignment based on name
+    final emojis = ['🚀', '👤', '🕵️‍♂️', '🧙‍♂️', '📚', '⚡', '🎯', '💡'];
+    return emojis[name.hashCode.abs() % emojis.length];
   }
 
   @override
@@ -85,244 +65,257 @@ class _LeaderboardPageState extends State<LeaderboardPage>
 
   @override
   Widget build(BuildContext context) {
-    final topThree = _players.take(3).toList();
+    // NOTE: Leaderboard data from Supabase ordered by total_xp DESC
+    final leaderboardAsync = ref.watch(leaderboardProvider);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF0F0C29),
-                  Color(0xFF302b63),
-                  Color(0xFF24243e),
-                ],
-              ),
-            ),
-          ),
-
-          // Floating blur circles
-          ...List.generate(8, (index) {
-            return AnimatedBuilder(
-              animation: _animController,
-              builder: (context, child) {
-                final offset = math.sin(
-                  (_animController.value + index * 0.2) * 2 * math.pi,
-                );
-                return Positioned(
-                  left: (index * 50.0) + offset * 20,
-                  top: (index * 80.0) + offset * 30,
-                  child: Container(
-                    width: 60 + (index * 10.0),
-                    height: 60 + (index * 10.0),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Colors.white.withOpacity(0.1),
-                          Colors.white.withOpacity(0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          }),
-
-          // Main content
-          Column(
+      body: leaderboardAsync.when(
+        data: (players) {
+          final topThree = players.take(3).toList();
+          return Stack(
             children: [
-              // Header: logo + notifications + settings
-              ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withOpacity(0.15),
-                          Colors.white.withOpacity(0.05),
-                        ],
-                      ),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.white.withOpacity(0.15),
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            SizedBox(
-                              height: 60,
-                              child: Image.asset(
-                                'assets/images/logo.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildGlassButton(
-                                  icon: Icons.notifications_rounded,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const NotificationsPage(),
-                                      ),
-                                    );
-                                  },
-                                  hasNotification: true,
-                                ),
-                                const SizedBox(width: 12),
-                                _buildGlassButton(
-                                  icon: Icons.settings_rounded,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const SettingsPage(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
-
-              // Title + subtitle
+              // Background gradient
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
-                child: Row(
-                  children: [
-                    AnimatedBuilder(
-                      animation: _animController,
-                      builder: (context, child) {
-                        return Transform.scale(
-                          scale:
-                              1.0 +
-                              (math.sin(_animController.value * 2 * math.pi) *
-                                  0.08),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color.lerp(
-                                    const Color(0xFFFFD700),
-                                    const Color(0xFF4facfe),
-                                    _animController.value,
-                                  )!,
-                                  const Color(0xFF00f2fe),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFFFFD700,
-                                  ).withOpacity(0.6),
-                                  blurRadius:
-                                      20 +
-                                      (math.sin(
-                                            _animController.value * 2 * math.pi,
-                                          ) *
-                                          5),
-                                  spreadRadius: 3,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.leaderboard_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                          ).createShader(bounds),
-                          child: const Text(
-                            'GLOBAL LEADERBOARD',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          'Compete with other learners in real time',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
-
-              // Scrollable body
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildPodium(topThree),
-                      const SizedBox(height: 20),
-                      _buildInfoChips(),
-                      const SizedBox(height: 16),
-                      _buildLeaderboardList(),
-                      const SizedBox(height: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF0F0C29),
+                      Color(0xFF302b63),
+                      Color(0xFF24243e),
                     ],
                   ),
                 ),
               ),
+
+              // Floating blur circles
+              ...List.generate(8, (index) {
+                return AnimatedBuilder(
+                  animation: _animController,
+                  builder: (context, child) {
+                    final offset = math.sin(
+                      (_animController.value + index * 0.2) * 2 * math.pi,
+                    );
+                    return Positioned(
+                      left: (index * 50.0) + offset * 20,
+                      top: (index * 80.0) + offset * 30,
+                      child: Container(
+                        width: 60 + (index * 10.0),
+                        height: 60 + (index * 10.0),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.1),
+                              Colors.white.withOpacity(0.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+
+              // Main content
+              Column(
+                children: [
+                  // Header: logo + notifications + settings
+                  ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withOpacity(0.15),
+                              Colors.white.withOpacity(0.05),
+                            ],
+                          ),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.white.withOpacity(0.15),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: SafeArea(
+                          bottom: false,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 18, 24, 18),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  height: 60,
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _buildGlassButton(
+                                      icon: Icons.notifications_rounded,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const NotificationsPage(),
+                                          ),
+                                        );
+                                      },
+                                      hasNotification: true,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildGlassButton(
+                                      icon: Icons.settings_rounded,
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const SettingsPage(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
+
+                  // Title + subtitle
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+                    child: Row(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _animController,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale:
+                                  1.0 +
+                                  (math.sin(
+                                        _animController.value * 2 * math.pi,
+                                      ) *
+                                      0.08),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Color.lerp(
+                                        const Color(0xFFFFD700),
+                                        const Color(0xFF4facfe),
+                                        _animController.value,
+                                      )!,
+                                      const Color(0xFF00f2fe),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFFFFD700,
+                                      ).withOpacity(0.6),
+                                      blurRadius:
+                                          20 +
+                                          (math.sin(
+                                                _animController.value *
+                                                    2 *
+                                                    math.pi,
+                                              ) *
+                                              5),
+                                      spreadRadius: 3,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.leaderboard_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                              ).createShader(bounds),
+                              child: const Text(
+                                'GLOBAL LEADERBOARD',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'Compete with other learners in real time',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, end: 0),
+
+                  // Scrollable body
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildPodium(topThree),
+                          const SizedBox(height: 20),
+                          _buildInfoChips(),
+                          const SizedBox(height: 16),
+                          _buildLeaderboardList(players),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
-          ),
-        ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) =>
+            Center(child: Text('Error loading leaderboard: $error')),
       ),
     );
   }
 
   // ===== Podium (top 3) =====
 
-  Widget _buildPodium(List<_PlayerEntry> topThree) {
+  Widget _buildPodium(List<Map<String, dynamic>> topThree) {
     final p1 = topThree.isNotEmpty ? topThree[0] : null;
     final p2 = topThree.length > 1 ? topThree[1] : null;
     final p3 = topThree.length > 2 ? topThree[2] : null;
@@ -334,10 +327,11 @@ class _LeaderboardPageState extends State<LeaderboardPage>
         children: [
           Flexible(
             flex: 9,
-            child: _ifPlayer(
+            child: _ifPlayerMap(
               p2,
               () => _buildPodiumCard(
                 p2!,
+                rankNumber: 2,
                 rankColor: const Color(0xFFC0C0C0),
                 gradient: const LinearGradient(
                   colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
@@ -348,10 +342,11 @@ class _LeaderboardPageState extends State<LeaderboardPage>
           const SizedBox(width: 8),
           Flexible(
             flex: 10,
-            child: _ifPlayer(
+            child: _ifPlayerMap(
               p1,
               () => _buildPodiumCard(
                 p1!,
+                rankNumber: 1,
                 isCrowned: true,
                 rankColor: const Color(0xFFFFD700),
                 gradient: const LinearGradient(
@@ -363,10 +358,11 @@ class _LeaderboardPageState extends State<LeaderboardPage>
           const SizedBox(width: 8),
           Flexible(
             flex: 9,
-            child: _ifPlayer(
+            child: _ifPlayerMap(
               p3,
               () => _buildPodiumCard(
                 p3!,
+                rankNumber: 3,
                 rankColor: const Color(0xFFCD7F32),
                 gradient: const LinearGradient(
                   colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
@@ -384,12 +380,25 @@ class _LeaderboardPageState extends State<LeaderboardPage>
     return builder();
   }
 
+  Widget _ifPlayerMap(Map<String, dynamic>? p, Widget Function() builder) {
+    if (p == null) return const SizedBox.shrink();
+    return builder();
+  }
+
   Widget _buildPodiumCard(
-    _PlayerEntry player, {
+    Map<String, dynamic> playerData, {
+    required int rankNumber,
     required Color rankColor,
     required Gradient gradient,
     bool isCrowned = false,
   }) {
+    final xp = playerData['total_xp'] as int? ?? 0;
+    final level = _calculateLevel(xp);
+    final streakDays = playerData['streak_days'] as int? ?? 0;
+    final coins = playerData['total_coins'] as int? ?? 0;
+    final name = playerData['name'] as String? ?? 'Unknown';
+    final avatarEmoji = _getAvatarEmoji(name);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -413,11 +422,11 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               ),
             ],
           ),
-          child: Text(player.avatarEmoji, style: const TextStyle(fontSize: 26)),
+          child: Text(avatarEmoji, style: const TextStyle(fontSize: 26)),
         ),
         const SizedBox(height: 6),
         Text(
-          '#${player.rank}',
+          '#$rankNumber',
           style: TextStyle(
             color: rankColor,
             fontWeight: FontWeight.w900,
@@ -426,7 +435,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
         ),
         const SizedBox(height: 2),
         Text(
-          player.name,
+          name,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Colors.white,
@@ -436,7 +445,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
         ),
         const SizedBox(height: 2),
         Text(
-          '${player.xp} XP • L${player.level}',
+          '$xp XP • L$level',
           style: TextStyle(
             color: Colors.white.withOpacity(0.8),
             fontSize: 11,
@@ -462,7 +471,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${player.streak} day streak 🔥',
+                '$streakDays day streak 🔥',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 11,
@@ -472,7 +481,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               ),
               const SizedBox(height: 4),
               Text(
-                '+${(player.xp / 100).round()} coins',
+                '+${(xp / 100).round()} coins',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.92),
                   fontSize: 11,
@@ -553,7 +562,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
 
   // ===== List section =====
 
-  Widget _buildLeaderboardList() {
+  Widget _buildLeaderboardList(List<Map<String, dynamic>> players) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -563,21 +572,27 @@ class _LeaderboardPageState extends State<LeaderboardPage>
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: _players.length,
+        itemCount: players.length,
         separatorBuilder: (_, __) =>
             Container(height: 1, color: Colors.white.withOpacity(0.05)),
         itemBuilder: (context, index) {
-          final player = _players[index];
-          return _buildLeaderboardRow(player);
+          final playerData = players[index];
+          return _buildLeaderboardRow(playerData, index + 1, _currentUserId);
         },
       ),
     );
   }
 
-  Widget _buildLeaderboardRow(_PlayerEntry player) {
-    final isYou = player.rank == 1 || player.name == 'You';
-    final gradient = _rowGradientForRank(player.rank);
-    final medal = _medalForRank(player.rank);
+  Widget _buildLeaderboardRow(
+    Map<String, dynamic> playerData,
+    int rank,
+    String? currentUserId,
+  ) {
+    final isYou = playerData['id'] == currentUserId;
+    final gradient = _rowGradientForRank(rank);
+    final medal = _medalForRank(rank);
+    final name = playerData['name'] ?? 'Unknown';
+    final xp = (playerData['total_xp'] as num?)?.toInt() ?? 0;
 
     return Container(
       decoration: BoxDecoration(gradient: gradient),
@@ -590,7 +605,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             child: Column(
               children: [
                 Text(
-                  '#${player.rank}',
+                  '#$rank',
                   style: TextStyle(
                     color: medal != null
                         ? Colors.white
@@ -616,7 +631,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               ),
             ),
             child: Text(
-              player.avatarEmoji,
+              _getAvatarEmoji(name),
               style: const TextStyle(fontSize: 20),
             ),
           ),
@@ -626,7 +641,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isYou ? '${player.name} (You)' : player.name,
+                  isYou ? '$name (You)' : name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -637,7 +652,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${player.streak} day streak • L${player.level}',
+                  '${playerData['streak_days'] ?? 0} day streak • L${_calculateLevel(xp)}',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 11,
@@ -651,7 +666,7 @@ class _LeaderboardPageState extends State<LeaderboardPage>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${player.xp} XP',
+                '$xp XP',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -665,10 +680,10 @@ class _LeaderboardPageState extends State<LeaderboardPage>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: (player.xp % 10000) / 10000,
+                    value: (xp % 10000) / 10000,
                     backgroundColor: Colors.white.withOpacity(0.15),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      _rowBarColorForRank(player.rank),
+                      _rowBarColorForRank(rank),
                     ),
                   ),
                 ),

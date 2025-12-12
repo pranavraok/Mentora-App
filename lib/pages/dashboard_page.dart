@@ -256,7 +256,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
-
         return Stack(
           children: [
             // Background gradient
@@ -273,7 +272,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 ),
               ),
             ),
-
             // Floating particles
             ...List.generate(8, (index) {
               return AnimatedBuilder(
@@ -302,7 +300,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 },
               );
             }),
-
             // Main content
             Column(
               children: [
@@ -379,558 +376,565 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                     ),
                   ),
                 ),
-
-                // Scrollable content
+                // Scrollable content with RefreshIndicator
                 Expanded(
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  child: RefreshIndicator(
+                    color: const Color(0xFFFFD700),
+                    backgroundColor: const Color(0xFF1A1B2E),
+                    onRefresh: () async {
+                      // Invalidate all providers to trigger refresh
+                      ref.invalidate(currentUserProvider);
+                      ref.invalidate(gamificationProvider);
+                      ref.invalidate(dailyChallengeProvider);
+                      ref.invalidate(recentActivitiesProvider);
 
-                      // Profile card with real-time avatar
-                      SliverToBoxAdapter(
-                        child: Animate(
-                          effects: [
-                            FadeEffect(delay: 200.ms),
-                            SlideEffect(
-                              begin: const Offset(0, 0.2),
-                              end: Offset.zero,
-                            ),
-                          ],
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Consumer(
-                              builder: (context, ref, child) {
-                                // Watch avatar from Supabase in real-time
-                                final avatarAsync = ref.watch(
-                                  StreamProvider.autoDispose<String>((ref) {
-                                    final supabase = SupabaseConfig.client;
-                                    final authUser = supabase.auth.currentUser;
+                      // Wait for all data to reload
+                      await Future.wait([
+                        ref.read(currentUserProvider.future),
+                        ref.read(gamificationProvider.future),
+                        ref.read(dailyChallengeProvider.future),
+                        ref.read(recentActivitiesProvider.future),
+                      ]);
+                    },
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        // Profile card with real-time avatar
+                        SliverToBoxAdapter(
+                          child: Animate(
+                            effects: [
+                              FadeEffect(delay: 200.ms),
+                              SlideEffect(
+                                begin: const Offset(0, 0.2),
+                                end: Offset.zero,
+                              ),
+                            ],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Consumer(
+                                builder: (context, ref, child) {
+                                  // Watch avatar from Supabase in real-time
+                                  final avatarAsync = ref.watch(
+                                    StreamProvider.autoDispose((ref) {
+                                      final supabase = SupabaseConfig.client;
+                                      final authUser = supabase.auth.currentUser;
+                                      if (authUser == null) {
+                                        return Stream.value('🚀');
+                                      }
 
-                                    if (authUser == null) {
-                                      return Stream.value('🚀');
-                                    }
+                                      return supabase
+                                          .from('users')
+                                          .stream(primaryKey: ['id'])
+                                          .eq('supabase_uid', authUser.id)
+                                          .map((list) {
+                                        if (list.isEmpty) return '🚀';
+                                        return list.first['avatar'] as String? ?? '🚀';
+                                      });
+                                    }),
+                                  );
 
-                                    return supabase
-                                        .from('users')
-                                        .stream(primaryKey: ['id'])
-                                        .eq('supabase_uid', authUser.id)
-                                        .map((list) {
-                                      if (list.isEmpty) return '🚀';
-                                      return list.first['avatar'] as String? ?? '🚀';
-                                    });
-                                  }),
-                                );
+                                  final currentAvatar = avatarAsync.maybeWhen(
+                                    data: (avatar) => avatar,
+                                    orElse: () => '🚀',
+                                  );
 
-                                final currentAvatar = avatarAsync.maybeWhen(
-                                  data: (avatar) => avatar,
-                                  orElse: () => '🚀',
-                                );
-
-                                return Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        const Color(0xFF667eea).withOpacity(0.9),
-                                        const Color(0xFF764ba2).withOpacity(0.9),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(28),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF667eea).withOpacity(0.4),
-                                        blurRadius: 30,
-                                        offset: const Offset(0, 15),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          AnimatedBuilder(
-                                            animation: _controller,
-                                            builder: (context, child) {
-                                              return Transform.translate(
-                                                offset: Offset(
-                                                  0,
-                                                  math.sin(_controller.value * 2 * math.pi) * 3,
-                                                ),
-                                                child: Container(
-                                                  width: 75,
-                                                  height: 75,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    gradient: const LinearGradient(
-                                                      colors: [
-                                                        Color(0xFFFFD700),
-                                                        Color(0xFFFFA500),
-                                                      ],
-                                                    ),
-                                                    border: Border.all(
-                                                      color: Colors.white,
-                                                      width: 4,
-                                                    ),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: const Color(0xFFFFD700).withOpacity(0.6),
-                                                        blurRadius: 25,
-                                                        spreadRadius: 3,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(
-                                                      currentAvatar,
-                                                      style: const TextStyle(fontSize: 38),
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(width: 20),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  'Hello, ${user.name}! 👋',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 22,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 6),
-                                                Text(
-                                                  user.email,
-                                                  style: TextStyle(
-                                                    color: Colors.white.withOpacity(0.9),
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 12),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 6,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white.withOpacity(0.2),
-                                                    borderRadius: BorderRadius.circular(20),
-                                                    border: Border.all(
-                                                      color: Colors.white.withOpacity(0.3),
-                                                      width: 1.5,
-                                                    ),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(
-                                                        Icons.workspace_premium,
-                                                        color: Color(0xFFFFD700),
-                                                        size: 18,
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      Flexible(
-                                                        child: Text(
-                                                          'Level ${user.level} - ${user.levelTitle}',
-                                                          style: const TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w800,
-                                                          ),
-                                                          overflow: TextOverflow.ellipsis,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
+                                  return Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          const Color(0xFF667eea).withOpacity(0.9),
+                                          const Color(0xFF764ba2).withOpacity(0.9),
                                         ],
                                       ),
-                                      const SizedBox(height: 24),
-                                      Container(
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.15),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: Colors.white.withOpacity(0.3),
-                                            width: 1.5,
-                                          ),
+                                      borderRadius: BorderRadius.circular(28),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF667eea).withOpacity(0.4),
+                                          blurRadius: 30,
+                                          offset: const Offset(0, 15),
                                         ),
-                                        child: Column(
+                                      ],
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
                                           children: [
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                const Text(
-                                                  'XP Progress',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w700,
+                                            AnimatedBuilder(
+                                              animation: _controller,
+                                              builder: (context, child) {
+                                                return Transform.translate(
+                                                  offset: Offset(
+                                                    0,
+                                                    math.sin(_controller.value * 2 * math.pi) * 3,
                                                   ),
-                                                ),
-                                                Text(
-                                                  '${gamificationAsync.maybeWhen(data: (g) => g.totalXp, orElse: () => user.xp)} / ${user.xpForNextLevel} XP',
-                                                  style: TextStyle(
-                                                    color: Colors.white.withOpacity(0.9),
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w600,
+                                                  child: Container(
+                                                    width: 75,
+                                                    height: 75,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      gradient: const LinearGradient(
+                                                        colors: [
+                                                          Color(0xFFFFD700),
+                                                          Color(0xFFFFA500),
+                                                        ],
+                                                      ),
+                                                      border: Border.all(
+                                                        color: Colors.white,
+                                                        width: 4,
+                                                      ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: const Color(0xFFFFD700).withOpacity(0.6),
+                                                          blurRadius: 25,
+                                                          spreadRadius: 3,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        currentAvatar,
+                                                        style: const TextStyle(fontSize: 38),
+                                                      ),
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                );
+                                              },
                                             ),
-                                            const SizedBox(height: 12),
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(10),
-                                              child: LinearProgressIndicator(
-                                                value: user.xp / user.xpForNextLevel,
-                                                backgroundColor: Colors.white.withOpacity(0.2),
-                                                valueColor: const AlwaysStoppedAnimation(
-                                                  Color(0xFFFFD700),
-                                                ),
-                                                minHeight: 10,
+                                            const SizedBox(width: 20),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'Hello, ${user.name}! 👋',
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 22,
+                                                      fontWeight: FontWeight.w900,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    user.email,
+                                                    style: TextStyle(
+                                                      color: Colors.white.withOpacity(0.9),
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white.withOpacity(0.2),
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      border: Border.all(
+                                                        color: Colors.white.withOpacity(0.3),
+                                                        width: 1.5,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.workspace_premium,
+                                                          color: Color(0xFFFFD700),
+                                                          size: 18,
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        Flexible(
+                                                          child: Text(
+                                                            'Level ${user.level} - ${user.levelTitle}',
+                                                            style: const TextStyle(
+                                                              color: Colors.white,
+                                                              fontSize: 13,
+                                                              fontWeight: FontWeight.w800,
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
+                                        const SizedBox(height: 24),
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: Colors.white.withOpacity(0.3),
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  const Text(
+                                                    'XP Progress',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '${gamificationAsync.maybeWhen(data: (g) => g.totalXp, orElse: () => user.xp)} / ${user.xpForNextLevel} XP',
+                                                    style: TextStyle(
+                                                      color: Colors.white.withOpacity(0.9),
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 12),
+                                              ClipRRect(
+                                                borderRadius: BorderRadius.circular(10),
+                                                child: LinearProgressIndicator(
+                                                  value: user.xp / user.xpForNextLevel,
+                                                  backgroundColor: Colors.white.withOpacity(0.2),
+                                                  valueColor: const AlwaysStoppedAnimation(
+                                                    Color(0xFFFFD700),
+                                                  ),
+                                                  minHeight: 10,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                        // Stats cards
+                        SliverToBoxAdapter(
+                          child: Animate(
+                            effects: [
+                              FadeEffect(delay: 300.ms),
+                              ScaleEffect(begin: const Offset(0.9, 0.9)),
+                            ],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildStatCard(
+                                      icon: Icons.local_fire_department_rounded,
+                                      value: '${gamificationAsync.maybeWhen(data: (g) => g.streakDays, orElse: () => user.streak)}',
+                                      label: 'Day Streak',
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildStatCard(
+                                      icon: Icons.monetization_on_rounded,
+                                      value: '${gamificationAsync.maybeWhen(data: (g) => g.totalCoins, orElse: () => user.coins)}',
+                                      label: 'Coins',
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildStatCard(
+                                      icon: Icons.emoji_events_rounded,
+                                      value: '${gamificationAsync.maybeWhen(data: (g) => g.achievementCount, orElse: () => user.achievements.length)}',
+                                      label: 'Badges',
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                        // Today's challenge
+                        SliverToBoxAdapter(
+                          child: Animate(
+                            effects: [
+                              FadeEffect(delay: 400.ms),
+                              SlideEffect(
+                                begin: const Offset(-0.2, 0),
+                                end: Offset.zero,
+                              ),
+                            ],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                          ),
+                                          borderRadius: BorderRadius.circular(14),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFFFFD700).withOpacity(0.5),
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.star_rounded,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Text(
+                                        'Today\'s Challenge',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                );
-                              },
+                                  const SizedBox(height: 16),
+                                  challengeAsync.when(
+                                    data: (challenge) {
+                                      if (challenge == null) {
+                                        return _buildNoChallengeCard();
+                                      }
+                                      return _buildChallengeCard(challenge);
+                                    },
+                                    loading: () => _buildLoadingChallengeCard(),
+                                    error: (_, __) => _buildNoChallengeCard(),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                      // Stats cards
-                      SliverToBoxAdapter(
-                        child: Animate(
-                          effects: [
-                            FadeEffect(delay: 300.ms),
-                            ScaleEffect(begin: const Offset(0.9, 0.9)),
-                          ],
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildStatCard(
-                                    icon: Icons.local_fire_department_rounded,
-                                    value: '${gamificationAsync.maybeWhen(data: (g) => g.streakDays, orElse: () => user.streak)}',
-                                    label: 'Day Streak',
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildStatCard(
-                                    icon: Icons.monetization_on_rounded,
-                                    value: '${gamificationAsync.maybeWhen(data: (g) => g.totalCoins, orElse: () => user.coins)}',
-                                    label: 'Coins',
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildStatCard(
-                                    icon: Icons.emoji_events_rounded,
-                                    value: '${gamificationAsync.maybeWhen(data: (g) => g.achievementCount, orElse: () => user.achievements.length)}',
-                                    label: 'Badges',
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                      // Today's challenge
-                      SliverToBoxAdapter(
-                        child: Animate(
-                          effects: [
-                            FadeEffect(delay: 400.ms),
-                            SlideEffect(
-                              begin: const Offset(-0.2, 0),
-                              end: Offset.zero,
-                            ),
-                          ],
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                                        ),
-                                        borderRadius: BorderRadius.circular(14),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFFFD700).withOpacity(0.5),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 5),
+                        const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                        // Quick Actions
+                        SliverToBoxAdapter(
+                          child: Animate(
+                            effects: [FadeEffect(delay: 500.ms)],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                                           ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.star_rounded,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Today\'s Challenge',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                challengeAsync.when(
-                                  data: (challenge) {
-                                    if (challenge == null) {
-                                      return _buildNoChallengeCard();
-                                    }
-                                    return _buildChallengeCard(challenge);
-                                  },
-                                  loading: () => _buildLoadingChallengeCard(),
-                                  error: (_, __) => _buildNoChallengeCard(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                      // Quick Actions
-                      SliverToBoxAdapter(
-                        child: Animate(
-                          effects: [FadeEffect(delay: 500.ms)],
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                        ),
-                                        borderRadius: BorderRadius.circular(14),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFF667eea).withOpacity(0.5),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 5),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.flash_on_rounded,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Quick Actions',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildActionCard(
-                                        'View\nRoadmap',
-                                        Icons.map_rounded,
-                                        const LinearGradient(
-                                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                                        ),
-                                        onTap: () => _navigateTo(1),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildActionCard(
-                                        'Start\nProject',
-                                        Icons.rocket_launch_rounded,
-                                        const LinearGradient(
-                                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                                        ),
-                                        onTap: () => _navigateTo(2),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildActionCard(
-                                        'Resume\nCheck',
-                                        Icons.description_rounded,
-                                        const LinearGradient(
-                                          colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-                                        ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => const ResumeCheckerPageWithBackButton(),
+                                          borderRadius: BorderRadius.circular(14),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFF667eea).withOpacity(0.5),
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 5),
                                             ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildActionCard(
-                                        'Leader\nboard',
-                                        Icons.leaderboard_rounded,
-                                        const LinearGradient(
-                                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                          ],
                                         ),
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => const LeaderboardPageWithBackButton(),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                      // Recent activity
-                      SliverToBoxAdapter(
-                        child: Animate(
-                          effects: [FadeEffect(delay: 600.ms)],
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                                        child: const Icon(
+                                          Icons.flash_on_rounded,
+                                          color: Colors.white,
+                                          size: 22,
                                         ),
-                                        borderRadius: BorderRadius.circular(14),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFF4facfe).withOpacity(0.5),
-                                            blurRadius: 15,
-                                            offset: const Offset(0, 5),
-                                          ),
-                                        ],
                                       ),
-                                      child: const Icon(
-                                        Icons.history_rounded,
-                                        color: Colors.white,
-                                        size: 22,
+                                      const SizedBox(width: 12),
+                                      const Text(
+                                        'Quick Actions',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Recent Activity',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                activitiesAsync.when(
-                                  data: (activities) {
-                                    if (activities.isEmpty) {
-                                      return _buildNoActivityCard();
-                                    }
-
-                                    return Column(
-                                      children: activities.take(3).map((activity) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(bottom: 12),
-                                          child: _buildActivityItemFromModel(activity),
-                                        );
-                                      }).toList(),
-                                    );
-                                  },
-                                  loading: () => const Center(
-                                    child: CircularProgressIndicator(color: Color(0xFF4facfe)),
+                                    ],
                                   ),
-                                  error: (_, __) => _buildNoActivityCard(),
-                                ),
-                                const SizedBox(height: 32),
-                              ],
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildActionCard(
+                                          'View\nRoadmap',
+                                          Icons.map_rounded,
+                                          const LinearGradient(
+                                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                          ),
+                                          onTap: () => _navigateTo(1),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _buildActionCard(
+                                          'Start\nProject',
+                                          Icons.rocket_launch_rounded,
+                                          const LinearGradient(
+                                            colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                                          ),
+                                          onTap: () => _navigateTo(2),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildActionCard(
+                                          'Resume\nCheck',
+                                          Icons.description_rounded,
+                                          const LinearGradient(
+                                            colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                                          ),
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => const ResumeCheckerPageWithBackButton(),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _buildActionCard(
+                                          'Leader\nboard',
+                                          Icons.leaderboard_rounded,
+                                          const LinearGradient(
+                                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                          ),
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => const LeaderboardPageWithBackButton(),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        const SliverToBoxAdapter(child: SizedBox(height: 28)),
+                        // Recent activity
+                        SliverToBoxAdapter(
+                          child: Animate(
+                            effects: [FadeEffect(delay: 600.ms)],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                                          ),
+                                          borderRadius: BorderRadius.circular(14),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFF4facfe).withOpacity(0.5),
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.history_rounded,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Text(
+                                        'Recent Activity',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  activitiesAsync.when(
+                                    data: (activities) {
+                                      if (activities.isEmpty) {
+                                        return _buildNoActivityCard();
+                                      }
+                                      return Column(
+                                        children: activities.take(3).map((activity) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(bottom: 12),
+                                            child: _buildActivityItemFromModel(activity),
+                                          );
+                                        }).toList(),
+                                      );
+                                    },
+                                    loading: () => const Center(
+                                      child: CircularProgressIndicator(color: Color(0xFF4facfe)),
+                                    ),
+                                    error: (_, __) => _buildNoActivityCard(),
+                                  ),
+                                  const SizedBox(height: 32),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

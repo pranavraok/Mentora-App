@@ -6,6 +6,7 @@ import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
 import 'package:mentora_app/config/supabase_config.dart';
+import 'package:mentora_app/services/course_completion_service.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -29,7 +30,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
-
     _backgroundController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -50,10 +50,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
-
-        // ⭐ CHANGED: Using roadmapNodesSupabaseProvider instead of roadmapNodesProvider
         final nodesAsync = ref.watch(roadmapNodesSupabaseProvider);
-
         return Scaffold(
           body: Stack(
             children: [
@@ -71,7 +68,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                   ),
                 ),
               ),
-
               // ✅ FLOATING BLUR CIRCLES
               ...List.generate(8, (index) {
                 return AnimatedBuilder(
@@ -100,7 +96,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                   },
                 );
               }),
-
               // ✅ MAIN CONTENT
               Column(
                 children: [
@@ -140,7 +135,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                     fit: BoxFit.contain,
                                   ),
                                 ),
-
                                 // ✅ GLASSMORPHIC ACTIONS
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -180,7 +174,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                       ),
                     ),
                   ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
-
                   // ============= PAGE TITLE SECTION =============
                   Container(
                     width: double.infinity,
@@ -256,7 +249,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                       ],
                     ),
                   ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
-
                   // ============= SCROLLABLE CONTENT =============
                   Expanded(
                     child: nodesAsync.when(
@@ -265,7 +257,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                           return _buildEmptyState();
                         }
 
-// ⭐ CONVERT RAW JSON TO RoadmapNode OBJECTS
                         final nodes = rawNodes.map((json) {
                           return RoadmapNode.fromJson(json as Map<String, dynamic>);
                         }).toList();
@@ -277,7 +268,6 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 8),
                             ),
-
                             // Progress Summary
                             SliverToBoxAdapter(
                               child: Padding(
@@ -287,16 +277,13 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                 child: _buildProgressSummary(nodes),
                               ),
                             ),
-
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 32),
                             ),
-
                             // 3D Roadmap
                             SliverToBoxAdapter(
                               child: ThreeDRoadmap(nodes: nodes),
                             ),
-
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 60),
                             ),
@@ -725,13 +712,11 @@ class ThreeDRoadmap extends ConsumerWidget {
             size: Size(MediaQuery.of(context).size.width, nodes.length * 280.0),
             painter: ThreeDRoadPainter(nodeCount: nodes.length),
           ),
-
           // Checkpoints
           ...nodes.asMap().entries.map((entry) {
             final index = entry.key;
             final node = entry.value;
             final isLeft = index % 2 == 0;
-
             return Positioned(
               top: index * 280.0 + 80,
               left: isLeft ? 30 : null,
@@ -748,13 +733,11 @@ class ThreeDRoadmap extends ConsumerWidget {
               ),
             );
           }),
-
           // Numbered markers on road
           ...nodes.asMap().entries.map((entry) {
             final index = entry.key;
             final node = entry.value;
             final isLeft = index % 2 == 0;
-
             return Positioned(
               top: index * 280.0 + 100,
               left: isLeft
@@ -775,13 +758,11 @@ class ThreeDRoadmap extends ConsumerWidget {
 // ============= 3D ROAD PAINTER =============
 class ThreeDRoadPainter extends CustomPainter {
   final int nodeCount;
-
   ThreeDRoadPainter({required this.nodeCount});
 
   @override
   void paint(Canvas canvas, Size size) {
     final segmentHeight = 280.0;
-
     for (int i = 0; i < nodeCount; i++) {
       final y = i * segmentHeight;
 
@@ -815,13 +796,11 @@ class ThreeDRoadPainter extends CustomPainter {
           const Color(0xFF2c3e50).withOpacity(0.95),
         ],
       );
-
       final paint = Paint()
         ..shader = gradient.createShader(
           Rect.fromLTWH(0, y, size.width, segmentHeight),
         )
         ..style = PaintingStyle.fill;
-
       canvas.drawPath(path, paint);
 
       // Road edges
@@ -829,14 +808,12 @@ class ThreeDRoadPainter extends CustomPainter {
         ..color = const Color(0xFF1a202c)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4;
-
       canvas.drawPath(path, edgePaint);
 
       // Inner shadow effect
       final shadowPaint = Paint()
         ..color = Colors.black.withOpacity(0.3)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-
       canvas.drawPath(path, shadowPaint);
 
       // Center dashed line
@@ -867,12 +844,10 @@ class ThreeDRoadPainter extends CustomPainter {
       ..color = const Color(0xFFFFD700)
       ..strokeWidth = 5
       ..style = PaintingStyle.stroke;
-
     const dashWidth = 18.0;
     const dashSpace = 14.0;
     double distance = 0.0;
     final totalDistance = (end - start).distance;
-
     while (distance < totalDistance) {
       final startOffset = Offset.lerp(start, end, distance / totalDistance)!;
       distance += dashWidth;
@@ -887,12 +862,10 @@ class ThreeDRoadPainter extends CustomPainter {
       final paint = Paint()
         ..color = Colors.white.withOpacity(0.5)
         ..strokeWidth = 3;
-
       const dashWidth = 12.0;
       const dashSpace = 10.0;
       double distance = 0.0;
       final totalDistance = (end - start).distance;
-
       while (distance < totalDistance) {
         final startOffset = Offset.lerp(start, end, distance / totalDistance)!;
         distance += dashWidth;
@@ -911,7 +884,6 @@ class ThreeDRoadPainter extends CustomPainter {
 class RoadMarker extends ConsumerStatefulWidget {
   final int number;
   final RoadmapNode node;
-
   const RoadMarker({super.key, required this.number, required this.node});
 
   @override
@@ -941,7 +913,6 @@ class _RoadMarkerState extends ConsumerState<RoadMarker>
   Widget build(BuildContext context) {
     final color = _getNodeColor(widget.node.status);
     final gradient = _getNodeGradient(widget.node.status);
-
     return GestureDetector(
       onTap: () => _showNodeDetails(context, ref),
       child: AnimatedBuilder(
@@ -1088,7 +1059,6 @@ class RoadCheckpoint extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final color = _getNodeColor(node.status);
     final gradient = _getNodeGradient(node.status);
-
     return GestureDetector(
       onTap: () => _showNodeDetails(context, ref),
       child: ClipRRect(
@@ -1286,7 +1256,6 @@ class RoadCheckpoint extends ConsumerWidget {
       default:
         iconData = Icons.circle;
     }
-
     return Icon(iconData, color: Colors.white, size: 20);
   }
 
@@ -1300,16 +1269,104 @@ class RoadCheckpoint extends ConsumerWidget {
   }
 }
 
-// ============= DETAIL SHEET =============
-class RoadmapDetailSheet extends ConsumerWidget {
+// ============= DETAIL SHEET WITH COURSE COMPLETION SERVICE =============
+class RoadmapDetailSheet extends ConsumerStatefulWidget {
   final RoadmapNode node;
-
   const RoadmapDetailSheet({super.key, required this.node});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final color = _getNodeColor(node.status);
-    final gradient = _getNodeGradient(node.status);
+  ConsumerState<RoadmapDetailSheet> createState() => _RoadmapDetailSheetState();
+}
+
+class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
+  bool _isProcessing = false;
+
+  Future<void> _startLearning() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+
+    try {
+      final success = await CourseCompletionService.startCourse(widget.node.id);
+
+      if (success) {
+        ref.invalidate(roadmapNodesSupabaseProvider);
+
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('📚 Started learning! Mark complete when done.'),
+              backgroundColor: Color(0xFF4facfe),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _markComplete() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+
+    try {
+      final userId = await CourseCompletionService.getUserIdFromAuth();
+      if (userId == null) throw Exception('User not found');
+
+      final result = await CourseCompletionService.completeCourse(
+        nodeId: widget.node.id,
+        userId: userId,
+        xpReward: widget.node.xpReward,
+      );
+
+      if (result['success'] == true) {
+        ref.invalidate(roadmapNodesSupabaseProvider);
+        ref.invalidate(currentUserProvider);
+
+        if (mounted) {
+          Navigator.pop(context);
+
+          String message = '🎉 +${result['xpGained']} XP!';
+          if (result['unlockedCourse'] != null) {
+            message += '\n🔓 Unlocked: ${result['unlockedCourse']}';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: const Color(0xFF43e97b),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        throw Exception(result['error'] ?? 'Unknown error');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getNodeColor(widget.node.status);
+    final gradient = _getNodeGradient(widget.node.status);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -1364,7 +1421,7 @@ class RoadmapDetailSheet extends ConsumerWidget {
                           ],
                         ),
                         child: Center(
-                          child: _getNodeIcon(node.type, node.status),
+                          child: _getNodeIcon(widget.node.type, widget.node.status),
                         ),
                       ),
                       const SizedBox(width: 20),
@@ -1373,7 +1430,7 @@ class RoadmapDetailSheet extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              node.title,
+                              widget.node.title,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
@@ -1397,7 +1454,7 @@ class RoadmapDetailSheet extends ConsumerWidget {
                                 border: Border.all(color: color, width: 2),
                               ),
                               child: Text(
-                                _getStatusText(node.status),
+                                _getStatusText(widget.node.status),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 13,
@@ -1427,7 +1484,7 @@ class RoadmapDetailSheet extends ConsumerWidget {
                           ),
                         ),
                         child: Text(
-                          node.description,
+                          widget.node.description,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.95),
                             fontSize: 15,
@@ -1441,23 +1498,23 @@ class RoadmapDetailSheet extends ConsumerWidget {
                   _buildDetailRow(
                     Icons.star_rounded,
                     'XP Reward',
-                    '${node.xpReward} XP',
+                    '${widget.node.xpReward} XP',
                     const Color(0xFFFFD700),
                   ),
                   _buildDetailRow(
                     Icons.access_time_rounded,
                     'Duration',
-                    '${node.estimatedHours} hours',
+                    '${widget.node.estimatedHours} hours',
                     const Color(0xFF4facfe),
                   ),
-                  if (node.providerName != null)
+                  if (widget.node.providerName != null)
                     _buildDetailRow(
                       Icons.school_rounded,
                       'Provider',
-                      node.providerName!,
+                      widget.node.providerName!,
                       const Color(0xFF667eea),
                     ),
-                  if (node.skills.isNotEmpty) ...[
+                  if (widget.node.skills.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     const Text(
                       '💡 Skills You\'ll Learn',
@@ -1471,7 +1528,7 @@ class RoadmapDetailSheet extends ConsumerWidget {
                     Wrap(
                       spacing: 10,
                       runSpacing: 10,
-                      children: node.skills.map((skill) {
+                      children: widget.node.skills.map((skill) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -1509,70 +1566,104 @@ class RoadmapDetailSheet extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: 32),
-                  if (node.status == NodeStatus.unlocked ||
-                      node.status == NodeStatus.inProgress)
+
+                  // ACTION BUTTONS
+                  if (widget.node.status == NodeStatus.unlocked)
+                    _buildActionButton(
+                      label: 'Start Learning',
+                      icon: Icons.play_circle_rounded,
+                      gradient: gradient,
+                      color: color,
+                      onTap: _startLearning,
+                    ),
+
+                  if (widget.node.status == NodeStatus.inProgress)
+                    _buildActionButton(
+                      label: 'Mark as Complete ✓',
+                      icon: Icons.check_circle_rounded,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                      ),
+                      color: const Color(0xFF43e97b),
+                      onTap: _markComplete,
+                    ),
+
+                  if (widget.node.status == NodeStatus.locked)
                     Container(
                       width: double.infinity,
                       height: 62,
                       decoration: BoxDecoration(
-                        gradient: gradient,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.grey.withOpacity(0.3),
+                            Colors.grey.withOpacity(0.2),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.grey.withOpacity(0.5),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_rounded,
+                              color: Colors.white54,
+                              size: 26,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Complete Previous Course',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  if (widget.node.status == NodeStatus.completed)
+                    Container(
+                      width: double.infinity,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                        ),
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: color.withOpacity(0.6),
+                            color: const Color(0xFF43e97b).withOpacity(0.6),
                             blurRadius: 30,
                             offset: const Offset(0, 12),
                           ),
                         ],
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () async {
-                            try {
-                              // ⭐ UPDATE NODE STATUS IN SUPABASE DIRECTLY
-                              await SupabaseConfig.client
-                                  .from('roadmap_nodes')
-                                  .update({
-                                'status': 'inProgress',
-                                'started_at': DateTime.now().toIso8601String(),
-                              })
-                                  .eq('id', node.id);
-
-                              // Refresh the roadmap
-                              ref.invalidate(roadmapNodesSupabaseProvider);
-
-                              if (context.mounted) Navigator.pop(context);
-                            } catch (e) {
-                              debugPrint('Error updating node: $e');
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(18),
-                          child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  node.status == NodeStatus.unlocked
-                                      ? Icons.play_circle_rounded
-                                      : Icons.arrow_forward_rounded,
-                                  color: Colors.white,
-                                  size: 26,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  node.status == NodeStatus.unlocked
-                                      ? 'Start Learning'
-                                      : 'Continue',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ],
+                      child: const Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.white,
+                              size: 26,
                             ),
-                          ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Course Completed!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -1581,6 +1672,63 @@ class RoadmapDetailSheet extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required LinearGradient gradient,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 62,
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.6),
+            blurRadius: 30,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isProcessing ? null : onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Center(
+            child: _isProcessing
+                ? const CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 3,
+            )
+                : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 26,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1649,7 +1797,6 @@ class RoadmapDetailSheet extends ConsumerWidget {
       default:
         iconData = Icons.circle;
     }
-
     return Icon(iconData, color: Colors.white, size: 38);
   }
 

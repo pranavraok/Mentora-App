@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:glassmorphism/glassmorphism.dart';
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
 import 'package:mentora_app/providers/app_providers.dart';
@@ -27,6 +28,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
   String _experienceLevel = 'Beginner';
   String _learningStyle = 'Visual';
   String _motivation = 'Career Switch';
+  String _careerField = 'Engineering';
   late AnimationController _floatingController;
   bool _isSubmitting = false;
 
@@ -37,6 +39,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
+
+    // ⭐ FIX: Add listeners to text controllers to trigger rebuild
+    _educationController.addListener(() => setState(() {}));
+    _careerGoalController.addListener(() => setState(() {}));
+    _currentRoleController.addListener(() => setState(() {}));
   }
 
   @override
@@ -48,16 +55,28 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
     super.dispose();
   }
 
+  void _showAIGeneratingPopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.8),
+      builder: (BuildContext dialogContext) {
+        return _AIGeneratingPopup();
+      },
+    );
+  }
+
   Future<void> _completeOnboarding() async {
     if (_isSubmitting) return;
-
     setState(() => _isSubmitting = true);
 
+    _showAIGeneratingPopup();
+
     try {
-      // Get current user from Supabase Auth
       final currentUser = SupabaseConfig.client.auth.currentUser;
       if (currentUser == null) {
         if (mounted) {
+          Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Not logged in. Please sign in first.'),
@@ -67,7 +86,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         return;
       }
 
-      // Get or create user ID from database
       var userResponse = await SupabaseConfig.client
           .from('users')
           .select('id')
@@ -75,26 +93,22 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
           .maybeSingle();
 
       String userId;
-
       if (userResponse == null) {
-        // User profile doesn't exist yet - create it now
         final insertResponse = await SupabaseConfig.client
             .from('users')
             .insert({
-              'supabase_uid': currentUser.id,
-              'email': currentUser.email!,
-              'name': currentUser.userMetadata?['name'] ?? 'User',
-              'onboarding_complete': false,
-            })
+          'supabase_uid': currentUser.id,
+          'email': currentUser.email!,
+          'name': currentUser.userMetadata?['name'] ?? 'User',
+          'onboarding_complete': false,
+        })
             .select('id')
             .single();
-
         userId = insertResponse['id'] as String;
       } else {
         userId = userResponse['id'] as String;
       }
 
-      // Call Supabase Edge Function to generate roadmap via Gemini AI
       final roadmapService = RoadmapService();
       await roadmapService.generateRoadmap(
         userId: userId,
@@ -104,22 +118,16 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         experience: _experienceLevel,
         education: _educationController.text,
         learningStyle: _learningStyle,
-        timelineMonths: (_weeklyHours * 4)
-            .toInt(), // Rough estimate based on commitment
+        timelineMonths: (_weeklyHours * 4).toInt(),
       );
 
-      // Update user profile with onboarding data
-      await SupabaseConfig.client
-          .from('users')
-          .update({
-            'onboarding_complete': true,
-            'career_goal': _careerGoalController.text,
-            'college': _educationController.text,
-            'last_activity': DateTime.now().toIso8601String(),
-          })
-          .eq('id', userId);
+      await SupabaseConfig.client.from('users').update({
+        'onboarding_complete': true,
+        'career_goal': _careerGoalController.text,
+        'college': _educationController.text,
+        'last_activity': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
 
-      // Also update local user model via provider
       final userAsync = ref.read(currentUserProvider);
       await userAsync.when(
         data: (user) async {
@@ -140,7 +148,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
 
       if (!mounted) return;
 
-      // Show success message
+      Navigator.of(context).pop();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🎉 Roadmap generated! Welcome to your journey!'),
@@ -148,7 +157,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         ),
       );
 
-      // Navigate to dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardPage()),
@@ -156,12 +164,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
     } catch (e, stackTrace) {
       print('Error completing onboarding: $e');
       print('Stack trace: $stackTrace');
-
       if (mounted) {
-        // Check if error is quota/resource exhausted
+        Navigator.of(context).pop();
+
         final errorMessage = e.toString().toLowerCase();
-        final isQuotaError =
-            errorMessage.contains('429') ||
+        final isQuotaError = errorMessage.contains('429') ||
             errorMessage.contains('resource_exhausted') ||
             errorMessage.contains('quota');
 
@@ -187,15 +194,17 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
   bool _canProceed() {
     switch (_currentStep) {
       case 0:
-        return _educationController.text.isNotEmpty &&
-            _experienceLevel.isNotEmpty;
+        return _careerField.isNotEmpty && _experienceLevel.isNotEmpty;
       case 1:
-        return _selectedSkills.isNotEmpty;
+        return _educationController.text.trim().isNotEmpty;
       case 2:
-        return _careerGoalController.text.isNotEmpty && _motivation.isNotEmpty;
+        return _selectedSkills.isNotEmpty;
       case 3:
-        return _selectedInterests.isNotEmpty;
+        return _careerGoalController.text.trim().isNotEmpty &&
+            _motivation.isNotEmpty;
       case 4:
+        return _selectedInterests.isNotEmpty;
+      case 5:
         return _weeklyHours > 0 && _learningStyle.isNotEmpty;
       default:
         return true;
@@ -207,7 +216,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
     return Scaffold(
       body: Stack(
         children: [
-          // ✅ UPDATED BACKGROUND - SAME AS OTHER PAGES
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -221,8 +229,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
               ),
             ),
           ),
-
-          // Floating particles (SAME AS OTHER PAGES)
           ...List.generate(8, (index) {
             return AnimatedBuilder(
               animation: _floatingController,
@@ -250,12 +256,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
               },
             );
           }),
-
-          // Main content
           SafeArea(
             child: Column(
               children: [
-                // Progress bar with step indicator
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -264,7 +267,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Step ${_currentStep + 1} of 5',
+                            'Step ${_currentStep + 1} of 6',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -272,7 +275,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                             ),
                           ),
                           Text(
-                            '${((_currentStep + 1) / 5 * 100).toInt()}%',
+                            '${((_currentStep + 1) / 6 * 100).toInt()}%',
                             style: const TextStyle(
                               color: AppColors.xpGold,
                               fontSize: 16,
@@ -285,7 +288,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: LinearProgressIndicator(
-                          value: (_currentStep + 1) / 5,
+                          value: (_currentStep + 1) / 6,
                           backgroundColor: Colors.white.withOpacity(0.2),
                           valueColor: const AlwaysStoppedAnimation(
                             AppColors.xpGold,
@@ -296,8 +299,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                     ],
                   ),
                 ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.2, end: 0),
-
-                // Content
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -307,8 +308,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                         .slideX(begin: 0.2, end: 0),
                   ),
                 ),
-
-                // Navigation buttons
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Row(
@@ -356,25 +355,25 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                             gradient: LinearGradient(
                               colors: _canProceed()
                                   ? [
-                                      const Color(0xFFFFD700),
-                                      const Color(0xFFFFA500),
-                                    ]
+                                const Color(0xFFFFD700),
+                                const Color(0xFFFFA500),
+                              ]
                                   : [
-                                      Colors.grey.shade400,
-                                      Colors.grey.shade500,
-                                    ],
+                                Colors.grey.shade400,
+                                Colors.grey.shade500,
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: _canProceed()
                                 ? [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFFFFD700,
-                                      ).withOpacity(0.4),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ]
+                              BoxShadow(
+                                color: const Color(
+                                  0xFFFFD700,
+                                ).withOpacity(0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ]
                                 : [],
                           ),
                           child: Material(
@@ -382,64 +381,39 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                             child: InkWell(
                               onTap: (_canProceed() && !_isSubmitting)
                                   ? () {
-                                      if (_currentStep < 4) {
-                                        setState(() => _currentStep++);
-                                      } else {
-                                        _completeOnboarding();
-                                      }
-                                    }
+                                if (_currentStep < 5) {
+                                  setState(() => _currentStep++);
+                                } else {
+                                  _completeOnboarding();
+                                }
+                              }
                                   : null,
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
                                 ),
-                                child: _isSubmitting
-                                    ? const Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
-                                            ),
-                                          ),
-                                          SizedBox(width: 12),
-                                          Text(
-                                            'Generating your roadmap...',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      )
-                                    : Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            _currentStep < 4
-                                                ? 'Next'
-                                                : '🎉 Complete Setup',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          const Icon(
-                                            Icons.arrow_forward_rounded,
-                                            color: Colors.white,
-                                            size: 24,
-                                          ),
-                                        ],
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      _currentStep < 5
+                                          ? 'Next'
+                                          : '🎉 Complete Setup',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
                                       ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -459,22 +433,46 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
   Widget _buildStepContent() {
     switch (_currentStep) {
       case 0:
-        return _buildEducationStep();
+        return _buildCareerFieldStep();
       case 1:
-        return _buildSkillsStep();
+        return _buildEducationStep();
       case 2:
-        return _buildCareerGoalStep();
+        return _buildSkillsStep();
       case 3:
-        return _buildInterestsStep();
+        return _buildCareerGoalStep();
       case 4:
+        return _buildInterestsStep();
+      case 5:
         return _buildPreferencesStep();
       default:
         return const SizedBox();
     }
   }
 
-  // ============= STEP 1: EDUCATION & EXPERIENCE =============
-  Widget _buildEducationStep() {
+  Widget _buildCareerFieldStep() {
+    final careerFields = [
+      {'icon': '💻', 'label': 'Engineering', 'color': const Color(0xFF4facfe)},
+      {'icon': '⚕️', 'label': 'Medical', 'color': const Color(0xFF43e97b)},
+      {'icon': '💼', 'label': 'Business/MBA', 'color': const Color(0xFFf093fb)},
+      {'icon': '📊', 'label': 'Commerce', 'color': const Color(0xFFFFD700)},
+      {'icon': '🎨', 'label': 'Arts & Design', 'color': const Color(0xFFf5576c)},
+      {'icon': '⚖️', 'label': 'Law', 'color': const Color(0xFF667eea)},
+      {
+        'icon': '🔬',
+        'label': 'Science & Research',
+        'color': const Color(0xFF38f9d7)
+      },
+      {'icon': '📚', 'label': 'Education', 'color': const Color(0xFFfda085)},
+      {'icon': '📢', 'label': 'Marketing', 'color': const Color(0xFFa8edea)},
+      {'icon': '🏗️', 'label': 'Architecture', 'color': const Color(0xFFfed6e3)},
+      {
+        'icon': '🎬',
+        'label': 'Media & Entertainment',
+        'color': const Color(0xFFfbc2eb)
+      },
+      {'icon': '🌾', 'label': 'Agriculture', 'color': const Color(0xFF81FBB8)},
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -490,7 +488,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '📚 Let\'s Start With Your Background',
+                  '🎓 Choose Your Field',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -503,7 +501,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         ),
         const SizedBox(height: 32),
         const Text(
-          'Education Background',
+          'Career Field',
           style: TextStyle(
             color: Colors.white,
             fontSize: 28,
@@ -512,73 +510,72 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         ),
         const SizedBox(height: 8),
         Text(
-          'Tell us about your educational journey',
+          'Select the field you\'re studying or working in',
           style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
         ),
         const SizedBox(height: 24),
-        TextField(
-          controller: _educationController,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText:
-                'e.g., Bachelor\'s in Computer Science from XYZ University',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.1),
-            prefixIcon: const Icon(Icons.history_edu, color: AppColors.xpGold),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.3),
-                width: 1.5,
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.4,
+          ),
+          itemCount: careerFields.length,
+          itemBuilder: (context, index) {
+            final field = careerFields[index];
+            final isSelected = _careerField == field['label'];
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _careerField = field['label'] as String;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                    colors: [
+                      (field['color'] as Color).withOpacity(0.8),
+                      (field['color'] as Color),
+                    ],
+                  )
+                      : null,
+                  color: isSelected ? null : Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected
+                        ? (field['color'] as Color)
+                        : Colors.white.withOpacity(0.3),
+                    width: isSelected ? 2 : 1.5,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      field['icon'] as String,
+                      style: const TextStyle(fontSize: 40),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      field['label'] as String,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight:
+                        isSelected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.xpGold, width: 2),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-        const Text(
-          'Current Role (if any)',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _currentRoleController,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          decoration: InputDecoration(
-            hintText: 'e.g., Junior Developer, Student, Career Switcher',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.1),
-            prefixIcon: const Icon(Icons.work_outline, color: AppColors.xpGold),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.3),
-                width: 1.5,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.xpGold, width: 2),
-            ),
-          ),
+            );
+          },
         ),
         const SizedBox(height: 32),
         const Text(
@@ -594,8 +591,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
           spacing: 12,
           runSpacing: 12,
           children: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((
-            level,
-          ) {
+              level,
+              ) {
             final isSelected = _experienceLevel == level;
             return GestureDetector(
               onTap: () => setState(() => _experienceLevel = level),
@@ -607,8 +604,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                        )
+                    colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                  )
                       : null,
                   color: isSelected ? null : Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(16),
@@ -647,30 +644,299 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
     );
   }
 
-  // ============= STEP 2: SKILLS =============
+  Widget _buildEducationStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.history_edu, color: AppColors.xpGold, size: 32),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '📚 Your Background',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        const Text(
+          'Education Background',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Tell us about your educational journey',
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
+        ),
+        const SizedBox(height: 24),
+        TextField(
+          controller: _educationController,
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText:
+            'e.g., Bachelor\'s in Computer Science from XYZ University',
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.1),
+            prefixIcon: const Icon(Icons.history_edu, color: AppColors.xpGold),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.xpGold, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        const Text(
+          'Current Role (optional)',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _currentRoleController,
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+          decoration: InputDecoration(
+            hintText: 'e.g., Junior Developer, Student, Career Switcher',
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.1),
+            prefixIcon: const Icon(Icons.work_outline, color: AppColors.xpGold),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.xpGold, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: 40),
+      ],
+    );
+  }
+
   Widget _buildSkillsStep() {
-    final availableSkills = [
-      'Python',
-      'JavaScript',
-      'React',
-      'Node.js',
-      'Flutter',
-      'Java',
-      'C++',
-      'SQL',
-      'MongoDB',
-      'AWS',
-      'Docker',
-      'Git',
-      'Machine Learning',
-      'Data Science',
-      'UI/UX Design',
-      'DevOps',
-      'TypeScript',
-      'GraphQL',
-      'Firebase',
-      'Kubernetes',
-    ];
+    Map<String, List<String>> fieldSkills = {
+      'Engineering': [
+        'Python',
+        'JavaScript',
+        'React',
+        'Node.js',
+        'Flutter',
+        'Java',
+        'C++',
+        'SQL',
+        'MongoDB',
+        'AWS',
+        'Docker',
+        'Git',
+        'Machine Learning',
+        'Data Science',
+        'UI/UX Design',
+        'DevOps',
+        'TypeScript',
+        'GraphQL',
+        'Firebase',
+        'Kubernetes',
+      ],
+      'Medical': [
+        'Clinical Skills',
+        'Anatomy',
+        'Pharmacology',
+        'Patient Care',
+        'Medical Research',
+        'Diagnostics',
+        'Surgery',
+        'Emergency Care',
+        'Laboratory Skills',
+        'Medical Ethics',
+        'Public Health',
+        'Healthcare Management',
+      ],
+      'Business/MBA': [
+        'Strategy',
+        'Finance',
+        'Marketing',
+        'Operations',
+        'Leadership',
+        'Analytics',
+        'Consulting',
+        'Project Management',
+        'Sales',
+        'Negotiation',
+        'Business Development',
+        'Supply Chain',
+      ],
+      'Commerce': [
+        'Accounting',
+        'Taxation',
+        'Auditing',
+        'Financial Analysis',
+        'Excel',
+        'Tally',
+        'SAP',
+        'Banking',
+        'Insurance',
+        'Cost Management',
+        'Economics',
+        'Stock Market',
+      ],
+      'Arts & Design': [
+        'Graphic Design',
+        'Illustration',
+        'Photoshop',
+        'Illustrator',
+        'Figma',
+        'Animation',
+        'Video Editing',
+        'Typography',
+        'Branding',
+        'UI Design',
+        'Photography',
+        '3D Modeling',
+      ],
+      'Law': [
+        'Constitutional Law',
+        'Criminal Law',
+        'Corporate Law',
+        'Legal Research',
+        'Contract Drafting',
+        'Litigation',
+        'Arbitration',
+        'Legal Writing',
+        'Case Analysis',
+        'Legal Ethics',
+        'IP Law',
+        'Tax Law',
+      ],
+      'Science & Research': [
+        'Research Methods',
+        'Data Analysis',
+        'Laboratory Skills',
+        'Scientific Writing',
+        'Statistics',
+        'Python',
+        'R Programming',
+        'Experimentation',
+        'Literature Review',
+        'Thesis Writing',
+        'Peer Review',
+        'Grant Writing',
+      ],
+      'Education': [
+        'Teaching',
+        'Curriculum Design',
+        'Classroom Management',
+        'Assessment',
+        'Educational Technology',
+        'Lesson Planning',
+        'Student Counseling',
+        'E-Learning',
+        'Special Education',
+        'Communication',
+        'Research',
+        'Training',
+      ],
+      'Marketing': [
+        'Digital Marketing',
+        'SEO',
+        'Content Writing',
+        'Social Media',
+        'Google Ads',
+        'Analytics',
+        'Email Marketing',
+        'Copywriting',
+        'Brand Strategy',
+        'Market Research',
+        'Video Marketing',
+        'Influencer Marketing',
+      ],
+      'Architecture': [
+        'AutoCAD',
+        'SketchUp',
+        'Revit',
+        '3D Modeling',
+        'Structural Design',
+        'Interior Design',
+        'Urban Planning',
+        'Sustainable Design',
+        'Building Codes',
+        'Project Management',
+        'Rendering',
+        'Construction',
+      ],
+      'Media & Entertainment': [
+        'Video Production',
+        'Scriptwriting',
+        'Cinematography',
+        'Editing',
+        'Sound Design',
+        'Acting',
+        'Directing',
+        'Animation',
+        'VFX',
+        'Broadcasting',
+        'Journalism',
+        'Content Creation',
+      ],
+      'Agriculture': [
+        'Crop Management',
+        'Soil Science',
+        'Irrigation',
+        'Pest Control',
+        'Farm Management',
+        'Agricultural Tech',
+        'Horticulture',
+        'Animal Husbandry',
+        'Organic Farming',
+        'Agricultural Economics',
+        'Food Processing',
+        'Agronomy',
+      ],
+    };
+
+    final availableSkills =
+        fieldSkills[_careerField] ?? fieldSkills['Engineering']!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -759,8 +1025,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-                        )
+                    colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                  )
                       : null,
                   color: isSelected ? null : Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -782,9 +1048,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 15,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+                        fontWeight:
+                        isSelected ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -798,7 +1063,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
     );
   }
 
-  // ============= STEP 3: CAREER GOALS =============
   Widget _buildCareerGoalStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -847,7 +1111,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
           maxLines: 4,
           decoration: InputDecoration(
             hintText:
-                'e.g., Full Stack Developer at a FAANG company, building innovative products',
+            'e.g., Full Stack Developer at a FAANG company, building innovative products',
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
             filled: true,
             fillColor: Colors.white.withOpacity(0.1),
@@ -882,69 +1146,67 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children:
-              [
-                'Career Switch',
-                'Skill Upgrade',
-                'Get Promoted',
-                'Start Freelancing',
-                'Build Startup',
-                'Get First Job',
-              ].map((mot) {
-                final isSelected = _motivation == mot;
-                return GestureDetector(
-                  onTap: () => setState(() => _motivation = mot),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
+          children: [
+            'Career Switch',
+            'Skill Upgrade',
+            'Get Promoted',
+            'Start Freelancing',
+            'Build Startup',
+            'Get First Job',
+          ].map((mot) {
+            final isSelected = _motivation == mot;
+            return GestureDetector(
+              onTap: () => setState(() => _motivation = mot),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? const LinearGradient(
+                    colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                  )
+                      : null,
+                  color: isSelected ? null : Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFFf5576c)
+                        : Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isSelected
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      color: Colors.white,
+                      size: 20,
                     ),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                              colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-                            )
-                          : null,
-                      color: isSelected ? null : Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFFf5576c)
-                            : Colors.white.withOpacity(0.3),
-                        width: 2,
+                    const SizedBox(width: 8),
+                    Text(
+                      mot,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isSelected
-                              ? Icons.check_circle
-                              : Icons.circle_outlined,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          mot,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 40),
       ],
     );
   }
 
-  // ============= STEP 4: INTERESTS =============
   Widget _buildInterestsStep() {
     final interests = [
       '🌐 Web Development',
@@ -1053,8 +1315,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-                        )
+                    colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                  )
                       : null,
                   color: isSelected ? null : Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -1081,9 +1343,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                          fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
@@ -1100,7 +1361,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
     );
   }
 
-  // ============= STEP 5: PREFERENCES =============
   Widget _buildPreferencesStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1143,8 +1403,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
           style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
         ),
         const SizedBox(height: 32),
-
-        // Weekly hours
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -1253,8 +1511,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
           ),
         ),
         const SizedBox(height: 32),
-
-        // Learning style
         const Text(
           'Preferred Learning Style',
           style: TextStyle(
@@ -1267,85 +1523,82 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children:
-              [
-                {
-                  'icon': Icons.visibility,
-                  'label': 'Visual',
-                  'desc': 'Videos & Diagrams',
-                },
-                {
-                  'icon': Icons.menu_book,
-                  'label': 'Reading',
-                  'desc': 'Articles & Docs',
-                },
-                {
-                  'icon': Icons.people,
-                  'label': 'Interactive',
-                  'desc': 'Hands-on Projects',
-                },
-                {
-                  'icon': Icons.mic,
-                  'label': 'Auditory',
-                  'desc': 'Podcasts & Audio',
-                },
-              ].map((style) {
-                final isSelected = _learningStyle == style['label'];
-                return GestureDetector(
-                  onTap: () =>
-                      setState(() => _learningStyle = style['label'] as String),
-                  child: Container(
-                    width: (MediaQuery.of(context).size.width - 60) / 2,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                            )
-                          : null,
-                      color: isSelected ? null : Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFF764ba2)
-                            : Colors.white.withOpacity(0.3),
-                        width: 2,
+          children: [
+            {
+              'icon': Icons.visibility,
+              'label': 'Visual',
+              'desc': 'Videos & Diagrams',
+            },
+            {
+              'icon': Icons.menu_book,
+              'label': 'Reading',
+              'desc': 'Articles & Docs',
+            },
+            {
+              'icon': Icons.people,
+              'label': 'Interactive',
+              'desc': 'Hands-on Projects',
+            },
+            {
+              'icon': Icons.mic,
+              'label': 'Auditory',
+              'desc': 'Podcasts & Audio',
+            },
+          ].map((style) {
+            final isSelected = _learningStyle == style['label'];
+            return GestureDetector(
+              onTap: () =>
+                  setState(() => _learningStyle = style['label'] as String),
+              child: Container(
+                width: (MediaQuery.of(context).size.width - 60) / 2,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? const LinearGradient(
+                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                  )
+                      : null,
+                  color: isSelected ? null : Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF764ba2)
+                        : Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      style['icon'] as IconData,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      style['label'] as String,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          style['icon'] as IconData,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          style['label'] as String,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          style['desc'] as String,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      style['desc'] as String,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                );
-              }).toList(),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         ),
         const SizedBox(height: 40),
-
-        // Final CTA
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -1390,6 +1643,207 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         ),
         const SizedBox(height: 40),
       ],
+    );
+  }
+}
+
+class _AIGeneratingPopup extends StatefulWidget {
+  @override
+  State<_AIGeneratingPopup> createState() => _AIGeneratingPopupState();
+}
+
+class _AIGeneratingPopupState extends State<_AIGeneratingPopup>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _floatingController;
+  late AnimationController _rotationController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _floatingController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )
+      ..repeat(reverse: true);
+
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 20),
+      vsync: this,
+    )
+      ..repeat();
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    );
+
+    _scaleController.forward();
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _floatingController.dispose();
+    _rotationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        // ✅ Added padding
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: 300, // ✅ Reduced from 340
+            maxHeight: MediaQuery
+                .of(context)
+                .size
+                .height * 0.45, // ✅ Max 45% height
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24), // ✅ Reduced from 32
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF0F0C29),
+                Color(0xFF302b63),
+                Color(0xFF24243e),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.xpGold.withOpacity(0.3),
+                blurRadius: 30,
+                spreadRadius: 5,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: GlassmorphicContainer(
+            width: double.infinity,
+            height: double.infinity,
+            borderRadius: 24,
+            // ✅ Reduced from 32
+            blur: 20,
+            alignment: Alignment.center,
+            border: 2,
+            linearGradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.2),
+                Colors.white.withOpacity(0.05),
+              ],
+            ),
+            borderGradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.6),
+                Colors.white.withOpacity(0.2),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24), // ✅ Reduced from 40
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon with floating animation
+                  AnimatedBuilder(
+                    animation: _floatingController,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(
+                          0,
+                          math.sin(_floatingController.value * 2 * math.pi) *
+                              6, // ✅ Reduced from 10
+                        ),
+                        child: Container(
+                          width: 70, // ✅ Reduced from 100
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.xpGold.withOpacity(0.3),
+                                AppColors.xpGold.withOpacity(0.1),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: AppColors.xpGold.withOpacity(0.5),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.xpGold.withOpacity(0.4),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            size: 36, // ✅ Reduced from 50
+                            color: AppColors.xpGold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 18), // ✅ Reduced from 28
+                  const Text(
+                    'AI Generating Your Roadmap',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18, // ✅ Reduced from 22
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8), // ✅ Reduced from 12
+                  Text(
+                    'Please wait while our AI crafts a personalized learning path just for you...',
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12, // ✅ Reduced from 15
+                      fontWeight: FontWeight.w500,
+                      height: 1.3, // ✅ Reduced from 1.5
+                    ),
+                  ),
+                  const SizedBox(height: 18), // ✅ Reduced from 28
+                  const SizedBox(
+                    width: 32, // ✅ Reduced from 40
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      color: AppColors.xpGold,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

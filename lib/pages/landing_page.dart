@@ -339,7 +339,7 @@ class HeroSection3D extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '🎮 Level Up Your Career',
+                          'Level Up Your Career',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,

@@ -7,6 +7,7 @@ import 'package:mentora_app/pages/onboarding_page.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
 import 'package:mentora_app/services/auth_service.dart';
 import 'package:mentora_app/widgets/auth_popup_dialog.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math' as math;
 
 class AuthPage extends ConsumerStatefulWidget {
@@ -24,8 +25,10 @@ class _AuthPageState extends ConsumerState<AuthPage>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
+
   bool _isLoading = false;
   bool _obscurePassword = true;
+
   late AnimationController _floatingController;
   late AnimationController _rotationController;
   late AnimationController _slideController;
@@ -72,10 +75,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
           const end = Offset.zero;
           const curve = Curves.easeInOutCubic;
 
-          var tween = Tween(
-            begin: begin,
-            end: end,
-          ).chain(CurveTween(curve: curve));
+          var tween = Tween(begin: begin, end: end)
+              .chain(CurveTween(curve: curve));
 
           return SlideTransition(
             position: animation.drive(tween),
@@ -87,7 +88,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 
-  // ⭐ UPDATED AUTH HANDLER
+  // ✅ COMPLETE FIXED AUTH HANDLER
   Future<void> _handleAuth() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -97,46 +98,145 @@ class _AuthPageState extends ConsumerState<AuthPage>
       final authService = AuthService();
 
       if (widget.isLogin) {
-        // ============= LOGIN =============
-        final response = await authService.signInWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-
-        if (response.user != null) {
-          // Check if onboarding is complete
-          final isComplete = await authService.isOnboardingComplete(
-            response.user!.id,
+        // ===== LOGIN =====
+        try {
+          final response = await authService.signInWithEmail(
+            _emailController.text.trim(),
+            _passwordController.text,
           );
 
+          if (response.user != null) {
+            // ✅ Check if email is verified
+            final isEmailVerified = response.user!.emailConfirmedAt != null;
+
+            if (!isEmailVerified) {
+              // Email not verified - show warning popup
+              if (!mounted) return;
+              setState(() => _isLoading = false);
+
+              await showAuthPopup(
+                context: context,
+                title: '📧 Email Not Verified',
+                message: 'Please verify your email before logging in. Check your inbox for the verification link.',
+                icon: Icons.mark_email_unread_rounded,
+                iconColor: const Color(0xFFFFA500),
+                isEmailVerification: true,
+                onClose: () {
+                  // Stay on login page
+                },
+              );
+
+              // Sign out the unverified user
+              await authService.signOut();
+              return;
+            }
+
+            // Email is verified - proceed
+            final isComplete = await authService.isOnboardingComplete(response.user!.id);
+
+            if (!mounted) return;
+            setState(() => _isLoading = false);
+
+            // Show success popup
+            await showAuthPopup(
+              context: context,
+              title: 'Login Successful! 🎉',
+              message: 'Welcome back! Let\'s continue your journey.',
+              icon: Icons.check_circle_rounded,
+              iconColor: const Color(0xFF43e97b),
+              onClose: () {
+                if (isComplete) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardPage()),
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OnboardingPage()),
+                  );
+                }
+              },
+            );
+          }
+        } on AuthException catch (e) {
+          // ✅ IMPROVED ERROR DETECTION
           if (!mounted) return;
+          setState(() => _isLoading = false);
 
-          // Show login success popup
-          await showAuthPopup(
-            context: context,
-            title: 'Login Successful! 🎉',
-            message: 'Welcome back! Let\'s continue your journey.',
-            icon: Icons.check_circle_rounded,
-            iconColor: const Color(0xFF43e97b),
-            onClose: () {
-              if (isComplete) {
-                // Go to dashboard
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DashboardPage()),
-                );
-              } else {
-                // Go to onboarding (first-time user)
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const OnboardingPage()),
-                );
-              }
-            },
-          );
+          final errorMessage = e.message.toLowerCase();
+
+          // Check for specific error types
+          if (errorMessage.contains('email not confirmed')) {
+            // Definitely email verification issue
+            await showAuthPopup(
+              context: context,
+              title: '📧 Email Not Verified',
+              message: 'Please verify your email before logging in. Check your inbox and click the verification link.',
+              icon: Icons.mark_email_unread_rounded,
+              iconColor: const Color(0xFFFFA500),
+              isEmailVerification: true,
+              onClose: () {},
+            );
+          } else if (errorMessage.contains('invalid login credentials') ||
+              errorMessage.contains('invalid password') ||
+              errorMessage.contains('wrong password')) {
+            // Wrong email or password
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Invalid email or password. Please try again.'),
+                backgroundColor: Colors.red.shade700,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+          } else if (errorMessage.contains('user not found')) {
+            // User doesn't exist
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('No account found with this email.'),
+                backgroundColor: Colors.red.shade700,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+          } else if (errorMessage.contains('too many requests')) {
+            // Rate limit
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Too many attempts. Please try again later.'),
+                backgroundColor: Colors.orange.shade700,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+          } else {
+            // Other errors - show the actual error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.message),
+                backgroundColor: Colors.red.shade700,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+          }
+          return;
         }
       } else {
-        // ============= SIGN UP =============
+        // ===== SIGN UP =====
         final response = await authService.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text,
@@ -145,18 +245,18 @@ class _AuthPageState extends ConsumerState<AuthPage>
 
         if (response.user != null) {
           if (!mounted) return;
+          setState(() => _isLoading = false);
 
-          // Show email verification popup with auto-redirect
+          // Show email verification popup
           await showAuthPopup(
             context: context,
-            title: 'Check Your Email! 📧',
-            message:
-            'We\'ve sent a verification link to ${_emailController.text.trim()}. Please verify your email to continue.',
+            title: '📧 Check Your Email!',
+            message: 'We\'ve sent a verification link to ${_emailController.text.trim()}. Please verify your email to continue.',
             icon: Icons.mark_email_read_rounded,
             iconColor: const Color(0xFF4facfe),
+            isEmailVerification: true,
             autoCloseDurationSeconds: 10,
             onClose: () {
-              // Redirect to login page after 10 seconds
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const AuthPage(isLogin: true)),
@@ -171,18 +271,18 @@ class _AuthPageState extends ConsumerState<AuthPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceAll('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
         ),
       );
-      return;
-    }
-
-    if (mounted) {
-      setState(() => _isLoading = false);
     }
   }
 
-  // ⭐ NEW GOOGLE SIGN-IN HANDLER
+  // ✅ GOOGLE SIGN-IN HANDLER
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
 
@@ -220,7 +320,12 @@ class _AuthPageState extends ConsumerState<AuthPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Google sign-in failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
         ),
       );
     } finally {
@@ -244,11 +349,11 @@ class _AuthPageState extends ConsumerState<AuthPage>
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF0F0C29),
-                      const Color(0xFF302b63),
-                      const Color(0xFF24243e),
-                      const Color(0xFF302b63),
+                    colors: const [
+                      Color(0xFF0F0C29),
+                      Color(0xFF302b63),
+                      Color(0xFF24243e),
+                      Color(0xFF302b63),
                     ],
                     transform: GradientRotation(
                       _rotationController.value * 2 * math.pi,
@@ -303,8 +408,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                       return Transform.translate(
                         offset: Offset(
                           0,
-                          math.sin(_floatingController.value * 2 * math.pi) *
-                              10,
+                          math.sin(_floatingController.value * 2 * math.pi) * 10,
                         ),
                         child: child,
                       );
@@ -316,9 +420,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                         fit: BoxFit.contain,
                       ),
                     )
-                        .animate(
-                      onPlay: (controller) => controller.repeat(),
-                    )
+                        .animate(onPlay: (controller) => controller.repeat())
                         .shimmer(
                       duration: 2000.ms,
                       color: Colors.white.withOpacity(0.3),
@@ -399,7 +501,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                     child: _buildSocialButton(
                                       icon: Icons.g_mobiledata,
                                       label: 'Google',
-                                      onTap: _handleGoogleSignIn, // ⭐ UPDATED
+                                      onTap: _handleGoogleSignIn,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -428,15 +530,11 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
                                     child: Text(
                                       'or',
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(
-                                          0.7,
-                                        ),
+                                        color: Colors.white.withOpacity(0.7),
                                         fontWeight: FontWeight.w600,
                                         fontSize: 12,
                                       ),
@@ -459,9 +557,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   controller: _nameController,
                                   label: 'Full Name',
                                   icon: Icons.person_outline,
-                                  validator: (v) => v?.isEmpty ?? true
-                                      ? 'Name required'
-                                      : null,
+                                  validator: (v) =>
+                                  v?.isEmpty ?? true ? 'Name required' : null,
                                   delay: 600,
                                 )
                                     .animate()
@@ -477,12 +574,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 icon: Icons.email_outlined,
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (v) {
-                                  if (v?.isEmpty ?? true) {
-                                    return 'Email required';
-                                  }
-                                  if (!v!.contains('@')) {
-                                    return 'Invalid email';
-                                  }
+                                  if (v?.isEmpty ?? true) return 'Email required';
+                                  if (!v!.contains('@')) return 'Invalid email';
                                   return null;
                                 },
                                 delay: widget.isLogin ? 600 : 700,
@@ -508,21 +601,17 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                     _obscurePassword
                                         ? Icons.visibility_off
                                         : Icons.visibility,
-                                    color: Colors.white.withOpacity(
-                                      0.7,
-                                    ),
+                                    color: Colors.white.withOpacity(0.7),
                                   ),
-                                  onPressed: () => setState(
-                                        () => _obscurePassword = !_obscurePassword,
-                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
                                 ),
                                 validator: (v) {
-                                  if (v?.isEmpty ?? true) {
-                                    return 'Password required';
-                                  }
-                                  if (v!.length < 6) {
-                                    return 'Min 6 characters';
-                                  }
+                                  if (v?.isEmpty ?? true) return 'Password required';
+                                  if (v!.length < 6) return 'Min 6 characters';
                                   return null;
                                 },
                                 delay: widget.isLogin ? 700 : 800,
@@ -542,16 +631,12 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   child: TextButton(
                                     onPressed: () {},
                                     style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 4),
                                     ),
                                     child: Text(
                                       'Forgot Password?',
                                       style: TextStyle(
-                                        color: Colors.white.withOpacity(
-                                          0.9,
-                                        ),
+                                        color: Colors.white.withOpacity(0.9),
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13,
                                       ),
@@ -571,10 +656,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 ),
                               )
                                   .slideY(begin: 0.2, end: 0)
-                                  .shimmer(
-                                delay: 1000.ms,
-                                duration: 2000.ms,
-                              ),
+                                  .then()
+                                  .shimmer(delay: 1000.ms, duration: 2000.ms),
 
                               const SizedBox(height: 14),
 
@@ -584,7 +667,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 children: [
                                   Text(
                                     widget.isLogin
-                                        ? "Don't have an account? "
+                                        ? 'Don\'t have an account? '
                                         : 'Already have an account? ',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.8),
@@ -612,11 +695,11 @@ class _AuthPageState extends ConsumerState<AuthPage>
                           ),
                         ),
                       ),
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 400.ms)
-                      .scale(begin: const Offset(0.95, 0.95)),
+                    )
+                        .animate()
+                        .fadeIn(delay: 400.ms)
+                        .scale(begin: const Offset(0.95, 0.95)),
+                  ),
 
                   const SizedBox(height: 20),
 
@@ -723,10 +806,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
           color: Colors.yellowAccent,
           fontWeight: FontWeight.w600,
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),
       validator: validator,
     );

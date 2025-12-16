@@ -223,9 +223,33 @@ class UserModel {
     );
   }
 
-  // XP and Level Calculations
-  int get xpForNextLevel => (level * 100 * (1 + level * 0.5)).toInt();
-  double get levelProgress => xp / xpForNextLevel;
+  // ✅ NEW: Dynamic XP Level System
+  static int getXPRequiredForLevel(int level) {
+    if (level <= 1) return 100;
+    if (level == 2) return 150;
+    if (level == 3) return 250;
+    if (level == 4) return 400;
+    if (level == 5) return 600;
+    if (level <= 10) return 1000 + ((level - 6) * 200);
+    if (level <= 20) return 2500 + ((level - 11) * 500);
+    if (level <= 30) return 7500 + ((level - 21) * 1000);
+    return 17500 + ((level - 31) * 2000);
+  }
+
+  // ✅ FIXED: XP required for NEXT level (not total)
+  int get xpForNextLevel => getXPRequiredForLevel(level);
+
+  // ✅ NEW: Get XP within current level only
+  int get currentLevelXP {
+    int cumulativeXP = 0;
+    for (int i = 1; i < level; i++) {
+      cumulativeXP += getXPRequiredForLevel(i);
+    }
+    return xp - cumulativeXP;
+  }
+
+  // ✅ FIXED: Progress based on current level XP
+  double get levelProgress => (currentLevelXP / xpForNextLevel).clamp(0.0, 1.0);
 
   // Level Title System
   String get levelTitle {
@@ -304,7 +328,8 @@ class UserModel {
   }
 
   // Next Level Info
-  int get xpNeededForNextLevel => xpForNextLevel - xp;
+  int get xpNeededForNextLevel => xpForNextLevel - currentLevelXP;
+
   String get nextLevelTitle {
     final nextLevel = level + 1;
     if (nextLevel >= 50) return 'Legendary Hero';
@@ -348,4 +373,5 @@ class UserModel {
   @override
   int get hashCode => id.hashCode;
 }
+
 

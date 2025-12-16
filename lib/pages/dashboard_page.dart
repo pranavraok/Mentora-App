@@ -13,6 +13,7 @@ import 'package:mentora_app/pages/profile_page.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
 import 'package:mentora_app/config/supabase_config.dart';
+import 'package:mentora_app/services/xp_service.dart';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -25,6 +26,7 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _selectedIndex = 0;
+
   final List<Widget> _pages = const [
     DashboardHome(),
     RoadmapPage(),
@@ -167,6 +169,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 class DashboardHome extends ConsumerStatefulWidget {
   final Function(int)? onNavigate;
+
   const DashboardHome({super.key, this.onNavigate});
 
   @override
@@ -176,6 +179,7 @@ class DashboardHome extends ConsumerStatefulWidget {
 class _DashboardHomeState extends ConsumerState<DashboardHome>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  bool _levelFixed = false;
 
   @override
   void initState() {
@@ -184,6 +188,25 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
+
+    // ✅ Fix user level on dashboard load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fixUserLevel();
+    });
+  }
+
+  // ✅ Automatically fix user level based on XP
+  Future<void> _fixUserLevel() async {
+    if (_levelFixed) return; // Only fix once per session
+
+    final user = ref.read(currentUserProvider).value;
+    if (user != null) {
+      await XPService.fixUserLevel(user.id);
+      _levelFixed = true;
+
+      // Refresh user data to show updated level
+      ref.invalidate(currentUserProvider);
+    }
   }
 
   void _navigateTo(int index) {
@@ -256,6 +279,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
+
         return Stack(
           children: [
             // Background gradient
@@ -272,6 +296,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 ),
               ),
             ),
+
             // Floating particles
             ...List.generate(8, (index) {
               return AnimatedBuilder(
@@ -300,6 +325,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 },
               );
             }),
+
             // Main content
             Column(
               children: [
@@ -376,6 +402,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                     ),
                   ),
                 ),
+
                 // Scrollable content with RefreshIndicator
                 Expanded(
                   child: RefreshIndicator(
@@ -400,6 +427,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                       physics: const BouncingScrollPhysics(),
                       slivers: [
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
                         // Profile card with real-time avatar
                         SliverToBoxAdapter(
                           child: Animate(
@@ -419,6 +447,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                     StreamProvider.autoDispose((ref) {
                                       final supabase = SupabaseConfig.client;
                                       final authUser = supabase.auth.currentUser;
+
                                       if (authUser == null) {
                                         return Stream.value('🚀');
                                       }
@@ -574,6 +603,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           ],
                                         ),
                                         const SizedBox(height: 24),
+                                        // ✅ FIXED XP PROGRESS SECTION
                                         Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
@@ -598,7 +628,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                                     ),
                                                   ),
                                                   Text(
-                                                    '${gamificationAsync.maybeWhen(data: (g) => g.totalXp, orElse: () => user.xp)} / ${user.xpForNextLevel} XP',
+                                                    '${user.currentLevelXP}/${user.xpForNextLevel} XP',
                                                     style: TextStyle(
                                                       color: Colors.white.withOpacity(0.9),
                                                       fontSize: 13,
@@ -611,7 +641,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                               ClipRRect(
                                                 borderRadius: BorderRadius.circular(10),
                                                 child: LinearProgressIndicator(
-                                                  value: user.xp / user.xpForNextLevel,
+                                                  value: user.levelProgress,
                                                   backgroundColor: Colors.white.withOpacity(0.2),
                                                   valueColor: const AlwaysStoppedAnimation(
                                                     Color(0xFFFFD700),
@@ -630,7 +660,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
+
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
                         // Stats cards
                         SliverToBoxAdapter(
                           child: Animate(
@@ -679,7 +711,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
+
                         const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
                         // Today's challenge
                         SliverToBoxAdapter(
                           child: Animate(
@@ -746,7 +780,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
+
                         const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
                         // Quick Actions
                         SliverToBoxAdapter(
                           child: Animate(
@@ -862,7 +898,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
+
                         const SliverToBoxAdapter(child: SizedBox(height: 28)),
+
                         // Recent activity
                         SliverToBoxAdapter(
                           child: Animate(
@@ -1141,6 +1179,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   Widget _buildActivityItemFromModel(activity) {
     final iconData = _getIconFromString(activity.icon ?? 'check_circle_rounded');
     final color = _getColorFromString(activity.color ?? '0xFF43e97b');
+
     return _buildActivityItem(
       activity.title,
       activity.timeAgo,

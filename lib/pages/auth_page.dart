@@ -12,7 +12,6 @@ import 'dart:math' as math;
 
 class AuthPage extends ConsumerStatefulWidget {
   final bool isLogin;
-
   const AuthPage({super.key, this.isLogin = true});
 
   @override
@@ -25,10 +24,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
-
   bool _isLoading = false;
   bool _obscurePassword = true;
-
   late AnimationController _floatingController;
   late AnimationController _rotationController;
   late AnimationController _slideController;
@@ -74,10 +71,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;
           const curve = Curves.easeInOutCubic;
-
-          var tween = Tween(begin: begin, end: end)
-              .chain(CurveTween(curve: curve));
-
+          var tween =
+          Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
           return SlideTransition(
             position: animation.drive(tween),
             child: child,
@@ -88,17 +83,14 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 
-  // ✅ COMPLETE FIXED AUTH HANDLER
   Future<void> _handleAuth() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
       final authService = AuthService();
-
       if (widget.isLogin) {
-        // ===== LOGIN =====
+        // LOGIN
         try {
           final response = await authService.signInWithEmail(
             _emailController.text.trim(),
@@ -106,38 +98,29 @@ class _AuthPageState extends ConsumerState<AuthPage>
           );
 
           if (response.user != null) {
-            // ✅ Check if email is verified
             final isEmailVerified = response.user!.emailConfirmedAt != null;
-
             if (!isEmailVerified) {
-              // Email not verified - show warning popup
               if (!mounted) return;
               setState(() => _isLoading = false);
-
               await showAuthPopup(
                 context: context,
                 title: '📧 Email Not Verified',
-                message: 'Please verify your email before logging in. Check your inbox for the verification link.',
+                message:
+                'Please verify your email before logging in. Check your inbox for the verification link.',
                 icon: Icons.mark_email_unread_rounded,
                 iconColor: const Color(0xFFFFA500),
                 isEmailVerification: true,
-                onClose: () {
-                  // Stay on login page
-                },
+                onClose: () {},
               );
-
-              // Sign out the unverified user
               await authService.signOut();
               return;
             }
 
-            // Email is verified - proceed
-            final isComplete = await authService.isOnboardingComplete(response.user!.id);
-
+            final isComplete =
+            await authService.isOnboardingComplete(response.user!.id);
             if (!mounted) return;
             setState(() => _isLoading = false);
 
-            // Show success popup
             await showAuthPopup(
               context: context,
               title: 'Login Successful! 🎉',
@@ -160,19 +143,16 @@ class _AuthPageState extends ConsumerState<AuthPage>
             );
           }
         } on AuthException catch (e) {
-          // ✅ IMPROVED ERROR DETECTION
           if (!mounted) return;
           setState(() => _isLoading = false);
-
           final errorMessage = e.message.toLowerCase();
 
-          // Check for specific error types
           if (errorMessage.contains('email not confirmed')) {
-            // Definitely email verification issue
             await showAuthPopup(
               context: context,
               title: '📧 Email Not Verified',
-              message: 'Please verify your email before logging in. Check your inbox and click the verification link.',
+              message:
+              'Please verify your email before logging in. Check your inbox and click the verification link.',
               icon: Icons.mark_email_unread_rounded,
               iconColor: const Color(0xFFFFA500),
               isEmailVerification: true,
@@ -181,37 +161,11 @@ class _AuthPageState extends ConsumerState<AuthPage>
           } else if (errorMessage.contains('invalid login credentials') ||
               errorMessage.contains('invalid password') ||
               errorMessage.contains('wrong password')) {
-            // Wrong email or password
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Invalid email or password. Please try again.'),
+                content:
+                const Text('Invalid email or password. Please try again.'),
                 backgroundColor: Colors.red.shade700,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                margin: const EdgeInsets.all(16),
-              ),
-            );
-          } else if (errorMessage.contains('user not found')) {
-            // User doesn't exist
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('No account found with this email.'),
-                backgroundColor: Colors.red.shade700,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                margin: const EdgeInsets.all(16),
-              ),
-            );
-          } else if (errorMessage.contains('too many requests')) {
-            // Rate limit
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Too many attempts. Please try again later.'),
-                backgroundColor: Colors.orange.shade700,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -220,7 +174,6 @@ class _AuthPageState extends ConsumerState<AuthPage>
               ),
             );
           } else {
-            // Other errors - show the actual error message
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(e.message),
@@ -236,7 +189,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
           return;
         }
       } else {
-        // ===== SIGN UP =====
+        // SIGN UP
         final response = await authService.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text,
@@ -247,11 +200,11 @@ class _AuthPageState extends ConsumerState<AuthPage>
           if (!mounted) return;
           setState(() => _isLoading = false);
 
-          // Show email verification popup
           await showAuthPopup(
             context: context,
             title: '📧 Check Your Email!',
-            message: 'We\'ve sent a verification link to ${_emailController.text.trim()}. Please verify your email to continue.',
+            message:
+            'We\'ve sent a verification link to ${_emailController.text.trim()}. Please verify your email to continue.',
             icon: Icons.mark_email_read_rounded,
             iconColor: const Color(0xFF4facfe),
             isEmailVerification: true,
@@ -282,32 +235,27 @@ class _AuthPageState extends ConsumerState<AuthPage>
     }
   }
 
-  // ✅ GOOGLE SIGN-IN HANDLER
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
-
     try {
       final authService = AuthService();
       final success = await authService.signInWithGoogle();
 
       if (success && mounted) {
-        // Wait for auth state to update
         await Future.delayed(const Duration(seconds: 2));
-
         final user = authService.currentUser;
-        if (user != null) {
-          final isComplete = await authService.isOnboardingComplete(user.id);
 
+        if (user != null) {
+          final isComplete =
+          await authService.isOnboardingComplete(user.id);
           if (!mounted) return;
 
           if (isComplete) {
-            // Existing user - go to dashboard
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const DashboardPage()),
             );
           } else {
-            // New user - go to onboarding
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const OnboardingPage()),
@@ -396,25 +344,25 @@ class _AuthPageState extends ConsumerState<AuthPage>
           // Main content
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 20), // Controls vertical position
 
-                  // Logo
+                  // Logo (SMALLER)
                   AnimatedBuilder(
                     animation: _floatingController,
                     builder: (context, child) {
                       return Transform.translate(
                         offset: Offset(
                           0,
-                          math.sin(_floatingController.value * 2 * math.pi) * 10,
+                          math.sin(_floatingController.value * 2 * math.pi) * 8,
                         ),
                         child: child,
                       );
                     },
                     child: SizedBox(
-                      height: 120,
+                      height: 80,
                       child: Image.asset(
                         'assets/images/logo.png',
                         fit: BoxFit.contain,
@@ -426,16 +374,16 @@ class _AuthPageState extends ConsumerState<AuthPage>
                       color: Colors.white.withOpacity(0.3),
                     ),
                   ),
-
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // Title
                   Text(
                     widget.isLogin ? 'Welcome Back!' : 'Join the Quest',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    style:
+                    Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
-                      fontSize: 32,
+                      fontSize: 28,
                       shadows: [
                         Shadow(
                           color: Colors.black.withOpacity(0.3),
@@ -445,8 +393,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                       ],
                     ),
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
-
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
                   // Subtitle
                   Text(
@@ -455,19 +402,19 @@ class _AuthPageState extends ConsumerState<AuthPage>
                         : 'Start your career transformation',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ).animate().fadeIn(delay: 300.ms),
+                  const SizedBox(height: 24),
 
-                  const SizedBox(height: 32),
-
-                  // Form card
-                  IntrinsicHeight(
+                  // Form card (CONSTRAINED WIDTH)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 450),
                     child: GlassmorphicContainer(
+                      height: 450,
                       width: double.infinity,
-                      height: double.infinity,
-                      borderRadius: 32,
+                      borderRadius: 28,
                       blur: 20,
                       alignment: Alignment.center,
                       border: 2,
@@ -488,37 +435,18 @@ class _AuthPageState extends ConsumerState<AuthPage>
                         ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(28),
+                        padding: const EdgeInsets.all(24),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Social login buttons
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildSocialButton(
-                                      icon: Icons.g_mobiledata,
-                                      label: 'Google',
-                                      onTap: _handleGoogleSignIn,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildSocialButton(
-                                      icon: Icons.apple,
-                                      label: 'Apple',
-                                      onTap: () {},
-                                    ),
-                                  ),
-                                ],
-                              )
+                              // Google button ONLY (FULL WIDTH)
+                              _buildGoogleButton()
                                   .animate()
                                   .fadeIn(delay: 400.ms)
                                   .slideY(begin: 0.2, end: 0),
-
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 18),
 
                               // Divider
                               Row(
@@ -530,7 +458,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                     ),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
                                     child: Text(
                                       'or',
                                       style: TextStyle(
@@ -548,8 +477,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   ),
                                 ],
                               ).animate().fadeIn(delay: 500.ms),
-
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 18),
 
                               // Name field (for signup)
                               if (!widget.isLogin) ...[
@@ -557,14 +485,15 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   controller: _nameController,
                                   label: 'Full Name',
                                   icon: Icons.person_outline,
-                                  validator: (v) =>
-                                  v?.isEmpty ?? true ? 'Name required' : null,
+                                  validator: (v) => v?.isEmpty ?? true
+                                      ? 'Name required'
+                                      : null,
                                   delay: 600,
                                 )
                                     .animate()
                                     .fadeIn(delay: 600.ms)
                                     .slideX(begin: -0.2, end: 0),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 12),
                               ],
 
                               // Email field
@@ -574,7 +503,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 icon: Icons.email_outlined,
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (v) {
-                                  if (v?.isEmpty ?? true) return 'Email required';
+                                  if (v?.isEmpty ?? true)
+                                    return 'Email required';
                                   if (!v!.contains('@')) return 'Invalid email';
                                   return null;
                                 },
@@ -583,12 +513,12 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   .animate()
                                   .fadeIn(
                                 delay: Duration(
-                                  milliseconds: widget.isLogin ? 600 : 700,
+                                  milliseconds:
+                                  widget.isLogin ? 600 : 700,
                                 ),
                               )
                                   .slideX(begin: -0.2, end: 0),
-
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 12),
 
                               // Password field
                               _buildTextField(
@@ -610,8 +540,10 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   },
                                 ),
                                 validator: (v) {
-                                  if (v?.isEmpty ?? true) return 'Password required';
-                                  if (v!.length < 6) return 'Min 6 characters';
+                                  if (v?.isEmpty ?? true)
+                                    return 'Password required';
+                                  if (v!.length < 6)
+                                    return 'Min 6 characters';
                                   return null;
                                 },
                                 delay: widget.isLogin ? 700 : 800,
@@ -619,7 +551,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   .animate()
                                   .fadeIn(
                                 delay: Duration(
-                                  milliseconds: widget.isLogin ? 700 : 800,
+                                  milliseconds:
+                                  widget.isLogin ? 700 : 800,
                                 ),
                               )
                                   .slideX(begin: -0.2, end: 0),
@@ -631,7 +564,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   child: TextButton(
                                     onPressed: () {},
                                     style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                      padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
                                     ),
                                     child: Text(
                                       'Forgot Password?',
@@ -645,21 +579,22 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 ).animate().fadeIn(delay: 800.ms),
                               ],
 
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 18),
 
                               // Submit button
                               _buildSubmitButton()
                                   .animate()
                                   .fadeIn(
                                 delay: Duration(
-                                  milliseconds: widget.isLogin ? 900 : 1000,
+                                  milliseconds:
+                                  widget.isLogin ? 900 : 1000,
                                 ),
                               )
                                   .slideY(begin: 0.2, end: 0)
                                   .then()
-                                  .shimmer(delay: 1000.ms, duration: 2000.ms),
-
-                              const SizedBox(height: 14),
+                                  .shimmer(
+                                  delay: 1000.ms, duration: 2000.ms),
+                              const SizedBox(height: 12),
 
                               // Toggle auth mode
                               Row(
@@ -688,7 +623,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 ],
                               ).animate().fadeIn(
                                 delay: Duration(
-                                  milliseconds: widget.isLogin ? 1000 : 1100,
+                                  milliseconds:
+                                  widget.isLogin ? 1000 : 1100,
                                 ),
                               ),
                             ],
@@ -701,7 +637,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                         .scale(begin: const Offset(0.95, 0.95)),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // Trust badges
                   Row(
@@ -713,9 +649,10 @@ class _AuthPageState extends ConsumerState<AuthPage>
                       const SizedBox(width: 20),
                       _buildTrustBadge(Icons.star, '4.9 Rating'),
                     ],
-                  ).animate().fadeIn(delay: 1200.ms).slideY(begin: 0.3, end: 0),
-
-                  const SizedBox(height: 20),
+                  )
+                      .animate()
+                      .fadeIn(delay: 1200.ms)
+                      .slideY(begin: 0.3, end: 0),
                 ],
               ),
             ),
@@ -725,31 +662,35 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
+  // Google button (FULL WIDTH)
+  Widget _buildGoogleButton() {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleGoogleSignIn,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 24),
+            Icon(Icons.g_mobiledata, color: Colors.blue.shade700, size: 28),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+            const Text(
+              'Continue with Google',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
               ),
             ),
           ],
@@ -784,29 +725,30 @@ class _AuthPageState extends ConsumerState<AuthPage>
         filled: true,
         fillColor: Colors.white.withOpacity(0.1),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
             color: Colors.white.withOpacity(0.3),
             width: 1.5,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.xpGold, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.red.shade300, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.red.shade300, width: 2),
         ),
         errorStyle: const TextStyle(
           color: Colors.yellowAccent,
           fontWeight: FontWeight.w600,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       ),
       validator: validator,
     );
@@ -815,12 +757,12 @@ class _AuthPageState extends ConsumerState<AuthPage>
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
-      height: 54,
+      height: 50,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFFD700).withOpacity(0.4),
@@ -833,7 +775,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
         color: Colors.transparent,
         child: InkWell(
           onTap: _isLoading ? null : _handleAuth,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: Center(
             child: _isLoading
                 ? const SizedBox(
@@ -851,7 +793,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                   widget.isLogin ? 'Login & Continue' : 'Create Account',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 17,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
                   ),
@@ -860,7 +802,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                 const Icon(
                   Icons.arrow_forward_rounded,
                   color: Colors.white,
-                  size: 22,
+                  size: 20,
                 ),
               ],
             ),
@@ -879,14 +821,14 @@ class _AuthPageState extends ConsumerState<AuthPage>
             color: Colors.white.withOpacity(0.15),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: AppColors.xpGold, size: 14),
+          child: Icon(icon, color: AppColors.xpGold, size: 12),
         ),
         const SizedBox(width: 6),
         Text(
           label,
           style: TextStyle(
             color: Colors.white.withOpacity(0.9),
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -894,3 +836,4 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 }
+

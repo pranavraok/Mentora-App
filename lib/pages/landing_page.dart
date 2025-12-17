@@ -11,7 +11,7 @@ class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
   @override
-  State<LandingPage> createState() => _LandingPageState();
+  State createState() => _LandingPageState();
 }
 
 class _LandingPageState extends State<LandingPage>
@@ -25,17 +25,21 @@ class _LandingPageState extends State<LandingPage>
   @override
   void initState() {
     super.initState();
+
     _floatingController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
+
     _rotationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
+
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
     );
+
     _scrollController.addListener(() {
       setState(() => _scrollOffset = _scrollController.offset);
     });
@@ -55,7 +59,7 @@ class _LandingPageState extends State<LandingPage>
     return Scaffold(
       body: Stack(
         children: [
-          // ✅ UPDATED BACKGROUND - SAME AS PROFILE/PROJECTS
+          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -70,7 +74,7 @@ class _LandingPageState extends State<LandingPage>
             ),
           ),
 
-          // Floating particles (SAME AS PROFILE)
+          // Floating particles
           ...List.generate(8, (index) {
             return AnimatedBuilder(
               animation: _floatingController,
@@ -99,7 +103,7 @@ class _LandingPageState extends State<LandingPage>
             );
           }),
 
-          // ✅ ANIMATED ROCKET WITH SCROLL
+          // Animated rocket
           AnimatedRocket(
             floatingController: _floatingController,
             scrollOffset: _scrollOffset,
@@ -127,7 +131,7 @@ class _LandingPageState extends State<LandingPage>
           CustomScrollView(
             controller: _scrollController,
             slivers: [
-              // Hero Section
+              // Hero Section (UPDATED)
               SliverToBoxAdapter(
                 child: HeroSection3D(
                   floatingController: _floatingController,
@@ -157,33 +161,32 @@ class _LandingPageState extends State<LandingPage>
                     .slideY(begin: 0.3, end: 0),
               ),
 
-              // Interactive Roadmap Preview
+              // Roadmap Preview
               SliverToBoxAdapter(
                 child: RoadmapPreviewSection()
                     .animate()
                     .fadeIn(delay: 400.ms, duration: 600.ms)
                     .scale(
-                      begin: const Offset(0.8, 0.8),
-                      end: const Offset(1, 1),
-                    ),
+                  begin: Offset(0.8, 0.8),
+                  end: Offset(1, 1),
+                ),
               ),
 
               // Gamification Stats
               SliverToBoxAdapter(
-                child: GamificationStatsSection().animate().fadeIn(
-                  delay: 600.ms,
-                  duration: 600.ms,
-                ),
+                child: GamificationStatsSection()
+                    .animate()
+                    .fadeIn(delay: 600.ms, duration: 600.ms),
               ),
 
-              // 3D How It Works
+              // How It Works
               SliverToBoxAdapter(
                 child: HowItWorks3DSection(
                   floatingController: _floatingController,
                 ),
               ),
 
-              // Team Section
+              // Team
               SliverToBoxAdapter(
                 child: TeamSection(
                   floatingController: _floatingController,
@@ -205,7 +208,7 @@ class _LandingPageState extends State<LandingPage>
   }
 }
 
-// ============= ANIMATED ROCKET WITH SCROLL =============
+// ============= ANIMATED ROCKET =============
 class AnimatedRocket extends StatelessWidget {
   final AnimationController floatingController;
   final double scrollOffset;
@@ -218,14 +221,9 @@ class AnimatedRocket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate rocket position based on scroll
     final double rightPosition = math.max(-50, 20 - (scrollOffset * 0.15));
     final double topPosition = math.max(-200, 80 + (scrollOffset * 0.3));
-
-    // Calculate rotation based on scroll
     final double rotation = math.min(0.3, scrollOffset * 0.0005);
-
-    // Calculate opacity - fades out after scrolling past hero section
     final double opacity = math.max(
       0.0,
       math.min(1.0, 1.0 - (scrollOffset / 800)),
@@ -253,20 +251,26 @@ class AnimatedRocket extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [AppColors.xpGold.withOpacity(0.3), Colors.transparent],
+                colors: [
+                  AppColors.xpGold.withOpacity(0.3),
+                  Colors.transparent,
+                ],
               ),
             ),
             child: const Center(
               child: Text('🚀', style: TextStyle(fontSize: 100)),
             ),
-          ).animate().fadeIn(duration: 800.ms).scale(delay: 200.ms),
+          )
+              .animate()
+              .fadeIn(duration: 800.ms)
+              .scale(delay: 200.ms),
         ),
       ),
     );
   }
 }
 
-// ============= HERO SECTION WITH 3D CHARACTER =============
+// ============= HERO SECTION (UPDATED & CONCISE) =============
 class HeroSection3D extends StatelessWidget {
   final AnimationController floatingController;
   final VoidCallback onGetStarted;
@@ -281,17 +285,18 @@ class HeroSection3D extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.95,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // ✅ FIXED LOGO AT TOP
+          // Logo
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.only(top: 20, bottom: 20),
+              padding: const EdgeInsets.only(top: 16, bottom: 16),
               child: SizedBox(
-                height: 80,
+                height: 60,
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.contain,
@@ -300,212 +305,210 @@ class HeroSection3D extends StatelessWidget {
             ),
           ),
 
-          // ✅ SCROLLABLE CONTENT BELOW
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-                  // Badge
-                  GlassmorphicContainer(
-                    width: 180,
-                    height: 40,
-                    borderRadius: 20,
-                    blur: 20,
-                    alignment: Alignment.center,
-                    border: 2,
-                    linearGradient: LinearGradient(
-                      colors: [
-                        Colors.white.withOpacity(0.2),
-                        Colors.white.withOpacity(0.1),
-                      ],
-                    ),
-                    borderGradient: LinearGradient(
-                      colors: [
-                        Colors.white.withOpacity(0.5),
-                        Colors.white.withOpacity(0.2),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.rocket_launch,
-                          color: AppColors.xpGold,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Level Up Your Career',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn().slideX(begin: -0.2, duration: 600.ms),
-                  const SizedBox(height: 32),
-
-                  // Main Heading
-                  Text(
-                        'Transform Your\nCareer Into An\nEpic Adventure',
-                        style: Theme.of(context).textTheme.displayLarge
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              height: 1.1,
-                              fontSize: 56,
-                              letterSpacing: -2,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  offset: const Offset(0, 4),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
-                      )
-                      .animate()
-                      .fadeIn(delay: 100.ms, duration: 800.ms)
-                      .slideY(begin: 0.3, end: 0),
-                  const SizedBox(height: 24),
-
-                  // Subtitle
-                  Container(
-                        constraints: const BoxConstraints(maxWidth: 500),
-                        child: Text(
-                          'Master skills through gamified learning paths, unlock achievements, and compete with peers while building real-world projects.',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                color: Colors.white.withOpacity(0.95),
-                                fontSize: 18,
-                                height: 1.6,
-                              ),
-                        ),
-                      )
-                      .animate()
-                      .fadeIn(delay: 300.ms, duration: 800.ms)
-                      .slideY(begin: 0.2, end: 0),
-                  const SizedBox(height: 40),
-
-                  // CTA Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child:
-                            GlassmorphicContainer(
-                                  width: double.infinity,
-                                  height: 60,
-                                  borderRadius: 16,
-                                  blur: 20,
-                                  alignment: Alignment.center,
-                                  border: 0,
-                                  linearGradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFFFFFFF),
-                                      Color(0xFFF0F0F0),
-                                    ],
-                                  ),
-                                  borderGradient: LinearGradient(
-                                    colors: [
-                                      Colors.white.withOpacity(0.5),
-                                      Colors.white.withOpacity(0.2),
-                                    ],
-                                  ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: onGetStarted,
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: Center(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Start Your Quest',
-                                              style: TextStyle(
-                                                color: AppColors.gradientBlue,
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            const Icon(
-                                              Icons.arrow_forward_rounded,
-                                              color: AppColors.gradientBlue,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .animate()
-                                .fadeIn(delay: 500.ms)
-                                .slideY(begin: 0.2, end: 0)
-                                .shimmer(delay: 500.ms, duration: 1200.ms),
-                      ),
-                      const SizedBox(width: 16),
-                      GlassmorphicContainer(
-                        width: 60,
-                        height: 60,
-                        borderRadius: 16,
-                        blur: 20,
-                        alignment: Alignment.center,
-                        border: 2,
-                        linearGradient: LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(0.1),
-                            Colors.white.withOpacity(0.05),
-                          ],
-                        ),
-                        borderGradient: LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(0.5),
-                            Colors.white.withOpacity(0.2),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: onLogin,
-                            borderRadius: BorderRadius.circular(16),
-                            child: const Center(
-                              child: Icon(
-                                Icons.login_rounded,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ).animate().fadeIn(delay: 600.ms).scale(delay: 600.ms),
-                    ],
+          // Badge
+          GlassmorphicContainer(
+            width: 180,
+            height: 36,
+            borderRadius: 18,
+            blur: 20,
+            alignment: Alignment.center,
+            border: 2,
+            linearGradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.2),
+                Colors.white.withOpacity(0.1),
+              ],
+            ),
+            borderGradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.5),
+                Colors.white.withOpacity(0.2),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.rocket_launch,
+                  color: AppColors.xpGold,
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Level Up Your Career',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(height: 40),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().slideX(begin: -0.2, duration: 600.ms),
 
-                  // Stats Row
-                  Row(
-                    children: [
-                      _buildStatChip('100+', 'Active Courses'),
-                      const SizedBox(width: 16),
-                      _buildStatChip('500+', 'Skills'),
-                      const SizedBox(width: 16),
-                      _buildStatChip('4.9⭐', 'Rating'),
-                    ],
-                  ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+          const SizedBox(height: 24),
 
-                  const SizedBox(height: 40), // Extra padding at bottom
+          // Main heading (centered)
+          Center(
+            child: Text(
+              'Transform Your\nCareer Into An\nEpic Adventure',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                height: 1.1,
+                fontSize: 38,
+                letterSpacing: -1.5,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withOpacity(0.3),
+                    offset: const Offset(0, 4),
+                    blurRadius: 20,
+                  ),
                 ],
               ),
             ),
+          )
+              .animate()
+              .fadeIn(delay: 100.ms, duration: 800.ms)
+              .slideY(begin: 0.3, end: 0),
+
+          const SizedBox(height: 16),
+
+
+// Subtitle (centered)
+          Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Text(
+                'Master skills through gamified learning, unlock achievements, and compete while building real projects.',
+                textAlign: TextAlign.center, // Added text alignment
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 15,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          )
+              .animate()
+              .fadeIn(delay: 300.ms, duration: 800.ms)
+              .slideY(begin: 0.2, end: 0),
+
+          const SizedBox(height: 28),
+
+
+          // CTA buttons
+          Row(
+            children: [
+              Expanded(
+                child: GlassmorphicContainer(
+                  width: double.infinity,
+                  height: 52,
+                  borderRadius: 14,
+                  blur: 20,
+                  alignment: Alignment.center,
+                  border: 0,
+                  linearGradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFFFFFF),
+                      Color(0xFFF0F0F0),
+                    ],
+                  ),
+                  borderGradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.5),
+                      Colors.white.withOpacity(0.2),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onGetStarted,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Start Your Quest',
+                              style: TextStyle(
+                                color: AppColors.gradientBlue,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: AppColors.gradientBlue,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                    .animate()
+                    .fadeIn(delay: 500.ms)
+                    .slideY(begin: 0.2, end: 0)
+                    .shimmer(delay: 500.ms, duration: 1200.ms),
+              ),
+              const SizedBox(width: 12),
+              GlassmorphicContainer(
+                width: 52,
+                height: 52,
+                borderRadius: 14,
+                blur: 20,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.05),
+                  ],
+                ),
+                borderGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0.2),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onLogin,
+                    borderRadius: BorderRadius.circular(14),
+                    child: const Center(
+                      child: Icon(
+                        Icons.login_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ).animate().fadeIn(delay: 600.ms).scale(delay: 600.ms),
+            ],
           ),
+
+          const SizedBox(height: 28),
+
+          // Stats row
+          Row(
+            children: [
+              _buildStatChip('100+', 'Courses'),
+              const SizedBox(width: 12),
+              _buildStatChip('500+', 'Skills'),
+              const SizedBox(width: 12),
+              _buildStatChip('4.9⭐', 'Rating'),
+            ],
+          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -515,7 +518,7 @@ class HeroSection3D extends StatelessWidget {
     return Expanded(
       child: GlassmorphicContainer(
         width: double.infinity,
-        height: 70,
+        height: 60,
         borderRadius: 12,
         blur: 15,
         alignment: Alignment.center,
@@ -539,16 +542,16 @@ class HeroSection3D extends StatelessWidget {
               value,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: 17,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.8),
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -581,7 +584,6 @@ class BentoFeaturesSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // ✅ UNDERLINE
               Container(
                 width: 80,
                 height: 4,
@@ -595,8 +597,6 @@ class BentoFeaturesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 40),
-
-          // Bento Grid Layout
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -644,8 +644,6 @@ class BentoFeaturesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-
-          // Wide bento card
           _buildWideBentoCard(
             icon: Icons.description,
             title: 'AI Resume Optimizer',
@@ -726,7 +724,10 @@ class BentoFeaturesSection extends StatelessWidget {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: Duration(milliseconds: delay)).scale();
+    )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: delay))
+        .scale();
   }
 
   Widget _buildWideBentoCard({
@@ -794,7 +795,10 @@ class BentoFeaturesSection extends StatelessWidget {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.2, end: 0);
+    )
+        .animate()
+        .fadeIn(delay: 400.ms)
+        .slideX(begin: 0.2, end: 0);
   }
 }
 
@@ -818,7 +822,6 @@ class RoadmapPreviewSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // ✅ UNDERLINE
               Container(
                 width: 80,
                 height: 4,
@@ -854,9 +857,9 @@ class RoadmapPreviewSection extends StatelessWidget {
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                children: const [
                   Text('🎯', style: TextStyle(fontSize: 80)),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     'Interactive Learning Paths',
                     style: TextStyle(
@@ -895,7 +898,6 @@ class GamificationStatsSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // ✅ UNDERLINE
               Container(
                 width: 80,
                 height: 4,
@@ -958,11 +960,11 @@ class GamificationStatsSection extends StatelessWidget {
   }
 
   Widget _buildStatCard(
-    String value,
-    String label,
-    IconData icon,
-    Color color,
-  ) {
+      String value,
+      String label,
+      IconData icon,
+      Color color,
+      ) {
     return GlassmorphicContainer(
       width: double.infinity,
       height: 120,
@@ -1045,7 +1047,6 @@ class HowItWorks3DSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // ✅ UNDERLINE
               Container(
                 width: 80,
                 height: 4,
@@ -1062,109 +1063,106 @@ class HowItWorks3DSection extends StatelessWidget {
           ...List.generate(steps.length, (i) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child:
-                  GlassmorphicContainer(
-                        width: double.infinity,
-                        height: 90,
-                        borderRadius: 20,
-                        blur: 20,
-                        alignment: Alignment.center,
-                        border: 2,
-                        linearGradient: LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(0.15),
-                            Colors.white.withOpacity(0.05),
-                          ],
-                        ),
-                        borderGradient: LinearGradient(
-                          colors: [
-                            Colors.white.withOpacity(0.5),
-                            Colors.white.withOpacity(0.2),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF667eea),
-                                      Color(0xFF764ba2),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(
-                                        0xFF667eea,
-                                      ).withOpacity(0.5),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    steps[i]['emoji']!,
-                                    style: const TextStyle(fontSize: 28),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 20),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      steps[i]['title']!,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      steps[i]['desc']!,
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.8),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${i + 1}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ),
-                              ),
+              child: GlassmorphicContainer(
+                width: double.infinity,
+                height: 90,
+                borderRadius: 20,
+                blur: 20,
+                alignment: Alignment.center,
+                border: 2,
+                linearGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.15),
+                    Colors.white.withOpacity(0.05),
+                  ],
+                ),
+                borderGradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.5),
+                    Colors.white.withOpacity(0.2),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF667eea),
+                              Color(0xFF764ba2),
                             ],
                           ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF667eea).withOpacity(0.5),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                      )
-                      .animate()
-                      .fadeIn(delay: Duration(milliseconds: i * 100))
-                      .slideX(begin: 0.3, end: 0),
+                        child: Center(
+                          child: Text(
+                            steps[i]['emoji']!,
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              steps[i]['title']!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              steps[i]['desc']!,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${i + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: i * 100))
+                  .slideX(begin: 0.3, end: 0),
             );
           }),
         ],
@@ -1178,7 +1176,7 @@ class TeamSection extends StatelessWidget {
   final AnimationController floatingController;
   const TeamSection({super.key, required this.floatingController});
 
-  Future<void> _launchURL(String url) async {
+  Future _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       throw 'Could not launch $url';
@@ -1224,7 +1222,6 @@ class TeamSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // ✅ UNDERLINE
               Container(
                 width: 80,
                 height: 4,
@@ -1263,143 +1260,132 @@ class TeamSection extends StatelessWidget {
                         offset: Offset(
                           0,
                           math.sin(
-                                (floatingController.value + index * 0.5) *
-                                    2 *
-                                    math.pi,
-                              ) *
+                            (floatingController.value + index * 0.5) *
+                                2 *
+                                math.pi,
+                          ) *
                               10,
                         ),
                         child: child,
                       );
                     },
-                    child:
-                        GlassmorphicContainer(
-                              width: double.infinity,
-                              height: 320,
-                              borderRadius: 24,
-                              blur: 20,
-                              alignment: Alignment.center,
-                              border: 2,
-                              linearGradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withOpacity(0.2),
-                                  Colors.white.withOpacity(0.05),
-                                ],
-                              ),
-                              borderGradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withOpacity(0.5),
-                                  Colors.white.withOpacity(0.2),
-                                ],
-                              ),
-                              child: Container(
+                    child: GlassmorphicContainer(
+                      width: double.infinity,
+                      height: 320,
+                      borderRadius: 24,
+                      blur: 20,
+                      alignment: Alignment.center,
+                      border: 2,
+                      linearGradient: LinearGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.2),
+                          Colors.white.withOpacity(0.05),
+                        ],
+                      ),
+                      borderGradient: LinearGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.5),
+                          Colors.white.withOpacity(0.2),
+                        ],
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: member['gradient'] as Gradient,
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.0),
+                                Colors.black.withOpacity(0.4),
+                              ],
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                width: 120,
+                                height: 120,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(24),
-                                  gradient: member['gradient'] as Gradient,
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(24),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.black.withOpacity(0.0),
-                                        Colors.black.withOpacity(0.4),
-                                      ],
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
                                     ),
+                                  ],
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                      member['image'] as String,
+                                    ),
+                                    fit: BoxFit.cover,
                                   ),
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  Text(
+                                    member['name'] as String,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    member['role'] as String,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      // ✅ PROFILE IMAGE
-                                      Container(
-                                        width: 120,
-                                        height: 120,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.white,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.3,
-                                              ),
-                                              blurRadius: 20,
-                                              offset: const Offset(0, 10),
-                                            ),
-                                          ],
-                                          image: DecorationImage(
-                                            image: AssetImage(
-                                              member['image'] as String,
-                                            ),
-                                            fit: BoxFit.cover,
-                                          ),
+                                      GestureDetector(
+                                        onTap: () => _launchURL(
+                                          member['linkedin'] as String,
                                         ),
+                                        child:
+                                        _buildSocialIcon(Icons.work),
                                       ),
-                                      Column(
-                                        children: [
-                                          Text(
-                                            member['name'] as String,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            member['role'] as String,
-                                            style: TextStyle(
-                                              color: Colors.white.withOpacity(
-                                                0.9,
-                                              ),
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 16),
-                                          // ✅ LINKEDIN + EMAIL BUTTONS
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () => _launchURL(
-                                                  member['linkedin'] as String,
-                                                ),
-                                                child: _buildSocialIcon(
-                                                  Icons.work,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              GestureDetector(
-                                                onTap: () => _launchURL(
-                                                  'mailto:${member['email']}',
-                                                ),
-                                                child: _buildSocialIcon(
-                                                  Icons.email,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                      const SizedBox(width: 12),
+                                      GestureDetector(
+                                        onTap: () => _launchURL(
+                                          'mailto:${member['email']}',
+                                        ),
+                                        child:
+                                        _buildSocialIcon(Icons.email),
                                       ),
                                     ],
                                   ),
-                                ),
+                                ],
                               ),
-                            )
-                            .animate()
-                            .fadeIn(
-                              delay: Duration(
-                                milliseconds: 200 + (index * 200),
-                              ),
-                            )
-                            .slideY(begin: 0.3, end: 0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(
+                      delay: Duration(
+                        milliseconds: 200 + (index * 200),
+                      ),
+                    )
+                        .slideY(begin: 0.3, end: 0),
                   ),
                 ),
               );
@@ -1417,7 +1403,8 @@ class TeamSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.25),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+        border:
+        Border.all(color: Colors.white.withOpacity(0.5), width: 2),
       ),
       child: Icon(icon, color: Colors.white, size: 20),
     );
@@ -1430,6 +1417,24 @@ class SocialProofSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final testimonials = [
+      {
+        'name': 'Samarth K.',
+        'role': 'Full Stack Dev',
+        'text': 'Landed my dream job in 3 months!',
+      },
+      {
+        'name': 'Likith R.',
+        'role': 'Data Scientist',
+        'text': 'The gamification kept me motivated',
+      },
+      {
+        'name': 'Eeshwar L.',
+        'role': 'UX Designer',
+        'text': 'Best learning experience ever!',
+      },
+    ];
+
     return Container(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -1444,7 +1449,6 @@ class SocialProofSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // ✅ UNDERLINE
               Container(
                 width: 80,
                 height: 4,
@@ -1462,25 +1466,7 @@ class SocialProofSection extends StatelessWidget {
             height: 200,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: List.generate(3, (i) {
-                final testimonials = [
-                  {
-                    'name': 'Samarth K.',
-                    'role': 'Full Stack Dev',
-                    'text': 'Landed my dream job in 3 months!',
-                  },
-                  {
-                    'name': 'Likith R.',
-                    'role': 'Data Scientist',
-                    'text': 'The gamification kept me motivated',
-                  },
-                  {
-                    'name': 'Eeshwar L.',
-                    'role': 'UX Designer',
-                    'text': 'Best learning experience ever!',
-                  },
-                ];
-
+              children: List.generate(testimonials.length, (i) {
                 return Container(
                   width: 280,
                   margin: const EdgeInsets.only(right: 16),
@@ -1511,7 +1497,7 @@ class SocialProofSection extends StatelessWidget {
                           Row(
                             children: List.generate(
                               5,
-                              (index) => const Icon(
+                                  (index) => const Icon(
                                 Icons.star,
                                 color: AppColors.xpGold,
                                 size: 16,
@@ -1520,7 +1506,7 @@ class SocialProofSection extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            '"${testimonials[i]['text']}"',
+                            '"${testimonials[i]['text']!}"',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -1544,7 +1530,8 @@ class SocialProofSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     testimonials[i]['name']!,
@@ -1557,7 +1544,8 @@ class SocialProofSection extends StatelessWidget {
                                   Text(
                                     testimonials[i]['role']!,
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
+                                      color:
+                                      Colors.white.withOpacity(0.7),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -1593,10 +1581,12 @@ class ModernFooter extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ✅ LOGO PNG IN FOOTER
           SizedBox(
             height: 60,
-            child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+            child: Image.asset(
+              'assets/images/logo.png',
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
@@ -1659,7 +1649,7 @@ class ModernFooter extends StatelessWidget {
   }
 }
 
-// Extension for gradient scaling
+// ============= GRADIENT EXTENSION =============
 extension GradientScale on Gradient {
   Gradient scale(double opacity) {
     if (this is LinearGradient) {

@@ -102,10 +102,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   Future<void> _updateAvatar(String emoji, String userId) async {
     try {
       await _supabase.from('users').update({'avatar': emoji}).eq('id', userId);
-
       // Force refresh the provider
       ref.invalidate(userProfileProvider);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -126,16 +124,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
   void _showEditProfileDialog(Map<String, dynamic> user) {
     final nameController = TextEditingController(text: user['name']);
-    final collegeController = TextEditingController(text: user['college']);
-    final majorController = TextEditingController(text: user['major']);
-    final careerGoalController = TextEditingController(text: user['career_goal']);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Edit Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -157,54 +155,91 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: collegeController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'College',
-                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                    borderRadius: BorderRadius.circular(12),
+              // Display-only college field
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF667eea)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lock_outline,
+                      color: Colors.white.withOpacity(0.5),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'College',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user['college'] ?? 'Not set',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: majorController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Major',
-                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF667eea)),
-                    borderRadius: BorderRadius.circular(12),
+              // Display-only career goal field
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: careerGoalController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Career Goal',
-                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Color(0xFF667eea)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lock_outline,
+                      color: Colors.white.withOpacity(0.5),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Career Goal',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user['career_goal'] ?? 'Not set',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -220,9 +255,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
               try {
                 await _supabase.from('users').update({
                   'name': nameController.text,
-                  'college': collegeController.text,
-                  'major': majorController.text,
-                  'career_goal': careerGoalController.text,
                 }).eq('id', user['id']);
 
                 // Refresh the provider
@@ -619,6 +651,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                             itemBuilder: (context, index) {
                                               final emoji = _avatarEmojis[index];
                                               final isSelected = emoji == currentAvatar;
+
                                               return GestureDetector(
                                                 onTap: () async {
                                                   await _updateAvatar(emoji, user['id']);
@@ -809,7 +842,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
                                         onTap: () async {
                                           await _supabase.auth.signOut();
                                           if (mounted) {
-                                            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                                            // Navigate to landing page and clear all routes
+                                            Navigator.of(context).pushNamedAndRemoveUntil(
+                                              '/',
+                                                  (route) => false,
+                                            );
                                           }
                                         },
                                         child: Container(

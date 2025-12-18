@@ -418,223 +418,154 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ],
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 24),
-                              child: Consumer(
-                                builder: (context, ref, child) {
-                                  final avatarAsync = ref.watch(
-                                    StreamProvider.autoDispose((ref) {
-                                      final supabase = SupabaseConfig.client;
-                                      final authUser = supabase.auth.currentUser;
-                                      if (authUser == null) {
-                                        return Stream.value('🚀');
-                                      }
-
-                                      return supabase
-                                          .from('users')
-                                          .stream(primaryKey: ['id'])
-                                          .eq('supabase_uid', authUser.id)
-                                          .map((list) {
-                                        if (list.isEmpty) return '🚀';
-                                        return list.first['avatar'] as String? ?? '🚀';
-                                      });
-                                    }),
-                                  );
-
-                                  final currentAvatar = avatarAsync.maybeWhen(
-                                    data: (avatar) => avatar,
-                                    orElse: () => '🚀',
-                                  );
-
-                                  return Container(
-                                    padding: const EdgeInsets.all(24),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          const Color(0xFF667eea).withOpacity(0.9),
-                                          const Color(0xFF764ba2).withOpacity(0.9),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(28),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFF667eea).withOpacity(0.4),
-                                          blurRadius: 30,
-                                          offset: const Offset(0, 15),
-                                        ),
-                                      ],
+                              child: Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      const Color(0xFF667eea).withOpacity(0.9),
+                                      const Color(0xFF764ba2).withOpacity(0.9),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(28),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF667eea).withOpacity(0.4),
+                                      blurRadius: 30,
+                                      offset: const Offset(0, 15),
                                     ),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          children: [
-                                            AnimatedBuilder(
-                                              animation: _controller,
-                                              builder: (context, child) {
-                                                return Transform.translate(
-                                                  offset: Offset(
-                                                    0,
-                                                    math.sin(_controller.value * 2 * math.pi) * 3,
-                                                  ),
-                                                  child: Container(
-                                                    width: 75,
-                                                    height: 75,
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      gradient: const LinearGradient(
-                                                        colors: [
-                                                          Color(0xFFFFD700),
-                                                          Color(0xFFFFA500),
-                                                        ],
-                                                      ),
-                                                      border: Border.all(
-                                                        color: Colors.white,
-                                                        width: 4,
-                                                      ),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: const Color(0xFFFFD700).withOpacity(0.6),
-                                                          blurRadius: 25,
-                                                          spreadRadius: 3,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: Center(
-                                                      child: Text(
-                                                        currentAvatar,
-                                                        style: const TextStyle(fontSize: 38),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            const SizedBox(width: 20),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    'Hello, ${user.name}! 👋',
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 22,
-                                                      fontWeight: FontWeight.w900,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  const SizedBox(height: 6),
-                                                  Text(
-                                                    user.email,
-                                                    style: TextStyle(
-                                                      color: Colors.white.withOpacity(0.9),
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w500,
-                                                    ),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  const SizedBox(height: 12),
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 6,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white.withOpacity(0.2),
-                                                      borderRadius: BorderRadius.circular(20),
-                                                      border: Border.all(
-                                                        color: Colors.white.withOpacity(0.3),
-                                                        width: 1.5,
-                                                      ),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.workspace_premium,
-                                                          color: Color(0xFFFFD700),
-                                                          size: 18,
-                                                        ),
-                                                        const SizedBox(width: 6),
-                                                        Flexible(
-                                                          child: Text(
-                                                            'Level ${user.level} - ${user.levelTitle}',
-                                                            style: const TextStyle(
-                                                              color: Colors.white,
-                                                              fontSize: 13,
-                                                              fontWeight: FontWeight.w800,
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // Name
+                                    Text(
+                                      'Hello, ${user.name}! 👋',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+
+                                    // Email
+                                    Text(
+                                      user.email,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    // Level Badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                          width: 1.5,
                                         ),
-                                        const SizedBox(height: 24),
-                                        Container(
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.15),
-                                            borderRadius: BorderRadius.circular(20),
-                                            border: Border.all(
-                                              color: Colors.white.withOpacity(0.3),
-                                              width: 1.5,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.workspace_premium,
+                                            color: Color(0xFFFFD700),
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            child: Text(
+                                              'Level ${user.level} - ${user.levelTitle}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          child: Column(
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    // XP Progress Section
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  const Text(
-                                                    'XP Progress',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 14,
-                                                      fontWeight: FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    '${user.currentLevelXP}/${user.xpForNextLevel} XP',
-                                                    style: TextStyle(
-                                                      color: Colors.white.withOpacity(0.9),
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ],
+                                              const Text(
+                                                'XP Progress',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                               ),
-                                              const SizedBox(height: 12),
-                                              ClipRRect(
-                                                borderRadius: BorderRadius.circular(10),
-                                                child: LinearProgressIndicator(
-                                                  value: user.levelProgress,
-                                                  backgroundColor: Colors.white.withOpacity(0.2),
-                                                  valueColor: const AlwaysStoppedAnimation(
-                                                    Color(0xFFFFD700),
-                                                  ),
-                                                  minHeight: 10,
+                                              Text(
+                                                '${user.currentLevelXP}/${user.xpForNextLevel} XP',
+                                                style: TextStyle(
+                                                  color: Colors.white.withOpacity(0.9),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(height: 12),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: LinearProgressIndicator(
+                                              value: user.levelProgress,
+                                              backgroundColor: Colors.white.withOpacity(0.2),
+                                              valueColor: const AlwaysStoppedAnimation(
+                                                Color(0xFFFFD700),
+                                              ),
+                                              minHeight: 10,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  );
-                                },
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
+
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
                         SliverToBoxAdapter(
                           child: Animate(

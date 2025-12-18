@@ -30,6 +30,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
+
     _backgroundController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -50,6 +51,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
+
         final nodesAsync = ref.watch(roadmapNodesSupabaseProvider);
         return Scaffold(
           body: Stack(
@@ -68,6 +70,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                   ),
                 ),
               ),
+
               // ✅ FLOATING BLUR CIRCLES
               ...List.generate(8, (index) {
                 return AnimatedBuilder(
@@ -96,6 +99,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                   },
                 );
               }),
+
               // ✅ MAIN CONTENT
               Column(
                 children: [
@@ -128,13 +132,16 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 // ✅ LOGO
-                                SizedBox(
-                                  height: 60,
-                                  child: Image.asset(
-                                    'assets/images/logo.png',
-                                    fit: BoxFit.contain,
+                                Flexible(
+                                  child: SizedBox(
+                                    height: 60,
+                                    child: Image.asset(
+                                      'assets/images/logo.png',
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
                                 ),
+
                                 // ✅ GLASSMORPHIC ACTIONS
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -174,6 +181,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                       ),
                     ),
                   ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.3, end: 0),
+
                   // ============= PAGE TITLE SECTION =============
                   Container(
                     width: double.infinity,
@@ -195,9 +203,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFFFFD700,
-                                    ).withOpacity(0.5),
+                                    color: const Color(0xFFFFD700).withOpacity(0.5),
                                     blurRadius: 20,
                                     spreadRadius: 2,
                                   ),
@@ -226,10 +232,12 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                       'LEARNING ROADMAP',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 28,
+                                        fontSize: 24,
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: 0.5,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -240,6 +248,8 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
                                 ],
                               ),
@@ -249,6 +259,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                       ],
                     ),
                   ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2, end: 0),
+
                   // ============= SCROLLABLE CONTENT =============
                   Expanded(
                     child: nodesAsync.when(
@@ -268,6 +279,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 8),
                             ),
+
                             // Progress Summary
                             SliverToBoxAdapter(
                               child: Padding(
@@ -277,13 +289,16 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                 child: _buildProgressSummary(nodes),
                               ),
                             ),
+
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 32),
                             ),
+
                             // 3D Roadmap
                             SliverToBoxAdapter(
                               child: ThreeDRoadmap(nodes: nodes),
                             ),
+
                             const SliverToBoxAdapter(
                               child: SizedBox(height: 60),
                             ),
@@ -307,9 +322,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(
-                                      0xFFFFD700,
-                                    ).withOpacity(0.5),
+                                    color: const Color(0xFFFFD700).withOpacity(0.5),
                                     blurRadius: 30,
                                     spreadRadius: 10,
                                   ),
@@ -337,36 +350,39 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                         ),
                       ),
                       error: (e, _) => Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline_rounded,
-                              size: 80,
-                              color: Colors.red.withOpacity(0.7),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              'Something went wrong',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                size: 80,
+                                color: Colors.red.withOpacity(0.7),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 40),
-                              child: Text(
+                              const SizedBox(height: 20),
+                              Text(
+                                'Something went wrong',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
                                 e.toString(),
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.6),
                                   fontSize: 13,
                                 ),
                                 textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -451,58 +467,61 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 140,
-            height: 140,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFFFD700).withOpacity(0.2),
-                  const Color(0xFFFFA500).withOpacity(0.2),
-                ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFFFD700).withOpacity(0.2),
+                    const Color(0xFFFFA500).withOpacity(0.2),
+                  ],
+                ),
+                shape: BoxShape.circle,
               ),
-              shape: BoxShape.circle,
+              child: const Icon(
+                Icons.map_rounded,
+                size: 70,
+                color: Colors.white54,
+              ),
+            )
+                .animate(onPlay: (controller) => controller.repeat())
+                .shimmer(duration: 2.seconds),
+            const SizedBox(height: 32),
+            const Text(
+              'No Roadmap Yet',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              ),
+              textAlign: TextAlign.center,
             ),
-            child: const Icon(
-              Icons.map_rounded,
-              size: 70,
-              color: Colors.white54,
+            const SizedBox(height: 8),
+            Text(
+              'Your learning journey awaits',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 15,
+              ),
+              textAlign: TextAlign.center,
             ),
-          )
-              .animate(onPlay: (controller) => controller.repeat())
-              .shimmer(duration: 2.seconds),
-          const SizedBox(height: 32),
-          const Text(
-            'No Roadmap Yet',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Your learning journey awaits',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 15,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProgressSummary(List<RoadmapNode> nodes) {
-    final completed = nodes
-        .where((n) => n.status == NodeStatus.completed)
-        .length;
-    final inProgress = nodes
-        .where((n) => n.status == NodeStatus.inProgress)
-        .length;
+    final completed =
+        nodes.where((n) => n.status == NodeStatus.completed).length;
+    final inProgress =
+        nodes.where((n) => n.status == NodeStatus.inProgress).length;
     final total = nodes.length;
     final progress = total > 0 ? completed / total : 0.0;
 
@@ -539,31 +558,36 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Journey Progress',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Journey Progress',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$completed of $total completed',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(height: 4),
+                        Text(
+                          '$completed of $total completed',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
+                      horizontal: 16,
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
@@ -583,7 +607,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                       '${(progress * 100).toInt()}%',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -624,20 +648,28 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildStatChip(
-                    '$completed',
-                    'Done',
-                    const Color(0xFF43e97b),
+                  Expanded(
+                    child: _buildStatChip(
+                      '$completed',
+                      'Done',
+                      const Color(0xFF43e97b),
+                    ),
                   ),
-                  _buildStatChip(
-                    '$inProgress',
-                    'Active',
-                    const Color(0xFF4facfe),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildStatChip(
+                      '$inProgress',
+                      'Active',
+                      const Color(0xFF4facfe),
+                    ),
                   ),
-                  _buildStatChip(
-                    '${total - completed - inProgress}',
-                    'Locked',
-                    const Color(0xFF6c757d),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildStatChip(
+                      '${total - completed - inProgress}',
+                      'Locked',
+                      const Color(0xFF6c757d),
+                    ),
                   ),
                 ],
               ),
@@ -655,7 +687,7 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
 
   Widget _buildStatChip(String value, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [color.withOpacity(0.3), color.withOpacity(0.15)],
@@ -671,22 +703,29 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -698,30 +737,33 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
 // ============= 3D ROADMAP =============
 class ThreeDRoadmap extends ConsumerWidget {
   final List<RoadmapNode> nodes;
-
   const ThreeDRoadmap({super.key, required this.nodes});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return SizedBox(
       height: nodes.length * 280.0,
       child: Stack(
         children: [
           // 3D Road
           CustomPaint(
-            size: Size(MediaQuery.of(context).size.width, nodes.length * 280.0),
+            size: Size(screenWidth, nodes.length * 280.0),
             painter: ThreeDRoadPainter(nodeCount: nodes.length),
           ),
+
           // Checkpoints
           ...nodes.asMap().entries.map((entry) {
             final index = entry.key;
             final node = entry.value;
             final isLeft = index % 2 == 0;
+
             return Positioned(
               top: index * 280.0 + 80,
-              left: isLeft ? 30 : null,
-              right: isLeft ? null : 30,
-              width: MediaQuery.of(context).size.width * 0.4,
+              left: isLeft ? 20 : null,
+              right: isLeft ? null : 20,
+              width: (screenWidth * 0.42).clamp(150.0, 200.0),
               child: RoadCheckpoint(node: node, index: index, isLeft: isLeft)
                   .animate(delay: Duration(milliseconds: 150 * index))
                   .fadeIn(duration: 600.ms)
@@ -733,16 +775,18 @@ class ThreeDRoadmap extends ConsumerWidget {
               ),
             );
           }),
+
           // Numbered markers on road
           ...nodes.asMap().entries.map((entry) {
             final index = entry.key;
             final node = entry.value;
             final isLeft = index % 2 == 0;
+
             return Positioned(
               top: index * 280.0 + 100,
               left: isLeft
-                  ? MediaQuery.of(context).size.width * 0.4 + 50
-                  : MediaQuery.of(context).size.width * 0.3,
+                  ? screenWidth * 0.42 + 40
+                  : screenWidth * 0.28,
               child: RoadMarker(number: index + 1, node: node)
                   .animate(delay: Duration(milliseconds: 150 * index + 300))
                   .fadeIn(duration: 600.ms)
@@ -763,6 +807,7 @@ class ThreeDRoadPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final segmentHeight = 280.0;
+
     for (int i = 0; i < nodeCount; i++) {
       final y = i * segmentHeight;
 
@@ -796,11 +841,13 @@ class ThreeDRoadPainter extends CustomPainter {
           const Color(0xFF2c3e50).withOpacity(0.95),
         ],
       );
+
       final paint = Paint()
         ..shader = gradient.createShader(
           Rect.fromLTWH(0, y, size.width, segmentHeight),
         )
         ..style = PaintingStyle.fill;
+
       canvas.drawPath(path, paint);
 
       // Road edges
@@ -844,10 +891,12 @@ class ThreeDRoadPainter extends CustomPainter {
       ..color = const Color(0xFFFFD700)
       ..strokeWidth = 5
       ..style = PaintingStyle.stroke;
+
     const dashWidth = 18.0;
     const dashSpace = 14.0;
     double distance = 0.0;
     final totalDistance = (end - start).distance;
+
     while (distance < totalDistance) {
       final startOffset = Offset.lerp(start, end, distance / totalDistance)!;
       distance += dashWidth;
@@ -862,10 +911,12 @@ class ThreeDRoadPainter extends CustomPainter {
       final paint = Paint()
         ..color = Colors.white.withOpacity(0.5)
         ..strokeWidth = 3;
+
       const dashWidth = 12.0;
       const dashSpace = 10.0;
       double distance = 0.0;
       final totalDistance = (end - start).distance;
+
       while (distance < totalDistance) {
         final startOffset = Offset.lerp(start, end, distance / totalDistance)!;
         distance += dashWidth;
@@ -884,6 +935,7 @@ class ThreeDRoadPainter extends CustomPainter {
 class RoadMarker extends ConsumerStatefulWidget {
   final int number;
   final RoadmapNode node;
+
   const RoadMarker({super.key, required this.number, required this.node});
 
   @override
@@ -913,6 +965,7 @@ class _RoadMarkerState extends ConsumerState<RoadMarker>
   Widget build(BuildContext context) {
     final color = _getNodeColor(widget.node.status);
     final gradient = _getNodeGradient(widget.node.status);
+
     return GestureDetector(
       onTap: () => _showNodeDetails(context, ref),
       child: AnimatedBuilder(
@@ -923,8 +976,8 @@ class _RoadMarkerState extends ConsumerState<RoadMarker>
                 ? 1.0 + (_controller.value * 0.1)
                 : 1.0,
             child: Container(
-              width: 75,
-              height: 75,
+              width: 70,
+              height: 70,
               decoration: BoxDecoration(
                 gradient: gradient,
                 shape: BoxShape.circle,
@@ -945,19 +998,22 @@ class _RoadMarkerState extends ConsumerState<RoadMarker>
               child: Stack(
                 children: [
                   Center(
-                    child: Text(
-                      widget.number.toString().padLeft(2, '0'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black45,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        widget.number.toString().padLeft(2, '0'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black45,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -968,7 +1024,7 @@ class _RoadMarkerState extends ConsumerState<RoadMarker>
                       child: Icon(
                         Icons.check_circle,
                         color: Colors.white,
-                        size: 26,
+                        size: 24,
                         shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
                       ),
                     ),
@@ -977,7 +1033,7 @@ class _RoadMarkerState extends ConsumerState<RoadMarker>
                       bottom: -2,
                       right: -2,
                       child: Container(
-                        padding: const EdgeInsets.all(5),
+                        padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
                           color: Colors.black54,
                           shape: BoxShape.circle,
@@ -985,7 +1041,7 @@ class _RoadMarkerState extends ConsumerState<RoadMarker>
                         child: const Icon(
                           Icons.lock_rounded,
                           color: Colors.white,
-                          size: 16,
+                          size: 14,
                         ),
                       ),
                     ),
@@ -1059,6 +1115,7 @@ class RoadCheckpoint extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final color = _getNodeColor(node.status);
     final gradient = _getNodeGradient(node.status);
+
     return GestureDetector(
       onTap: () => _showNodeDetails(context, ref),
       child: ClipRRect(
@@ -1066,8 +1123,8 @@ class RoadCheckpoint extends ConsumerWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 120, maxHeight: 160),
-            padding: const EdgeInsets.all(16),
+            constraints: const BoxConstraints(minHeight: 120, maxHeight: 180),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -1094,7 +1151,7 @@ class RoadCheckpoint extends ConsumerWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         gradient: gradient,
                         borderRadius: BorderRadius.circular(12),
@@ -1107,13 +1164,13 @@ class RoadCheckpoint extends ConsumerWidget {
                       ),
                       child: _getNodeIcon(node.type),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         node.title,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w900,
                         ),
                         maxLines: 2,
@@ -1123,42 +1180,50 @@ class RoadCheckpoint extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  node.description,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 12,
+                Flexible(
+                  child: Text(
+                    node.description,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 11,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 14,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${node.estimatedHours}h',
-                          style: TextStyle(
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.access_time_rounded,
+                            size: 13,
                             color: Colors.white.withOpacity(0.8),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '${node.estimatedHours}h',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
@@ -1175,13 +1240,13 @@ class RoadCheckpoint extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, color: Colors.white, size: 12),
-                          const SizedBox(width: 4),
+                          const Icon(Icons.star, color: Colors.white, size: 11),
+                          const SizedBox(width: 3),
                           Text(
                             '${node.xpReward}',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
@@ -1256,7 +1321,8 @@ class RoadCheckpoint extends ConsumerWidget {
       default:
         iconData = Icons.circle;
     }
-    return Icon(iconData, color: Colors.white, size: 20);
+
+    return Icon(iconData, color: Colors.white, size: 18);
   }
 
   void _showNodeDetails(BuildContext context, WidgetRef ref) {
@@ -1272,10 +1338,12 @@ class RoadCheckpoint extends ConsumerWidget {
 // ============= DETAIL SHEET WITH COURSE COMPLETION SERVICE =============
 class RoadmapDetailSheet extends ConsumerStatefulWidget {
   final RoadmapNode node;
+
   const RoadmapDetailSheet({super.key, required this.node});
 
   @override
-  ConsumerState<RoadmapDetailSheet> createState() => _RoadmapDetailSheetState();
+  ConsumerState<RoadmapDetailSheet> createState() =>
+      _RoadmapDetailSheetState();
 }
 
 class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
@@ -1287,10 +1355,8 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
 
     try {
       final success = await CourseCompletionService.startCourse(widget.node.id);
-
       if (success) {
         ref.invalidate(roadmapNodesSupabaseProvider);
-
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1330,7 +1396,6 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
 
         if (mounted) {
           Navigator.pop(context);
-
           String message = '🎉 +${result['xpGained']} XP!';
           if (result['unlockedCourse'] != null) {
             message += '\n🔓 Unlocked: ${result['unlockedCourse']}';
@@ -1406,8 +1471,8 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                   Row(
                     children: [
                       Container(
-                        width: 85,
-                        height: 85,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
                           gradient: gradient,
                           shape: BoxShape.circle,
@@ -1424,7 +1489,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                           child: _getNodeIcon(widget.node.type, widget.node.status),
                         ),
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1433,15 +1498,17 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                               widget.node.title,
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 22,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w900,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 7,
+                                horizontal: 12,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
@@ -1457,7 +1524,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                                 _getStatusText(widget.node.status),
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
@@ -1474,7 +1541,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -1487,7 +1554,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                           widget.node.description,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.95),
-                            fontSize: 15,
+                            fontSize: 14,
                             height: 1.6,
                           ),
                         ),
@@ -1520,19 +1587,19 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                       '💡 Skills You\'ll Learn',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: widget.node.skills.map((skill) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
+                            horizontal: 14,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -1557,7 +1624,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                             skill,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -1576,7 +1643,6 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                       color: color,
                       onTap: _startLearning,
                     ),
-
                   if (widget.node.status == NodeStatus.inProgress)
                     _buildActionButton(
                       label: 'Mark as Complete ✓',
@@ -1587,11 +1653,10 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                       color: const Color(0xFF43e97b),
                       onTap: _markComplete,
                     ),
-
                   if (widget.node.status == NodeStatus.locked)
                     Container(
                       width: double.infinity,
-                      height: 62,
+                      height: 60,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -1612,26 +1677,28 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                             Icon(
                               Icons.lock_rounded,
                               color: Colors.white54,
-                              size: 26,
+                              size: 24,
                             ),
                             SizedBox(width: 10),
-                            Text(
-                              'Complete Previous Course',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 19,
-                                fontWeight: FontWeight.w900,
+                            Flexible(
+                              child: Text(
+                                'Complete Previous Course',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-
                   if (widget.node.status == NodeStatus.completed)
                     Container(
                       width: double.infinity,
-                      height: 62,
+                      height: 60,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
@@ -1652,14 +1719,14 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                             Icon(
                               Icons.check_circle,
                               color: Colors.white,
-                              size: 26,
+                              size: 24,
                             ),
                             SizedBox(width: 10),
                             Text(
                               'Course Completed!',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 19,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -1685,7 +1752,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
   }) {
     return Container(
       width: double.infinity,
-      height: 62,
+      height: 60,
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(18),
@@ -1714,15 +1781,18 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
                 Icon(
                   icon,
                   color: Colors.white,
-                  size: 26,
+                  size: 24,
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
+                Flexible(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -1769,9 +1839,9 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
 
   Widget _getNodeIcon(NodeType type, NodeStatus status) {
     if (status == NodeStatus.completed) {
-      return const Icon(Icons.check_circle, color: Colors.white, size: 42);
+      return const Icon(Icons.check_circle, color: Colors.white, size: 36);
     } else if (status == NodeStatus.locked) {
-      return const Icon(Icons.lock_rounded, color: Colors.white, size: 38);
+      return const Icon(Icons.lock_rounded, color: Colors.white, size: 34);
     }
 
     IconData iconData;
@@ -1797,7 +1867,8 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
       default:
         iconData = Icons.circle;
     }
-    return Icon(iconData, color: Colors.white, size: 38);
+
+    return Icon(iconData, color: Colors.white, size: 34);
   }
 
   String _getStatusText(NodeStatus status) {
@@ -1824,7 +1895,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [color.withOpacity(0.3), color.withOpacity(0.15)],
@@ -1832,30 +1903,33 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: color, width: 2),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

@@ -607,7 +607,7 @@ class BentoFeaturesSection extends StatelessWidget {
                 context,
                 icon: Icons.emoji_events,
                 title: 'Epic\nRewards',
-                description: 'XP, badges & more',
+                description: 'XP, badges & more..',
                 gradient: const LinearGradient(
                   colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
                 ),

@@ -5,6 +5,7 @@ import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/pages/landing_page.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
 import 'package:mentora_app/services/auth_service.dart';
+import 'package:mentora_app/utils/responsive_helper.dart'; // ADDED
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -22,7 +23,6 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _navigateToNextPage() async {
     await Future.delayed(const Duration(seconds: 5));
-
     if (!mounted) return;
 
     // Check if user is logged in
@@ -85,15 +85,14 @@ class _SplashPageState extends State<SplashPage> {
           children: [
             // Spacer to center content vertically
             const Spacer(),
-
-            // Logo + Tagline together (NO SPACE)
+            // Logo + Tagline together (RESPONSIVE)
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Logo (LARGER)
+                // Logo - RESPONSIVE
                 SizedBox(
-                  width: 240,
-                  height: 240,
+                  width: ResponsiveHelper.spacing(context, 240),
+                  height: ResponsiveHelper.spacing(context, 240),
                   child: Image.asset(
                     'assets/images/logo.png',
                     fit: BoxFit.contain,
@@ -102,28 +101,32 @@ class _SplashPageState extends State<SplashPage> {
                     .animate()
                     .fadeIn(duration: 600.ms)
                     .scale(begin: const Offset(0.8, 0.8)),
-
-                // NEGATIVE MARGIN to pull tagline up
+                // NEGATIVE MARGIN - RESPONSIVE
                 Transform.translate(
-                  offset: const Offset(0, -75), // Pull up by 30 pixels
+                  offset: Offset(0, -ResponsiveHelper.spacing(context, 75)),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                      'YOUR PERSONAL AI\nCAREER COUNSELOR',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.montserrat(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2,
-                        height: 1.3,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.4),
-                            offset: const Offset(0, 2),
-                            blurRadius: 6,
-                          ),
-                        ],
+                    padding: EdgeInsets.symmetric(
+                      horizontal: ResponsiveHelper.spacing(context, 40),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'YOUR PERSONAL AI\nCAREER COUNSELOR',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.montserrat(
+                          color: Colors.white,
+                          fontSize: ResponsiveHelper.fontSize(context, 17),
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                          height: 1.3,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.4),
+                              offset: const Offset(0, 2),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   )
@@ -133,38 +136,41 @@ class _SplashPageState extends State<SplashPage> {
                 ),
               ],
             ),
-
             // Spacer to push content up
             const Spacer(),
-
-            // Loading indicator
+            // Loading indicator - RESPONSIVE
             SizedBox(
-              width: 32,
-              height: 32,
+              width: ResponsiveHelper.spacing(context, 32),
+              height: ResponsiveHelper.spacing(context, 32),
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(
+                valueColor: AlwaysStoppedAnimation(
                   AppColors.xpGold,
                 ),
               ),
             ).animate().fadeIn(delay: 900.ms, duration: 400.ms),
-
-            const SizedBox(height: 24),
-
-            // Bottom branding
-            Text(
-              'TRANSFORM YOUR CAREER JOURNEY',
-              style: GoogleFonts.montserrat(
-                color: Colors.white.withOpacity(0.6),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.8,
+            SizedBox(height: ResponsiveHelper.spacing(context, 24)),
+            // Bottom branding - RESPONSIVE
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveHelper.spacing(context, 24),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'TRANSFORM YOUR CAREER JOURNEY',
+                  style: GoogleFonts.montserrat(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: ResponsiveHelper.fontSize(context, 11),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.8,
+                  ),
+                ),
               ),
             )
                 .animate()
                 .fadeIn(delay: 1200.ms, duration: 600.ms),
-
-            const SizedBox(height: 40),
+            SizedBox(height: ResponsiveHelper.spacing(context, 40)),
           ],
         ),
       ),

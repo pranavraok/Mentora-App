@@ -26,7 +26,6 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _selectedIndex = 0;
-
   final List<Widget> _pages = const [
     DashboardHome(),
     RoadmapPage(),
@@ -42,7 +41,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     final isAuthenticatedAsync = ref.watch(isAuthenticatedProvider);
     final userAsync = ref.watch(currentUserProvider);
-
     return Scaffold(
       body: isAuthenticatedAsync.when(
         data: (isAuthenticated) {
@@ -169,7 +167,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 class DashboardHome extends ConsumerStatefulWidget {
   final Function(int)? onNavigate;
-
   const DashboardHome({super.key, this.onNavigate});
 
   @override
@@ -189,22 +186,17 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
       vsync: this,
     )..repeat(reverse: true);
 
-    // ✅ Fix user level on dashboard load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fixUserLevel();
     });
   }
 
-  // ✅ Automatically fix user level based on XP
   Future<void> _fixUserLevel() async {
-    if (_levelFixed) return; // Only fix once per session
-
+    if (_levelFixed) return;
     final user = ref.read(currentUserProvider).value;
     if (user != null) {
       await XPService.fixUserLevel(user.id);
       _levelFixed = true;
-
-      // Refresh user data to show updated level
       ref.invalidate(currentUserProvider);
     }
   }
@@ -279,10 +271,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     return userAsync.when(
       data: (user) {
         if (user == null) return const SizedBox();
-
         return Stack(
           children: [
-            // Background gradient
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -296,8 +286,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 ),
               ),
             ),
-
-            // Floating particles
             ...List.generate(8, (index) {
               return AnimatedBuilder(
                 animation: _controller,
@@ -325,11 +313,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                 },
               );
             }),
-
-            // Main content
             Column(
               children: [
-                // Header
                 ClipRRect(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -402,20 +387,15 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                     ),
                   ),
                 ),
-
-                // Scrollable content with RefreshIndicator
                 Expanded(
                   child: RefreshIndicator(
                     color: const Color(0xFFFFD700),
                     backgroundColor: const Color(0xFF1A1B2E),
                     onRefresh: () async {
-                      // Invalidate all providers to trigger refresh
                       ref.invalidate(currentUserProvider);
                       ref.invalidate(gamificationProvider);
                       ref.invalidate(dailyChallengeProvider);
                       ref.invalidate(recentActivitiesProvider);
-
-                      // Wait for all data to reload
                       await Future.wait([
                         ref.read(currentUserProvider.future),
                         ref.read(gamificationProvider.future),
@@ -427,8 +407,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                       physics: const BouncingScrollPhysics(),
                       slivers: [
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                        // Profile card with real-time avatar
                         SliverToBoxAdapter(
                           child: Animate(
                             effects: [
@@ -442,12 +420,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                               padding: const EdgeInsets.symmetric(horizontal: 24),
                               child: Consumer(
                                 builder: (context, ref, child) {
-                                  // Watch avatar from Supabase in real-time
                                   final avatarAsync = ref.watch(
                                     StreamProvider.autoDispose((ref) {
                                       final supabase = SupabaseConfig.client;
                                       final authUser = supabase.auth.currentUser;
-
                                       if (authUser == null) {
                                         return Stream.value('🚀');
                                       }
@@ -603,7 +579,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           ],
                                         ),
                                         const SizedBox(height: 24),
-                                        // ✅ FIXED XP PROGRESS SECTION
                                         Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
@@ -660,10 +635,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
-
                         const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                        // Stats cards
                         SliverToBoxAdapter(
                           child: Animate(
                             effects: [
@@ -711,10 +683,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
-
                         const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                        // Today's challenge
                         SliverToBoxAdapter(
                           child: Animate(
                             effects: [
@@ -780,10 +749,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
-
                         const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                        // Quick Actions
                         SliverToBoxAdapter(
                           child: Animate(
                             effects: [FadeEffect(delay: 500.ms)],
@@ -867,7 +833,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (_) => const ResumeCheckerPageWithBackButton(),
+                                                builder: (_) => const ResumeCheckerPage(),
                                               ),
                                             );
                                           },
@@ -876,7 +842,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: _buildActionCard(
-                                          'Leader\nboard',
+                                          'Leader\nBoard',
                                           Icons.leaderboard_rounded,
                                           const LinearGradient(
                                             colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
@@ -885,7 +851,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (_) => const LeaderboardPageWithBackButton(),
+                                                builder: (_) => const LeaderboardPage(),
                                               ),
                                             );
                                           },
@@ -898,10 +864,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                             ),
                           ),
                         ),
-
                         const SliverToBoxAdapter(child: SizedBox(height: 28)),
-
-                        // Recent activity
                         SliverToBoxAdapter(
                           child: Animate(
                             effects: [FadeEffect(delay: 600.ms)],
@@ -951,6 +914,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       if (activities.isEmpty) {
                                         return _buildNoActivityCard();
                                       }
+
                                       return Column(
                                         children: activities.take(3).map((activity) {
                                           return Padding(
@@ -1179,7 +1143,6 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   Widget _buildActivityItemFromModel(activity) {
     final iconData = _getIconFromString(activity.icon ?? 'check_circle_rounded');
     final color = _getColorFromString(activity.color ?? '0xFF43e97b');
-
     return _buildActivityItem(
       activity.title,
       activity.timeAgo,
@@ -1444,58 +1407,3 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 }
 
-/// Resume Checker Page with Back Button
-class ResumeCheckerPageWithBackButton extends StatelessWidget {
-  const ResumeCheckerPageWithBackButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1B2E),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Resume Checker',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: const ResumeCheckerPage(),
-    );
-  }
-}
-
-/// Leaderboard Page with Back Button
-class LeaderboardPageWithBackButton extends StatelessWidget {
-  const LeaderboardPageWithBackButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1B2E),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Leaderboard',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: const LeaderboardPage(),
-    );
-  }
-}

@@ -1,11 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
 import 'package:mentora_app/config/supabase_config.dart';
@@ -20,7 +18,6 @@ class ResumeCheckerPage extends StatefulWidget {
 class _ResumeCheckerPageState extends State<ResumeCheckerPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
-
   bool _isAnalyzing = false;
   bool _hasAnalyzed = false;
 
@@ -54,7 +51,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
         type: FileType.custom,
         allowedExtensions: ['pdf', 'docx', 'doc'],
       );
-
       if (result == null || result.files.isEmpty) return;
 
       final file = result.files.single;
@@ -79,12 +75,10 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
           .select('id')
           .eq('supabase_uid', user.id)
           .single();
-
       final userId = userRow['id'] as String;
 
       // Convert bytes to base64 for transmission
       final base64Resume = base64Encode(bytes);
-
       print('Calling analyzeResume with file: ${file.name}');
 
       // Call Edge Function directly with file content
@@ -96,10 +90,10 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
 
   /// Analyze resume by sending base64 content to Edge Function
   Future<void> _analyzeResumeWithBase64(
-    String base64Content,
-    String fileName,
-    String userId,
-  ) async {
+      String base64Content,
+      String fileName,
+      String userId,
+      ) async {
     setState(() {
       _isAnalyzing = true;
       _hasAnalyzed = false;
@@ -118,7 +112,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
       );
 
       final data = response as Map<String, dynamic>;
-
       setState(() {
         _scoreOverall = (data['overall_score'] as num?)?.toInt() ?? 0;
         _scoreTech = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
@@ -129,7 +122,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
         _isAnalyzing = false;
         _hasAnalyzed = true;
       });
-
       print('Resume analyzed successfully: Overall=$_scoreOverall');
     } catch (e) {
       print('Error analyzing resume: $e');
@@ -159,7 +151,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
           .select('id')
           .eq('supabase_uid', user.id)
           .single();
-
       final userId = userRow['id'] as String;
 
       // Call Edge Function
@@ -173,7 +164,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
       );
 
       final data = response as Map<String, dynamic>;
-
       setState(() {
         _scoreOverall = (data['overall_score'] as num?)?.toInt() ?? 0;
         _scoreTech = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
@@ -184,7 +174,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
         _isAnalyzing = false;
         _hasAnalyzed = true;
       });
-
       print('Resume analyzed successfully: Overall=$_scoreOverall');
     } catch (e) {
       print('Error analyzing resume: $e');
@@ -280,14 +269,28 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(
-                              height: 60,
-                              child: Image.asset(
-                                'assets/images/logo.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
+                            // LEFT SIDE: Back button + Logo
                             Row(
+                              children: [
+                                _buildGlassButton(
+                                  icon: Icons.arrow_back_rounded,
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                const SizedBox(width: 12),
+                                SizedBox(
+                                  height: 60,
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // RIGHT SIDE: Notifications + Settings
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 _buildGlassButton(
                                   icon: Icons.notifications_rounded,
@@ -296,7 +299,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            const NotificationsPage(),
+                                        const NotificationsPage(),
                                       ),
                                     );
                                   },
@@ -310,7 +313,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            const SettingsPage(),
+                                        const SettingsPage(),
                                       ),
                                     );
                                   },
@@ -335,105 +338,91 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                       children: [
                         // Title section
                         Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.fromLTRB(
-                                24,
-                                20,
-                                24,
-                                16,
-                              ),
-                              child: Row(
-                                children: [
-                                  AnimatedBuilder(
-                                    animation: _animController,
-                                    builder: (context, child) {
-                                      return Transform.scale(
-                                        scale:
-                                            1.0 +
-                                            (math.sin(
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                          child: Row(
+                            children: [
+                              AnimatedBuilder(
+                                animation: _animController,
+                                builder: (context, child) {
+                                  return Transform.scale(
+                                    scale: 1.0 +
+                                        (math.sin(
+                                          _animController.value * 2 * math.pi,
+                                        ) *
+                                            0.08),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Color.lerp(
+                                              const Color(0xFFFFD700),
+                                              const Color(0xFFf093fb),
+                                              _animController.value,
+                                            )!,
+                                            const Color(0xFFf5576c),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFFFD700)
+                                                .withOpacity(0.6),
+                                            blurRadius: 20 +
+                                                (math.sin(
                                                   _animController.value *
                                                       2 *
                                                       math.pi,
                                                 ) *
-                                                0.08),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                Color.lerp(
-                                                  const Color(0xFFFFD700),
-                                                  const Color(0xFFf093fb),
-                                                  _animController.value,
-                                                )!,
-                                                const Color(0xFFf5576c),
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              16,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: const Color(
-                                                  0xFFFFD700,
-                                                ).withOpacity(0.6),
-                                                blurRadius:
-                                                    20 +
-                                                    (math.sin(
-                                                          _animController
-                                                                  .value *
-                                                              2 *
-                                                              math.pi,
-                                                        ) *
-                                                        5),
-                                                spreadRadius: 3,
-                                              ),
-                                            ],
+                                                    5),
+                                            spreadRadius: 3,
                                           ),
-                                          child: const Icon(
-                                            Icons.description_rounded,
-                                            color: Colors.white,
-                                            size: 24,
-                                          ),
-                                        ),
-                                      );
-                                    },
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.description_rounded,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 14),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (bounds) =>
+                                        const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFFD700),
+                                            Color(0xFFFFA500),
+                                          ],
+                                        ).createShader(bounds),
+                                    child: const Text(
+                                      'RESUME CHECKER',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
                                   ),
-                                  const SizedBox(width: 14),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ShaderMask(
-                                        shaderCallback: (bounds) =>
-                                            const LinearGradient(
-                                              colors: [
-                                                Color(0xFFFFD700),
-                                                Color(0xFFFFA500),
-                                              ],
-                                            ).createShader(bounds),
-                                        child: const Text(
-                                          'RESUME CHECKER',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 26,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        'Level up your CV for tech roles',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    'Level up your CV for tech roles',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ],
                               ),
-                            )
+                            ],
+                          ),
+                        )
                             .animate()
                             .fadeIn(delay: 200.ms)
                             .slideY(begin: -0.2, end: 0),
@@ -446,30 +435,27 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                             children: [
                               _buildUploadCard(),
                               const SizedBox(height: 16),
-
                               Column(
                                 children: [
                                   _buildTipChip(
                                     icon: Icons.star_rounded,
-                                    text:
-                                        'Keep it 1–2 pages with clear sections.',
+                                    text: 'Keep it 1–2 pages with clear sections.',
                                   ),
                                   const SizedBox(height: 6),
                                   _buildTipChip(
                                     icon: Icons.bolt_rounded,
                                     text:
-                                        'Use measurable impact: "Improved performance by 30%".',
+                                    'Use measurable impact: "Improved performance by 30%".',
                                   ),
                                   const SizedBox(height: 6),
                                   _buildTipChip(
                                     icon: Icons.search_rounded,
                                     text:
-                                        'Include job-description keywords (Flutter, APIs, cloud, CI/CD).',
+                                    'Include job-description keywords (Flutter, APIs, cloud, CI/CD).',
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 20),
-
                               if (_isAnalyzing) _buildScanningCard(),
                               if (_hasAnalyzed && !_isAnalyzing) ...[
                                 const SizedBox(height: 8),
@@ -477,7 +463,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                 const SizedBox(height: 20),
                                 _buildSuggestions(),
                               ],
-
                               const SizedBox(height: 24),
                             ],
                           ),
@@ -495,7 +480,6 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
   }
 
   // ===== UI helpers =====
-
   Widget _buildUploadCard() {
     return Container(
       width: double.infinity,
@@ -764,7 +748,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
             )
           else
             ..._suggestions.map(
-              (suggestion) => Column(
+                  (suggestion) => Column(
                 children: [
                   _buildSuggestionItem(suggestion, ''),
                   if (_suggestions.indexOf(suggestion) <

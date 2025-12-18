@@ -625,17 +625,17 @@ class _RoadmapPageState extends ConsumerState<RoadmapPage>
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildStatChip(
-                    '✅ $completed',
+                    '$completed',
                     'Done',
                     const Color(0xFF43e97b),
                   ),
                   _buildStatChip(
-                    '🔄 $inProgress',
+                    '$inProgress',
                     'Active',
                     const Color(0xFF4facfe),
                   ),
                   _buildStatChip(
-                    '📚 ${total - completed - inProgress}',
+                    '${total - completed - inProgress}',
                     'Locked',
                     const Color(0xFF6c757d),
                   ),
@@ -1295,7 +1295,7 @@ class _RoadmapDetailSheetState extends ConsumerState<RoadmapDetailSheet> {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('📚 Started learning! Mark complete when done.'),
+              content: Text('Started learning! Mark complete when done.'),
               backgroundColor: Color(0xFF4facfe),
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 2),

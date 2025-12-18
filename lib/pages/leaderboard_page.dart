@@ -69,6 +69,13 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
     final leaderboardAsync = ref.watch(leaderboardProvider);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        toolbarHeight: 0,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+      ),
       body: leaderboardAsync.when(
         data: (players) {
           final topThree = players.take(3).toList();
@@ -121,7 +128,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
               // Main content
               Column(
                 children: [
-                  // Header: logo + notifications + settings
+                  // Header: back button + logo + notifications + settings
                   ClipRRect(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -149,12 +156,23 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SizedBox(
-                                  height: 60,
-                                  child: Image.asset(
-                                    'assets/images/logo.png',
-                                    fit: BoxFit.contain,
-                                  ),
+                                Row(
+                                  children: [
+                                    _buildGlassButton(
+                                      icon: Icons.arrow_back_rounded,
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      height: 60,
+                                      child: Image.asset(
+                                        'assets/images/logo.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -166,7 +184,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const NotificationsPage(),
+                                            const NotificationsPage(),
                                           ),
                                         );
                                       },
@@ -180,7 +198,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                const SettingsPage(),
+                                            const SettingsPage(),
                                           ),
                                         );
                                       },
@@ -206,10 +224,10 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                           builder: (context, child) {
                             return Transform.scale(
                               scale:
-                                  1.0 +
+                              1.0 +
                                   (math.sin(
-                                        _animController.value * 2 * math.pi,
-                                      ) *
+                                    _animController.value * 2 * math.pi,
+                                  ) *
                                       0.08),
                               child: Container(
                                 padding: const EdgeInsets.all(12),
@@ -231,12 +249,12 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                                         0xFFFFD700,
                                       ).withOpacity(0.6),
                                       blurRadius:
-                                          20 +
+                                      20 +
                                           (math.sin(
-                                                _animController.value *
-                                                    2 *
-                                                    math.pi,
-                                              ) *
+                                            _animController.value *
+                                                2 *
+                                                math.pi,
+                                          ) *
                                               5),
                                       spreadRadius: 3,
                                     ),
@@ -260,7 +278,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                                 colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                               ).createShader(bounds),
                               child: const Text(
-                                'GLOBAL LEADERBOARD',
+                                'LEADERBOARD',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,
@@ -270,7 +288,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                               ),
                             ),
                             Text(
-                              'Compete with other learners in real time',
+                              'Compete with other learners here',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.7),
                                 fontSize: 13,
@@ -329,7 +347,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
             flex: 9,
             child: _ifPlayerMap(
               p2,
-              () => _buildPodiumCard(
+                  () => _buildPodiumCard(
                 p2!,
                 rankNumber: 2,
                 rankColor: const Color(0xFFC0C0C0),
@@ -344,7 +362,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
             flex: 10,
             child: _ifPlayerMap(
               p1,
-              () => _buildPodiumCard(
+                  () => _buildPodiumCard(
                 p1!,
                 rankNumber: 1,
                 isCrowned: true,
@@ -360,7 +378,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
             flex: 9,
             child: _ifPlayerMap(
               p3,
-              () => _buildPodiumCard(
+                  () => _buildPodiumCard(
                 p3!,
                 rankNumber: 3,
                 rankColor: const Color(0xFFCD7F32),
@@ -386,12 +404,12 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
   }
 
   Widget _buildPodiumCard(
-    Map<String, dynamic> playerData, {
-    required int rankNumber,
-    required Color rankColor,
-    required Gradient gradient,
-    bool isCrowned = false,
-  }) {
+      Map<String, dynamic> playerData, {
+        required int rankNumber,
+        required Color rankColor,
+        required Gradient gradient,
+        bool isCrowned = false,
+      }) {
     final xp = playerData['total_xp'] as int? ?? 0;
     final level = _calculateLevel(xp);
     final streakDays = playerData['streak_days'] as int? ?? 0;
@@ -584,10 +602,10 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
   }
 
   Widget _buildLeaderboardRow(
-    Map<String, dynamic> playerData,
-    int rank,
-    String? currentUserId,
-  ) {
+      Map<String, dynamic> playerData,
+      int rank,
+      String? currentUserId,
+      ) {
     final isYou = playerData['id'] == currentUserId;
     final gradient = _rowGradientForRank(rank);
     final medal = _medalForRank(rank);

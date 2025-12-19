@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/landing_page.dart';
@@ -11,8 +12,13 @@ import 'package:mentora_app/config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   // Initialize Supabase
   await SupabaseConfig.initialize();
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -69,9 +75,7 @@ class AuthWrapper extends ConsumerWidget {
 
             if (context.mounted) {
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => const LandingPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const LandingPage()),
               );
             }
           },
@@ -90,8 +94,8 @@ class AuthWrapper extends ConsumerWidget {
 
         // Check if onboarding is complete
         // Note: Adjust this check based on your UserModel structure
-        final hasCompletedOnboarding = user.careerGoal != null &&
-            user.careerGoal!.isNotEmpty;
+        final hasCompletedOnboarding =
+            user.careerGoal != null && user.careerGoal!.isNotEmpty;
 
         if (!hasCompletedOnboarding) {
           debugPrint('ℹ️ Onboarding incomplete, showing onboarding page');
@@ -105,4 +109,3 @@ class AuthWrapper extends ConsumerWidget {
     );
   }
 }
-

@@ -1,12 +1,13 @@
 import 'dart:math' as math;
 import 'dart:ui';
-import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:mentora_app/pages/settings_page.dart';
 import 'package:mentora_app/pages/notifications_page.dart';
-import 'package:mentora_app/config/supabase_config.dart';
+import 'package:mentora_app/services/gemini_resume_service.dart';
+import 'package:mentora_app/models/resume_analysis_result.dart';
 
 class ResumeCheckerPage extends StatefulWidget {
   const ResumeCheckerPage({super.key});
@@ -21,13 +22,19 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
   bool _isAnalyzing = false;
   bool _hasAnalyzed = false;
 
-  // Real scores from Gemini analysis
-  int _scoreOverall = 0;
-  int _scoreTech = 0;
-  int _scoreReadability = 0;
-  List<String> _suggestions = [];
-  String? _resumeUrl;
+  // Gemini resume service
+  final GeminiResumeService _resumeService = GeminiResumeService();
+
+  // Analysis results from Gemini
+  ResumeAnalysisResult? _analysisResult;
   String? _errorMessage;
+
+  // Scores for display (derived from _analysisResult)
+  int get _scoreOverall => _analysisResult?.overallScore ?? 0;
+  int get _scoreSkills => _analysisResult?.skillsScore ?? 0;
+  int get _scoreExperience => _analysisResult?.experienceScore ?? 0;
+  int get _scoreReadability => _analysisResult?.readabilityScore ?? 0;
+  List<ResumeSuggestion> get _suggestions => _analysisResult?.suggestions ?? [];
 
   @override
   void initState() {
@@ -44,141 +51,109 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
     super.dispose();
   }
 
-  /// Pick PDF/DOCX file and analyze directly via Edge Function
+  /// Pick PDF file and analyze with Gemini (pure client-side)
   Future<void> _pickAndUploadResume() async {
     try {
+      // Pick PDF file
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'docx', 'doc'],
+        allowedExtensions: ['pdf'],
       );
+
       if (result == null || result.files.isEmpty) return;
 
       final file = result.files.single;
       final bytes = file.bytes;
+
       if (bytes == null) {
         _showError('Could not read file');
         return;
       }
 
-      setState(() => _errorMessage = null);
-
-      // Get authenticated user
-      final user = SupabaseConfig.client.auth.currentUser;
-      if (user == null) {
-        _showError('Not authenticated');
-        return;
-      }
-
-      // Get user profile ID
-      final userRow = await SupabaseConfig.client
-          .from('users')
-          .select('id')
-          .eq('supabase_uid', user.id)
-          .single();
-      final userId = userRow['id'] as String;
-
-      // Convert bytes to base64 for transmission
-      final base64Resume = base64Encode(bytes);
-      print('Calling analyzeResume with file: ${file.name}');
-
-      // Call Edge Function directly with file content
-      await _analyzeResumeWithBase64(base64Resume, file.name, userId);
-    } catch (e) {
-      _showError('Error: $e');
-    }
-  }
-
-  /// Analyze resume by sending base64 content to Edge Function
-  Future<void> _analyzeResumeWithBase64(
-      String base64Content,
-      String fileName,
-      String userId,
-      ) async {
-    setState(() {
-      _isAnalyzing = true;
-      _hasAnalyzed = false;
-      _errorMessage = null;
-    });
-
-    try {
-      // Call Edge Function with base64 encoded file
-      final response = await SupabaseConfig.client.functions.invoke(
-        'analyzeResume',
-        body: {
-          'file_name': fileName,
-          'file_content_base64': base64Content,
-          'user_id': userId,
-        },
-      );
-
-      final data = response as Map<String, dynamic>;
+      // Start analyzing
       setState(() {
-        _scoreOverall = (data['overall_score'] as num?)?.toInt() ?? 0;
-        _scoreTech = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
-        _scoreReadability = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
-        _suggestions = List<String>.from(
-          (data['improvements'] as List?) ?? [],
-        ).take(3).toList();
-        _isAnalyzing = false;
-        _hasAnalyzed = true;
+        _isAnalyzing = true;
+        _hasAnalyzed = false;
+        _errorMessage = null;
+        _analysisResult = null;
       });
-      print('Resume analyzed successfully: Overall=$_scoreOverall');
+
+      print('📄 Selected file: ${file.name} (${bytes.length} bytes)');
+
+      // Analyze resume using Gemini (client-side)
+      await _analyzeResumeWithGemini(Uint8List.fromList(bytes));
     } catch (e) {
-      print('Error analyzing resume: $e');
-      _showError('Analysis error: $e');
+      print('Error picking file: $e');
+      _showError('Error selecting file: $e');
       setState(() => _isAnalyzing = false);
     }
   }
 
-  /// Call analyzeResume Edge Function with Gemini AI (deprecated - use base64 method)
-  Future<void> _analyzeResume(String resumeUrl, String fileName) async {
-    setState(() {
-      _isAnalyzing = true;
-      _hasAnalyzed = false;
-      _errorMessage = null;
-    });
-
+  /// Analyze resume using Gemini AI (pure client-side)
+  ///
+  /// This method:
+  /// 1. Extracts text from PDF bytes
+  /// 2. Sends text to Gemini API
+  /// 3. Parses structured JSON response
+  /// 4. Updates UI with results
+  ///
+  /// NO Supabase Edge Functions are used
+  Future<void> _analyzeResumeWithGemini(Uint8List pdfBytes) async {
     try {
-      final user = SupabaseConfig.client.auth.currentUser;
-      if (user == null) {
-        _showError('Not authenticated');
-        return;
-      }
+      print('🔍 Starting resume analysis with Gemini...');
 
-      // Get user profile ID
-      final userRow = await SupabaseConfig.client
-          .from('users')
-          .select('id')
-          .eq('supabase_uid', user.id)
-          .single();
-      final userId = userRow['id'] as String;
+      // Analyze PDF using Gemini service
+      final result = await _resumeService.analyzePdfResume(pdfBytes);
 
-      // Call Edge Function
-      final response = await SupabaseConfig.client.functions.invoke(
-        'analyzeResume',
-        body: {
-          'resume_url': resumeUrl,
-          'file_name': fileName,
-          'user_id': userId,
-        },
-      );
-
-      final data = response as Map<String, dynamic>;
+      // Update UI with results
       setState(() {
-        _scoreOverall = (data['overall_score'] as num?)?.toInt() ?? 0;
-        _scoreTech = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
-        _scoreReadability = (data['ats_compatibility'] as num?)?.toInt() ?? 0;
-        _suggestions = List<String>.from(
-          (data['improvements'] as List?) ?? [],
-        ).take(3).toList();
+        _analysisResult = result;
         _isAnalyzing = false;
         _hasAnalyzed = true;
       });
-      print('Resume analyzed successfully: Overall=$_scoreOverall');
+
+      print('✓ Resume analyzed successfully!');
+      print('  Overall Score: ${result.overallScore}');
+      print('  Skills Score: ${result.skillsScore}');
+      print('  Experience Score: ${result.experienceScore}');
+      print('  Readability Score: ${result.readabilityScore}');
+      print('  Suggestions: ${result.suggestions.length}');
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('✓ Resume analyzed successfully!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
     } catch (e) {
-      print('Error analyzing resume: $e');
-      _showError('Analysis error: $e');
-      setState(() => _isAnalyzing = false);
+      print('✗ Error analyzing resume: $e');
+
+      // Provide helpful error messages
+      String errorMessage;
+      if (e.toString().contains('API key')) {
+        errorMessage =
+            'Please configure your Gemini API key in lib/config/gemini_config.dart';
+      } else if (e.toString().contains('extract')) {
+        errorMessage =
+            'Could not read PDF. Please ensure it\'s a text-based PDF.';
+      } else if (e.toString().contains('network') ||
+          e.toString().contains('connection')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else {
+        errorMessage = 'Analysis failed: ${e.toString()}';
+      }
+
+      _showError(errorMessage);
+
+      setState(() {
+        _isAnalyzing = false;
+        _hasAnalyzed = false;
+      });
     }
   }
 
@@ -299,7 +274,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                        const NotificationsPage(),
+                                            const NotificationsPage(),
                                       ),
                                     );
                                   },
@@ -313,7 +288,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                        const SettingsPage(),
+                                            const SettingsPage(),
                                       ),
                                     );
                                   },
@@ -338,91 +313,105 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                       children: [
                         // Title section
                         Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                          child: Row(
-                            children: [
-                              AnimatedBuilder(
-                                animation: _animController,
-                                builder: (context, child) {
-                                  return Transform.scale(
-                                    scale: 1.0 +
-                                        (math.sin(
-                                          _animController.value * 2 * math.pi,
-                                        ) *
-                                            0.08),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            Color.lerp(
-                                              const Color(0xFFFFD700),
-                                              const Color(0xFFf093fb),
-                                              _animController.value,
-                                            )!,
-                                            const Color(0xFFf5576c),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFFFFD700)
-                                                .withOpacity(0.6),
-                                            blurRadius: 20 +
-                                                (math.sin(
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(
+                                24,
+                                20,
+                                24,
+                                16,
+                              ),
+                              child: Row(
+                                children: [
+                                  AnimatedBuilder(
+                                    animation: _animController,
+                                    builder: (context, child) {
+                                      return Transform.scale(
+                                        scale:
+                                            1.0 +
+                                            (math.sin(
                                                   _animController.value *
                                                       2 *
                                                       math.pi,
                                                 ) *
-                                                    5),
-                                            spreadRadius: 3,
+                                                0.08),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Color.lerp(
+                                                  const Color(0xFFFFD700),
+                                                  const Color(0xFFf093fb),
+                                                  _animController.value,
+                                                )!,
+                                                const Color(0xFFf5576c),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(
+                                                  0xFFFFD700,
+                                                ).withOpacity(0.6),
+                                                blurRadius:
+                                                    20 +
+                                                    (math.sin(
+                                                          _animController
+                                                                  .value *
+                                                              2 *
+                                                              math.pi,
+                                                        ) *
+                                                        5),
+                                                spreadRadius: 3,
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.description_rounded,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 14),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ShaderMask(
-                                    shaderCallback: (bounds) =>
-                                        const LinearGradient(
-                                          colors: [
-                                            Color(0xFFFFD700),
-                                            Color(0xFFFFA500),
-                                          ],
-                                        ).createShader(bounds),
-                                    child: const Text(
-                                      'RESUME CHECKER',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
+                                          child: const Icon(
+                                            Icons.description_rounded,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                  Text(
-                                    'Level up your CV for tech roles',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                  const SizedBox(width: 14),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ShaderMask(
+                                        shaderCallback: (bounds) =>
+                                            const LinearGradient(
+                                              colors: [
+                                                Color(0xFFFFD700),
+                                                Color(0xFFFFA500),
+                                              ],
+                                            ).createShader(bounds),
+                                        child: const Text(
+                                          'RESUME CHECKER',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Level up your CV for tech roles',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        )
+                            )
                             .animate()
                             .fadeIn(delay: 200.ms)
                             .slideY(begin: -0.2, end: 0),
@@ -439,19 +428,20 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
                                 children: [
                                   _buildTipChip(
                                     icon: Icons.star_rounded,
-                                    text: 'Keep it 1–2 pages with clear sections.',
+                                    text:
+                                        'Keep it 1–2 pages with clear sections.',
                                   ),
                                   const SizedBox(height: 6),
                                   _buildTipChip(
                                     icon: Icons.bolt_rounded,
                                     text:
-                                    'Use measurable impact: "Improved performance by 30%".',
+                                        'Use measurable impact: "Improved performance by 30%".',
                                   ),
                                   const SizedBox(height: 6),
                                   _buildTipChip(
                                     icon: Icons.search_rounded,
                                     text:
-                                    'Include job-description keywords (Flutter, APIs, cloud, CI/CD).',
+                                        'Include job-description keywords (Flutter, APIs, cloud, CI/CD).',
                                   ),
                                 ],
                               ),
@@ -634,8 +624,8 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
         const SizedBox(width: 12),
         Expanded(
           child: _buildScoreCard(
-            label: 'Tech Stack',
-            score: _scoreTech,
+            label: 'Skills',
+            score: _scoreSkills,
             gradient: const LinearGradient(
               colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
             ),
@@ -644,10 +634,10 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
         const SizedBox(width: 12),
         Expanded(
           child: _buildScoreCard(
-            label: 'Readability',
-            score: _scoreReadability,
+            label: 'Experience',
+            score: _scoreExperience,
             gradient: const LinearGradient(
-              colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+              colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
             ),
           ),
         ),
@@ -747,17 +737,16 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
               ),
             )
           else
-            ..._suggestions.map(
-                  (suggestion) => Column(
+            ..._suggestions.asMap().entries.map(
+              (entry) => Column(
                 children: [
-                  _buildSuggestionItem(suggestion, ''),
-                  if (_suggestions.indexOf(suggestion) <
-                      _suggestions.length - 1)
+                  _buildSuggestionItem(entry.value.title, entry.value.detail),
+                  if (entry.key < _suggestions.length - 1)
                     const SizedBox(height: 10),
                 ],
               ),
             ),
-          if (_suggestions.isEmpty) ...[
+          if (!_hasAnalyzed) ...[
             const SizedBox(height: 10),
             _buildSuggestionItem(
               'Showcase your best projects first',

@@ -9,6 +9,10 @@ import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/services/roadmap_service_supabase.dart';
 import 'package:mentora_app/theme.dart';
 
+import '../providers/daily_challenge_provider.dart';
+import '../providers/gamification_provider.dart';
+import '../providers/user_activity_provider.dart';
+
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
 
@@ -231,9 +235,22 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         error: (_, __) async {},
       );
 
+      // ✅ FIX: Properly await Future.wait with correct error handling
+      try {
+        await Future.wait([
+          ref.refresh(currentUserProvider.future),
+          ref.refresh(gamificationProvider.future).catchError((_) => null),
+          ref.refresh(dailyChallengeProvider.future).catchError((_) => null),
+          ref.refresh(recentActivitiesProvider.future).catchError((_) => null),
+        ] as Iterable<Future>);
+      } catch (e) {
+        // Ignore provider refresh errors
+      }
+
       if (!mounted) return;
 
       Navigator.of(context).pop();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🎉 Roadmap generated! Welcome to your journey!'),
@@ -274,6 +291,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
       }
     }
   }
+
 
   bool _canProceed() {
     switch (_currentStep) {

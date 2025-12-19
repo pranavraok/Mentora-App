@@ -443,7 +443,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   children: [
                                     // Name
                                     Text(
-                                      'Hello, ${user.name}! 👋',
+                                      'Hello, ${user.name}!',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 24,

@@ -151,6 +151,9 @@ serve(async (req: Request) => {
     }
 
     console.log(`Gemini generated ${geminiResponse.nodes.length} nodes`);
+    console.log(`Gemini response keys:`, Object.keys(geminiResponse));
+    console.log(`Recommended projects in response:`, geminiResponse.recommended_projects ? geminiResponse.recommended_projects.length : 0);
+    console.log(`Gemini response:`, JSON.stringify(geminiResponse, null, 2).substring(0, 500) + '...');
 
     // Generate positions for nodes
     const positions = generateNodePositions(geminiResponse.nodes.length);
@@ -211,18 +214,39 @@ serve(async (req: Request) => {
     }
 
     // Create recommended projects
-    for (const project of geminiResponse.recommended_projects.slice(0, 5)) {
-      await supabase.from("projects").insert({
-        title: project.title,
-        description: project.description,
-        category: project.category || "General",
-        difficulty: project.difficulty || "Intermediate",
-        xp_reward: project.xp_reward || 200,
-        coin_reward: project.coin_reward || 50,
-        time_estimate_hours: project.time_estimate_hours || 10,
-        required_skills: project.required_skills || [],
-        tasks: project.tasks || [],
-      });
+    console.log(`Starting to insert ${geminiResponse.recommended_projects?.length || 0} recommended projects...`);
+    
+    if (!geminiResponse.recommended_projects || geminiResponse.recommended_projects.length === 0) {
+      console.warn('⚠️ WARNING: Gemini did not return any recommended_projects!');
+    }
+    
+    for (const project of (geminiResponse.recommended_projects || []).slice(0, 5)) {
+      try {
+        const projectPayload = {
+          user_id: profile.id,
+          title: project.title || "Untitled Project",
+          description: project.description || "",
+          category: project.category || "General",
+          difficulty: project.difficulty || "Intermediate",
+          xp_reward: project.xp_reward || 200,
+          coin_reward: project.coin_reward || 50,
+          time_estimate_hours: project.time_estimate_hours || 10,
+          required_skills: project.required_skills || [],
+          tasks: project.tasks || [],
+        };
+
+        console.log(`Inserting project: "${projectPayload.title}" for user ${profile.id}`);
+        
+        const { data, error } = await supabase.from("projects").insert(projectPayload);
+
+        if (error) {
+          console.error(`❌ Error inserting project "${project.title}":`, error);
+        } else {
+          console.log(`✓ Project inserted: "${project.title}" (ID: ${data?.[0]?.id || 'unknown'})`);
+        }
+      } catch (err) {
+        console.error(`Exception while inserting project:`, err);
+      }
     }
 
     // Create recommended courses

@@ -109,6 +109,7 @@ class ProjectTask {
 
 class Project {
   final String id;
+  final String? userId; // NULL = global template, UUID = user-owned project
   final String title;
   final String description;
   final String overview;
@@ -132,6 +133,7 @@ class Project {
 
   Project({
     required this.id,
+    this.userId,
     required this.title,
     required this.description,
     required this.overview,
@@ -243,6 +245,7 @@ class Project {
 
     return Project(
       id: id,
+      userId: json['user_id'] as String? ?? json['userId'] as String?,
       title: title,
       description: description,
       overview: overview,

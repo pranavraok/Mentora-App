@@ -186,17 +186,19 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         final insertResponse = await SupabaseConfig.client
             .from('users')
             .insert({
-          'supabase_uid': currentUser.id,
-          'email': currentUser.email!,
-          'name': currentUser.userMetadata?['name'] ?? 'User',
-          'onboarding_complete': false,
-        })
+              'supabase_uid': currentUser.id,
+              'email': currentUser.email!,
+              'name': currentUser.userMetadata?['name'] ?? 'User',
+              'onboarding_complete': false,
+            })
             .select('id')
             .single();
         userId = insertResponse['id'] as String;
       } else {
         userId = userResponse['id'] as String;
       }
+
+      debugPrint('🔑 Current User ID: $userId');
 
       final roadmapService = RoadmapService();
       await roadmapService.generateRoadmap(
@@ -210,12 +212,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         timelineMonths: (_weeklyHours * 4).toInt(),
       );
 
-      await SupabaseConfig.client.from('users').update({
-        'onboarding_complete': true,
-        'career_goal': _careerGoalController.text,
-        'college': _educationController.text,
-        'last_activity': DateTime.now().toIso8601String(),
-      }).eq('id', userId);
+      await SupabaseConfig.client
+          .from('users')
+          .update({
+            'onboarding_complete': true,
+            'career_goal': _careerGoalController.text,
+            'college': _educationController.text,
+            'last_activity': DateTime.now().toIso8601String(),
+          })
+          .eq('id', userId);
 
       final userAsync = ref.read(currentUserProvider);
       await userAsync.when(
@@ -237,12 +242,21 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
 
       // ✅ FIX: Properly await Future.wait with correct error handling
       try {
-        await Future.wait([
-          ref.refresh(currentUserProvider.future),
-          ref.refresh(gamificationProvider.future).catchError((_) => null),
-          ref.refresh(dailyChallengeProvider.future).catchError((_) => null),
-          ref.refresh(recentActivitiesProvider.future).catchError((_) => null),
-        ] as Iterable<Future>);
+        await Future.wait(
+          [
+                ref.refresh(currentUserProvider.future),
+                ref
+                    .refresh(gamificationProvider.future)
+                    .catchError((_) => null),
+                ref
+                    .refresh(dailyChallengeProvider.future)
+                    .catchError((_) => null),
+                ref
+                    .refresh(recentActivitiesProvider.future)
+                    .catchError((_) => null),
+              ]
+              as Iterable<Future>,
+        );
       } catch (e) {
         // Ignore provider refresh errors
       }
@@ -270,7 +284,8 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
       if (mounted) {
         Navigator.of(context).pop();
         final errorMessage = e.toString().toLowerCase();
-        final isQuotaError = errorMessage.contains('429') ||
+        final isQuotaError =
+            errorMessage.contains('429') ||
             errorMessage.contains('resource_exhausted') ||
             errorMessage.contains('quota');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -291,7 +306,6 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
       }
     }
   }
-
 
   bool _canProceed() {
     switch (_currentStep) {
@@ -340,18 +354,20 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
             return AnimatedBuilder(
               animation: _floatingController,
               builder: (context, child) {
-                final offset = math.sin(
-                  (_floatingController.value + index * 0.2) * 2 * math.pi,
-                ) *
+                final offset =
+                    math.sin(
+                      (_floatingController.value + index * 0.2) * 2 * math.pi,
+                    ) *
                     20;
                 return Positioned(
                   left: (index * 50.0) + offset,
-                  top: (index * 80.0) +
+                  top:
+                      (index * 80.0) +
                       math.sin(
-                        (_floatingController.value + index * 0.2) *
-                            2 *
-                            math.pi,
-                      ) *
+                            (_floatingController.value + index * 0.2) *
+                                2 *
+                                math.pi,
+                          ) *
                           30,
                   child: Container(
                     width: 40 + (index * 8.0),
@@ -378,190 +394,194 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                   children: [
                     // top progress
                     Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        20,
-                        layout.topPadding,
-                        20,
-                        12,
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          padding: EdgeInsets.fromLTRB(
+                            20,
+                            layout.topPadding,
+                            20,
+                            12,
+                          ),
+                          child: Column(
                             children: [
-                              Text(
-                                'Step ${_currentStep + 1} of 6',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Step ${_currentStep + 1} of 6',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${((_currentStep + 1) / 6 * 100).toInt()}%',
+                                    style: const TextStyle(
+                                      color: AppColors.xpGold,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                '${((_currentStep + 1) / 6 * 100).toInt()}%',
-                                style: const TextStyle(
-                                  color: AppColors.xpGold,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value: (_currentStep + 1) / 6,
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.2,
+                                  ),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                        AppColors.xpGold,
+                                      ),
+                                  minHeight: 6,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: LinearProgressIndicator(
-                              value: (_currentStep + 1) / 6,
-                              backgroundColor: Colors.white.withOpacity(0.2),
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.xpGold,
-                              ),
-                              minHeight: 6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fadeIn(delay: 100.ms).slideY(
-                      begin: -0.2,
-                      end: 0,
-                    ),
+                        )
+                        .animate()
+                        .fadeIn(delay: 100.ms)
+                        .slideY(begin: -0.2, end: 0),
                     // main content
                     Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 8,
-                        ),
-                        child: _buildStepContent(layout),
-                      )
-                          .animate()
-                          .fadeIn(delay: 200.ms)
-                          .slideX(begin: 0.2, end: 0),
+                      child:
+                          SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 8,
+                                ),
+                                child: _buildStepContent(layout),
+                              )
+                              .animate()
+                              .fadeIn(delay: 200.ms)
+                              .slideX(begin: 0.2, end: 0),
                     ),
                     // bottom buttons
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                      child: Row(
-                        children: [
-                          if (_currentStep > 0)
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => setState(
-                                      () => _currentStep--,
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: Colors.white,
-                                    width: 1.5,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.arrow_back,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      'Back',
-                                      style: TextStyle(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                          child: Row(
+                            children: [
+                              if (_currentStep > 0)
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () =>
+                                        setState(() => _currentStep--),
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(
                                         color: Colors.white,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
+                                        width: 1.5,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          if (_currentStep > 0) const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: _canProceed()
-                                      ? const [
-                                    Color(0xFFFFD700),
-                                    Color(0xFFFFA500),
-                                  ]
-                                      : [
-                                    Colors.grey.shade400,
-                                    Colors.grey.shade500,
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(14),
-                                boxShadow: _canProceed()
-                                    ? [
-                                  BoxShadow(
-                                    color: const Color(0xFFFFD700)
-                                        .withOpacity(0.3),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ]
-                                    : [],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: (_canProceed() && !_isSubmitting)
-                                      ? () {
-                                    if (_currentStep < 5) {
-                                      setState(
-                                            () => _currentStep++,
-                                      );
-                                    } else {
-                                      _completeOnboarding();
-                                    }
-                                  }
-                                      : null,
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    child: Row(
+                                    child: const Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Text(
-                                          _currentStep < 5
-                                              ? 'Next'
-                                              : '🎉 Complete Setup',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        const Icon(
-                                          Icons.arrow_forward_rounded,
+                                        Icon(
+                                          Icons.arrow_back,
                                           color: Colors.white,
-                                          size: 20,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'Back',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
+                              if (_currentStep > 0) const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: _canProceed()
+                                          ? const [
+                                              Color(0xFFFFD700),
+                                              Color(0xFFFFA500),
+                                            ]
+                                          : [
+                                              Colors.grey.shade400,
+                                              Colors.grey.shade500,
+                                            ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    boxShadow: _canProceed()
+                                        ? [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFFFFD700,
+                                              ).withOpacity(0.3),
+                                              blurRadius: 16,
+                                              offset: const Offset(0, 8),
+                                            ),
+                                          ]
+                                        : [],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: (_canProceed() && !_isSubmitting)
+                                          ? () {
+                                              if (_currentStep < 5) {
+                                                setState(() => _currentStep++);
+                                              } else {
+                                                _completeOnboarding();
+                                              }
+                                            }
+                                          : null,
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              _currentStep < 5
+                                                  ? 'Next'
+                                                  : '🎉 Complete Setup',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            const Icon(
+                                              Icons.arrow_forward_rounded,
+                                              color: Colors.white,
+                                              size: 20,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ).animate().fadeIn(delay: 300.ms).slideY(
-                      begin: 0.2,
-                      end: 0,
-                    ),
+                        )
+                        .animate()
+                        .fadeIn(delay: 300.ms)
+                        .slideY(begin: 0.2, end: 0),
                   ],
                 ),
               ),
@@ -623,46 +643,34 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
 
   Widget _buildCareerFieldStep(_LayoutConfig layout) {
     final careerFields = [
-      {
-        'icon': '💻',
-        'label': 'Engineering',
-        'color': const Color(0xFF4facfe)
-      },
+      {'icon': '💻', 'label': 'Engineering', 'color': const Color(0xFF4facfe)},
       {'icon': '⚕️', 'label': 'Medical', 'color': const Color(0xFF43e97b)},
-      {
-        'icon': '💼',
-        'label': 'Business/MBA',
-        'color': const Color(0xFFf093fb)
-      },
+      {'icon': '💼', 'label': 'Business/MBA', 'color': const Color(0xFFf093fb)},
       {'icon': '📊', 'label': 'Commerce', 'color': const Color(0xFFFFD700)},
       {
         'icon': '🎨',
         'label': 'Arts & Design',
-        'color': const Color(0xFFf5576c)
+        'color': const Color(0xFFf5576c),
       },
       {'icon': '⚖️', 'label': 'Law', 'color': const Color(0xFF667eea)},
       {
         'icon': '🔬',
         'label': 'Science & Research',
-        'color': const Color(0xFF38f9d7)
+        'color': const Color(0xFF38f9d7),
       },
       {'icon': '📚', 'label': 'Education', 'color': const Color(0xFFfda085)},
       {'icon': '📢', 'label': 'Marketing', 'color': const Color(0xFFa8edea)},
       {
         'icon': '🏗️',
         'label': 'Architecture',
-        'color': const Color(0xFFfed6e3)
+        'color': const Color(0xFFfed6e3),
       },
       {
         'icon': '🎬',
         'label': 'Media & Entertainment',
-        'color': const Color(0xFFfbc2eb)
+        'color': const Color(0xFFfbc2eb),
       },
-      {
-        'icon': '🌾',
-        'label': 'Agriculture',
-        'color': const Color(0xFF81FBB8)
-      },
+      {'icon': '🌾', 'label': 'Agriculture', 'color': const Color(0xFF81FBB8)},
     ];
 
     return Column(
@@ -716,18 +724,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   gradient: isSelected
-                      ? LinearGradient(
-                    colors: [
-                      color.withOpacity(0.8),
-                      color,
-                    ],
-                  )
+                      ? LinearGradient(colors: [color.withOpacity(0.8), color])
                       : null,
                   color: isSelected ? null : Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color:
-                    isSelected ? color : Colors.white.withOpacity(0.3),
+                    color: isSelected ? color : Colors.white.withOpacity(0.3),
                     width: isSelected ? 2 : 1.3,
                   ),
                 ),
@@ -769,8 +771,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
-              .map((level) {
+          children: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].map((
+            level,
+          ) {
             final isSelected = _experienceLevel == level;
             return GestureDetector(
               onTap: () => setState(() => _experienceLevel = level),
@@ -782,15 +785,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                    colors: [
-                      Color(0xFFFFD700),
-                      Color(0xFFFFA500),
-                    ],
-                  )
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        )
                       : null,
-                  color: isSelected
-                      ? null
-                      : Colors.white.withOpacity(0.15),
+                  color: isSelected ? null : Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
@@ -803,9 +801,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isSelected
-                          ? Icons.check_circle
-                          : Icons.circle_outlined,
+                      isSelected ? Icons.check_circle : Icons.circle_outlined,
                       color: Colors.white,
                       size: 18,
                     ),
@@ -858,24 +854,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         const SizedBox(height: 16),
         TextField(
           controller: _educationController,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: layout.bodySize,
-          ),
+          style: TextStyle(color: Colors.white, fontSize: layout.bodySize),
           maxLines: 3,
           decoration: InputDecoration(
             hintText:
-            "e.g., Bachelor's in Computer Science from XYZ University",
+                "e.g., Bachelor's in Computer Science from XYZ University",
             hintStyle: TextStyle(
               color: Colors.white.withOpacity(0.5),
               fontSize: layout.bodySize,
             ),
             filled: true,
             fillColor: Colors.white.withOpacity(0.1),
-            prefixIcon: const Icon(
-              Icons.history_edu,
-              color: AppColors.xpGold,
-            ),
+            prefixIcon: const Icon(Icons.history_edu, color: AppColors.xpGold),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -889,10 +879,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.xpGold,
-                width: 1.8,
-              ),
+              borderSide: const BorderSide(color: AppColors.xpGold, width: 1.8),
             ),
           ),
         ),
@@ -908,10 +895,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         const SizedBox(height: 10),
         TextField(
           controller: _currentRoleController,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: layout.bodySize,
-          ),
+          style: TextStyle(color: Colors.white, fontSize: layout.bodySize),
           decoration: InputDecoration(
             hintText: 'e.g., Junior Developer, Student, Career Switcher',
             hintStyle: TextStyle(
@@ -920,10 +904,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
             ),
             filled: true,
             fillColor: Colors.white.withOpacity(0.1),
-            prefixIcon: const Icon(
-              Icons.work_outline,
-              color: AppColors.xpGold,
-            ),
+            prefixIcon: const Icon(Icons.work_outline, color: AppColors.xpGold),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -937,10 +918,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.xpGold,
-                width: 1.8,
-              ),
+              borderSide: const BorderSide(color: AppColors.xpGold, width: 1.8),
             ),
           ),
         ),
@@ -1255,11 +1233,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.info_outline,
-                color: AppColors.xpGold,
-                size: 16,
-              ),
+              const Icon(Icons.info_outline, color: AppColors.xpGold, size: 16),
               const SizedBox(width: 6),
               Text(
                 'Selected: ${_selectedSkills.length}',
@@ -1296,15 +1270,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                    colors: [
-                      Color(0xFF4facfe),
-                      Color(0xFF00f2fe),
-                    ],
-                  )
+                          colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                        )
                       : null,
-                  color: isSelected
-                      ? null
-                      : Colors.white.withOpacity(0.1),
+                  color: isSelected ? null : Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
@@ -1317,11 +1286,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isSelected)
-                      const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 16,
-                      ),
+                      const Icon(Icons.check, color: Colors.white, size: 16),
                     if (isSelected) const SizedBox(width: 4),
                     Text(
                       skill,
@@ -1373,24 +1338,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         const SizedBox(height: 16),
         TextField(
           controller: _careerGoalController,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: layout.bodySize,
-          ),
+          style: TextStyle(color: Colors.white, fontSize: layout.bodySize),
           maxLines: 4,
           decoration: InputDecoration(
             hintText:
-            'e.g., Full Stack Developer at a FAANG company, building innovative products',
+                'e.g., Full Stack Developer at a FAANG company, building innovative products',
             hintStyle: TextStyle(
               color: Colors.white.withOpacity(0.5),
               fontSize: layout.bodySize,
             ),
             filled: true,
             fillColor: Colors.white.withOpacity(0.1),
-            prefixIcon: const Icon(
-              Icons.emoji_events,
-              color: AppColors.xpGold,
-            ),
+            prefixIcon: const Icon(Icons.emoji_events, color: AppColors.xpGold),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -1404,10 +1363,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: AppColors.xpGold,
-                width: 1.8,
-              ),
+              borderSide: const BorderSide(color: AppColors.xpGold, width: 1.8),
             ),
           ),
         ),
@@ -1424,66 +1380,62 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: [
-            'Career Switch',
-            'Skill Upgrade',
-            'Get Promoted',
-            'Start Freelancing',
-            'Build Startup',
-            'Get First Job',
-          ].map((mot) {
-            final isSelected = _motivation == mot;
-            return GestureDetector(
-              onTap: () => setState(() => _motivation = mot),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: layout.chipPaddingH,
-                  vertical: layout.chipPaddingV,
-                ),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                    colors: [
-                      Color(0xFFf093fb),
-                      Color(0xFFf5576c),
-                    ],
-                  )
-                      : null,
-                  color: isSelected
-                      ? null
-                      : Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFFf5576c)
-                        : Colors.white.withOpacity(0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isSelected
-                          ? Icons.check_circle
-                          : Icons.circle_outlined,
-                      color: Colors.white,
-                      size: 18,
+          children:
+              [
+                'Career Switch',
+                'Skill Upgrade',
+                'Get Promoted',
+                'Start Freelancing',
+                'Build Startup',
+                'Get First Job',
+              ].map((mot) {
+                final isSelected = _motivation == mot;
+                return GestureDetector(
+                  onTap: () => setState(() => _motivation = mot),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: layout.chipPaddingH,
+                      vertical: layout.chipPaddingV,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      mot,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: layout.chipFontSize,
-                        fontWeight: FontWeight.w600,
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFf5576c)
+                            : Colors.white.withOpacity(0.3),
+                        width: 1.5,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected
+                              ? Icons.check_circle
+                              : Icons.circle_outlined,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          mot,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: layout.chipFontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
         ),
         const SizedBox(height: 26),
       ],
@@ -1541,11 +1493,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.info_outline,
-                color: AppColors.xpGold,
-                size: 16,
-              ),
+              const Icon(Icons.info_outline, color: AppColors.xpGold, size: 16),
               const SizedBox(width: 6),
               Text(
                 'Selected: ${_selectedInterests.length}',
@@ -1587,15 +1535,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? const LinearGradient(
-                    colors: [
-                      Color(0xFF43e97b),
-                      Color(0xFF38f9d7),
-                    ],
-                  )
+                          colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                        )
                       : null,
-                  color: isSelected
-                      ? null
-                      : Colors.white.withOpacity(0.1),
+                  color: isSelected ? null : Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
@@ -1719,10 +1662,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
                     ),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFFFD700),
-                          Color(0xFFFFA500),
-                        ],
+                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1802,90 +1742,91 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage>
             return Wrap(
               spacing: 10,
               runSpacing: 10,
-              children: [
-                {
-                  'icon': Icons.visibility,
-                  'label': 'Visual',
-                  'desc': 'Videos & Diagrams',
-                },
-                {
-                  'icon': Icons.menu_book,
-                  'label': 'Reading',
-                  'desc': 'Articles & Docs',
-                },
-                {
-                  'icon': Icons.people,
-                  'label': 'Interactive',
-                  'desc': 'Hands-on Projects',
-                },
-                {
-                  'icon': Icons.mic,
-                  'label': 'Auditory',
-                  'desc': 'Podcasts & Audio',
-                },
-              ].map((style) {
-                final isSelected = _learningStyle == style['label'];
+              children:
+                  [
+                    {
+                      'icon': Icons.visibility,
+                      'label': 'Visual',
+                      'desc': 'Videos & Diagrams',
+                    },
+                    {
+                      'icon': Icons.menu_book,
+                      'label': 'Reading',
+                      'desc': 'Articles & Docs',
+                    },
+                    {
+                      'icon': Icons.people,
+                      'label': 'Interactive',
+                      'desc': 'Hands-on Projects',
+                    },
+                    {
+                      'icon': Icons.mic,
+                      'label': 'Auditory',
+                      'desc': 'Podcasts & Audio',
+                    },
+                  ].map((style) {
+                    final isSelected = _learningStyle == style['label'];
 
-                return GestureDetector(
-                  onTap: () => setState(
+                    return GestureDetector(
+                      onTap: () => setState(
                         () => _learningStyle = style['label'] as String,
-                  ),
-                  child: Container(
-                    width: cardWidth,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? const LinearGradient(
-                        colors: [
-                          Color(0xFF667eea),
-                          Color(0xFF764ba2),
-                        ],
-                      )
-                          : null,
-                      color: isSelected
-                          ? null
-                          : Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFF764ba2)
-                            : Colors.white.withOpacity(0.3),
-                        width: 1.5,
                       ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          style['icon'] as IconData,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          style['label'] as String,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: layout.chipFontSize,
-                            fontWeight: FontWeight.w700,
+                      child: Container(
+                        width: cardWidth,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFF667eea),
+                                    Color(0xFF764ba2),
+                                  ],
+                                )
+                              : null,
+                          color: isSelected
+                              ? null
+                              : Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFF764ba2)
+                                : Colors.white.withOpacity(0.3),
+                            width: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          style['desc'] as String,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 11,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              style['icon'] as IconData,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              style['label'] as String,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: layout.chipFontSize,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              style['desc'] as String,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 11,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+                      ),
+                    );
+                  }).toList(),
             );
           },
         ),
@@ -1998,25 +1939,15 @@ class _AIGeneratingPopupState extends State<_AIGeneratingPopup>
       child: Dialog(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 40,
-          vertical: 24,
-        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
         child: Container(
-          constraints: BoxConstraints(
-            maxWidth: 300,
-            maxHeight: maxHeight,
-          ),
+          constraints: BoxConstraints(maxWidth: 300, maxHeight: maxHeight),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF0F0C29),
-                Color(0xFF302b63),
-                Color(0xFF24243e),
-              ],
+              colors: [Color(0xFF0F0C29), Color(0xFF302b63), Color(0xFF24243e)],
             ),
             boxShadow: [
               BoxShadow(
@@ -2062,10 +1993,7 @@ class _AIGeneratingPopupState extends State<_AIGeneratingPopup>
                       return Transform.translate(
                         offset: Offset(
                           0,
-                          math.sin(
-                            _floatingController.value * 2 * math.pi,
-                          ) *
-                              6,
+                          math.sin(_floatingController.value * 2 * math.pi) * 6,
                         ),
                         child: Container(
                           width: 70,

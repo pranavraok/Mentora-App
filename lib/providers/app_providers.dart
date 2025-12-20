@@ -254,8 +254,8 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
   try {
     debugPrint('[ProjectsProvider] Fetching user projects from Supabase...');
 
-    // Get current authenticated user
-    final currentUser = SupabaseConfig.client.auth.currentUser;
+    // Get the full current user from database (has the internal UUID id)
+    final currentUser = await ref.watch(currentUserProvider.future);
 
     if (currentUser == null) {
       debugPrint('[ProjectsProvider] ❌ No authenticated user found');
@@ -263,16 +263,16 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
       return _fetchGlobalProjects();
     }
 
-    final userId = currentUser.id;
+    final userId =
+        currentUser.id; // This is the internal UUID, not supabase_uid
     debugPrint('[ProjectsProvider] ✅ Authenticated user ID: $userId');
 
-    // Fetch projects that are either:
-    // 1. Global templates (user_id IS NULL) - visible to all users
-    // 2. User's own projects (user_id = current_user.id)
+    // Fetch ONLY user's own projects (user_id = current_user.id)
+    // Global templates (user_id IS NULL) are NOT included
     final response = await SupabaseConfig.client
         .from('projects')
         .select()
-        .or('user_id.is.null,user_id.eq.$userId')
+        .eq('user_id', userId)
         .order('created_at', ascending: false)
         .timeout(const Duration(seconds: 15));
 

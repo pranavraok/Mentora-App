@@ -114,6 +114,9 @@ CREATE TABLE IF NOT EXISTS roadmap_nodes (
 CREATE TABLE IF NOT EXISTS projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     
+    -- Ownership (NULL = global template, UUID = user-owned project from Gemini)
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
     category VARCHAR(50) NOT NULL, -- 'Web Dev', 'Mobile', 'Data Science', 'AI/ML', etc
@@ -320,6 +323,7 @@ CREATE INDEX idx_roadmap_user_id ON roadmap_nodes(user_id);
 CREATE INDEX idx_roadmap_status ON roadmap_nodes(user_id, status);
 CREATE INDEX idx_roadmap_type ON roadmap_nodes(node_type);
 
+CREATE INDEX idx_projects_user_id ON projects(user_id);
 CREATE INDEX idx_projects_category ON projects(category);
 CREATE INDEX idx_projects_difficulty ON projects(difficulty);
 CREATE INDEX idx_projects_trending ON projects(trending_score DESC);

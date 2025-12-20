@@ -64,14 +64,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             data: (user) => user == null
                 ? const Center(child: CircularProgressIndicator())
                 : Column(
-              children: [
-                Expanded(
-                  child: _pages[_selectedIndex] is DashboardHome
-                      ? DashboardHome(onNavigate: _navigateToPage)
-                      : _pages[_selectedIndex],
-                ),
-              ],
-            ),
+                    children: [
+                      Expanded(
+                        child: _pages[_selectedIndex] is DashboardHome
+                            ? DashboardHome(onNavigate: _navigateToPage)
+                            : _pages[_selectedIndex],
+                      ),
+                    ],
+                  ),
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('Error: $e')),
           );
@@ -138,8 +138,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-          )
+                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                )
               : null,
           borderRadius: BorderRadius.circular(16),
         ),
@@ -212,11 +212,11 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 
   Widget _buildActionCard(
-      String title,
-      IconData icon,
-      Gradient gradient, {
-        required VoidCallback onTap,
-      }) {
+    String title,
+    IconData icon,
+    Gradient gradient, {
+    required VoidCallback onTap,
+  }) {
     return Container(
       height: 110,
       decoration: BoxDecoration(
@@ -359,7 +359,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                          const NotificationsPage(),
+                                              const NotificationsPage(),
                                         ),
                                       );
                                     },
@@ -373,7 +373,7 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                          const SettingsPage(),
+                                              const SettingsPage(),
                                         ),
                                       );
                                     },
@@ -417,7 +417,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                               ),
                             ],
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
@@ -432,7 +434,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   borderRadius: BorderRadius.circular(28),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF667eea).withOpacity(0.4),
+                                      color: const Color(
+                                        0xFF667eea,
+                                      ).withOpacity(0.4),
                                       blurRadius: 30,
                                       offset: const Offset(0, 15),
                                     ),
@@ -524,7 +528,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       child: Column(
                                         children: [
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               const Text(
                                                 'XP Progress',
@@ -537,7 +542,8 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                               Text(
                                                 '${user.currentLevelXP}/${user.xpForNextLevel} XP',
                                                 style: TextStyle(
-                                                  color: Colors.white.withOpacity(0.9),
+                                                  color: Colors.white
+                                                      .withOpacity(0.9),
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w600,
                                                 ),
@@ -546,13 +552,17 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           ),
                                           const SizedBox(height: 12),
                                           ClipRRect(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                             child: LinearProgressIndicator(
                                               value: user.levelProgress,
-                                              backgroundColor: Colors.white.withOpacity(0.2),
-                                              valueColor: const AlwaysStoppedAnimation(
-                                                Color(0xFFFFD700),
-                                              ),
+                                              backgroundColor: Colors.white
+                                                  .withOpacity(0.2),
+                                              valueColor:
+                                                  const AlwaysStoppedAnimation(
+                                                    Color(0xFFFFD700),
+                                                  ),
                                               minHeight: 10,
                                             ),
                                           ),
@@ -574,16 +584,22 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                               ScaleEffect(begin: const Offset(0.9, 0.9)),
                             ],
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.local_fire_department_rounded,
-                                      value: '${gamificationAsync.maybeWhen(data: (g) => g.streakDays, orElse: () => user.streak)}',
+                                      value:
+                                          '${gamificationAsync.maybeWhen(data: (g) => g.streakDays, orElse: () => user.streak)}',
                                       label: 'Day Streak',
                                       gradient: const LinearGradient(
-                                        colors: [Color(0xFFFF6B6B), Color(0xFFEE5A6F)],
+                                        colors: [
+                                          Color(0xFFFF6B6B),
+                                          Color(0xFFEE5A6F),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -591,10 +607,14 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.monetization_on_rounded,
-                                      value: '${gamificationAsync.maybeWhen(data: (g) => g.totalCoins, orElse: () => user.coins)}',
+                                      value:
+                                          '${gamificationAsync.maybeWhen(data: (g) => g.totalCoins, orElse: () => user.coins)}',
                                       label: 'Coins',
                                       gradient: const LinearGradient(
-                                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                        colors: [
+                                          Color(0xFFFFD700),
+                                          Color(0xFFFFA500),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -602,10 +622,14 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.emoji_events_rounded,
-                                      value: '${gamificationAsync.maybeWhen(data: (g) => g.achievementCount, orElse: () => user.achievements.length)}',
+                                      value:
+                                          '${gamificationAsync.maybeWhen(data: (g) => g.achievementCount, orElse: () => user.achievements.length)}',
                                       label: 'Badges',
                                       gradient: const LinearGradient(
-                                        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                        colors: [
+                                          Color(0xFF667eea),
+                                          Color(0xFF764ba2),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -625,7 +649,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                               ),
                             ],
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -636,12 +662,19 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
-                                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                            colors: [
+                                              Color(0xFFFFD700),
+                                              Color(0xFFFFA500),
+                                            ],
                                           ),
-                                          borderRadius: BorderRadius.circular(14),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: const Color(0xFFFFD700).withOpacity(0.5),
+                                              color: const Color(
+                                                0xFFFFD700,
+                                              ).withOpacity(0.5),
                                               blurRadius: 15,
                                               offset: const Offset(0, 5),
                                             ),
@@ -685,7 +718,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           child: Animate(
                             effects: [FadeEffect(delay: 500.ms)],
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -696,12 +731,19 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
-                                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                            colors: [
+                                              Color(0xFF667eea),
+                                              Color(0xFF764ba2),
+                                            ],
                                           ),
-                                          borderRadius: BorderRadius.circular(14),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: const Color(0xFF667eea).withOpacity(0.5),
+                                              color: const Color(
+                                                0xFF667eea,
+                                              ).withOpacity(0.5),
                                               blurRadius: 15,
                                               offset: const Offset(0, 5),
                                             ),
@@ -732,7 +774,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           'View\nRoadmap',
                                           Icons.map_rounded,
                                           const LinearGradient(
-                                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                                            colors: [
+                                              Color(0xFF667eea),
+                                              Color(0xFF764ba2),
+                                            ],
                                           ),
                                           onTap: () => _navigateTo(1),
                                         ),
@@ -743,7 +788,10 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           'Start\nProject',
                                           Icons.rocket_launch_rounded,
                                           const LinearGradient(
-                                            colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
+                                            colors: [
+                                              Color(0xFF43e97b),
+                                              Color(0xFF38f9d7),
+                                            ],
                                           ),
                                           onTap: () => _navigateTo(2),
                                         ),
@@ -758,13 +806,17 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           'Resume\nCheck',
                                           Icons.description_rounded,
                                           const LinearGradient(
-                                            colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                                            colors: [
+                                              Color(0xFFf093fb),
+                                              Color(0xFFf5576c),
+                                            ],
                                           ),
                                           onTap: () {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (_) => const ResumeCheckerPage(),
+                                                builder: (_) =>
+                                                    const ResumeCheckerPage(),
                                               ),
                                             );
                                           },
@@ -776,13 +828,17 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                           'Leader\nBoard',
                                           Icons.leaderboard_rounded,
                                           const LinearGradient(
-                                            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                                            colors: [
+                                              Color(0xFFFFD700),
+                                              Color(0xFFFFA500),
+                                            ],
                                           ),
                                           onTap: () {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (_) => const LeaderboardPage(),
+                                                builder: (_) =>
+                                                    const LeaderboardPage(),
                                               ),
                                             );
                                           },
@@ -800,7 +856,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                           child: Animate(
                             effects: [FadeEffect(delay: 600.ms)],
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -811,12 +869,19 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           gradient: const LinearGradient(
-                                            colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
+                                            colors: [
+                                              Color(0xFF4facfe),
+                                              Color(0xFF00f2fe),
+                                            ],
                                           ),
-                                          borderRadius: BorderRadius.circular(14),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: const Color(0xFF4facfe).withOpacity(0.5),
+                                              color: const Color(
+                                                0xFF4facfe,
+                                              ).withOpacity(0.5),
                                               blurRadius: 15,
                                               offset: const Offset(0, 5),
                                             ),
@@ -847,16 +912,24 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
                                       }
 
                                       return Column(
-                                        children: activities.take(3).map((activity) {
+                                        children: activities.take(3).map((
+                                          activity,
+                                        ) {
                                           return Padding(
-                                            padding: const EdgeInsets.only(bottom: 12),
-                                            child: _buildActivityItemFromModel(activity),
+                                            padding: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            child: _buildActivityItemFromModel(
+                                              activity,
+                                            ),
                                           );
                                         }).toList(),
                                       );
                                     },
                                     loading: () => const Center(
-                                      child: CircularProgressIndicator(color: Color(0xFF4facfe)),
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF4facfe),
+                                      ),
                                     ),
                                     error: (_, __) => _buildNoActivityCard(),
                                   ),
@@ -1072,7 +1145,9 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 
   Widget _buildActivityItemFromModel(activity) {
-    final iconData = _getIconFromString(activity.icon ?? 'check_circle_rounded');
+    final iconData = _getIconFromString(
+      activity.icon ?? 'check_circle_rounded',
+    );
     final color = _getColorFromString(activity.color ?? '0xFF43e97b');
     return _buildActivityItem(
       activity.title,
@@ -1089,19 +1164,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1.5,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
       ),
       child: Center(
         child: Column(
           children: [
-            const Icon(
-              Icons.history_rounded,
-              color: Colors.white54,
-              size: 48,
-            ),
+            const Icon(Icons.history_rounded, color: Colors.white54, size: 48),
             const SizedBox(height: 12),
             Text(
               'No recent activity',
@@ -1255,12 +1323,12 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
   }
 
   Widget _buildActivityItem(
-      String title,
-      String time,
-      IconData icon,
-      Color color,
-      String? badge,
-      ) {
+    String title,
+    String time,
+    IconData icon,
+    Color color,
+    String? badge,
+  ) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1337,4 +1405,3 @@ class _DashboardHomeState extends ConsumerState<DashboardHome>
     );
   }
 }
-

@@ -113,3 +113,6 @@ app.*.symbols
 # Obfuscation
 # -----------------------------
 app.*.map.json
+
+.env
+

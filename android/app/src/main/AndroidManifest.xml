@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required permissions for app functionality -->
+    <!-- INTERNET: Required for Gemini API calls (resume analysis) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- FILE ACCESS: Required by file_picker plugin for PDF selection (API 23+) -->
+    <!-- Note: file_picker handles runtime permission requests automatically -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
     <application
         android:label="MENTORA"
         android:name="${applicationName}"

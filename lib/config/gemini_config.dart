@@ -13,10 +13,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// 2. Add to .env file: GEMINI_API_KEY=your_key_here
 /// 3. Never commit .env to git (it's in .gitignore)
 ///
-/// For production web builds, consider:
-/// - Using a backend proxy to hide the API key
-/// - Implementing rate limiting and quota enforcement
-/// - Using environment-specific configurations
+/// TODO: For production APK/release builds, move API key to:
+/// - Backend proxy endpoint (recommended for security)
+/// - Firebase Remote Config (for key rotation without redeploying)
+/// - OAuth token-based authentication
+/// Current implementation embeds key in APK (acceptable for dev/internal testing only)
 
 class GeminiConfig {
   /// Gemini API key loaded from environment variables

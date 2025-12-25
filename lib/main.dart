@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mentora_app/theme.dart';
 import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/landing_page.dart';
@@ -11,6 +12,20 @@ import 'package:mentora_app/config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables from .env file
+  // Required for: Gemini API key, Supabase credentials, etc.
+  // Note: On web development, .env may not be loaded from assets.
+  // For Android APK, the .env file is bundled as an asset and will load correctly.
+  try {
+    await dotenv.load();
+  } catch (e) {
+    // .env not found (common on web development)
+    // Values will be loaded from system environment or use defaults
+    debugPrint(
+      '⚠️  .env file not found, using environment variables or defaults',
+    );
+  }
 
   // Initialize Supabase
   await SupabaseConfig.initialize();

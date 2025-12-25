@@ -8,7 +8,7 @@
 .pub-cache/
 .pub/
 build/
-env
+.env.example
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .env

@@ -26,24 +26,19 @@ class ResumeService {
         .getPublicUrl(fileName);
   }
 
-  // Analyze resume (via Edge Function with Gemini)
+  // Analyze resume via Node backend (use ResumeHttpService instead)
+  // This method is deprecated - use ResumeHttpService.analyzeResume() directly
+  @Deprecated('Use ResumeHttpService.analyzeResume() instead')
   Future<Map<String, dynamic>> analyzeResume({
     required String userId,
-    required String resumeText, // From OCR (Tesseract.js in Flutter)
+    required String resumeText,
     required String fileUrl,
     String? fileName,
   }) async {
-    final response = await _client.functions.invoke(
-      'analyze-resume',
-      body: {
-        'user_id': userId,
-        'resume_text': resumeText,
-        'file_url': fileUrl,
-        'file_name': fileName,
-      },
+    throw UnimplementedError(
+      'This method uses Supabase Edge Functions which are deprecated. '
+      'Use ResumeHttpService.analyzeResume() instead with resumeUrl and userId.'
     );
-
-    return response.data as Map<String, dynamic>;
   }
 
   // Get resume analysis history

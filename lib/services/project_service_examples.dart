@@ -4,8 +4,12 @@
 
 // 1. CREATE A NEW PROJECT FOR CURRENT USER
 // ============================================
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:mentora_app/services/supabase_project_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../models/project.dart';
 
 Future<void> createNewProject() async {
   final service = SupabaseProjectService();

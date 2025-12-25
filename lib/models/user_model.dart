@@ -95,25 +95,25 @@ class UserModel {
           : DateTime.parse(json['updatedAt'] as String),
       education: json['education'] as String?,
       currentRole: json['currentRole'] as String?,
-      skills: (json['skills'] as List<dynamic>?)?.cast<String>() ?? [],
-      skillProficiency: (json['skillProficiency'] as Map<String, dynamic>?)?.map(
+      skills: (json['skills'] as List?)?.cast<String>() ?? [],
+      skillProficiency: (json['skillProficiency'] as Map?)?.map(
             (key, value) => MapEntry(key, value as int),
       ) ??
           {},
       careerGoal: json['careerGoal'] as String?,
       careerTimeline: json['careerTimeline'] as String?,
       weeklyHours: json['weeklyHours'] as int? ?? 10,
-      interests: (json['interests'] as List<dynamic>?)?.cast<String>() ?? [],
+      interests: (json['interests'] as List?)?.cast<String>() ?? [],
       experienceLevel: json['experienceLevel'] as String?,
       learningStyle: json['learningStyle'] as String?,
       motivation: json['motivation'] as String?,
-      socialLinks: (json['socialLinks'] as Map<String, dynamic>?)?.map(
+      socialLinks: (json['socialLinks'] as Map?)?.map(
             (key, value) => MapEntry(key, value as String),
       ) ??
           {},
-      achievements: (json['achievements'] as List<dynamic>?)?.cast<String>() ?? [],
-      badges: (json['badges'] as List<dynamic>?)?.cast<String>() ?? [],
-      statistics: (json['statistics'] as Map<String, dynamic>?) ?? {},
+      achievements: (json['achievements'] as List?)?.cast<String>() ?? [],
+      badges: (json['badges'] as List?)?.cast<String>() ?? [],
+      statistics: (json['statistics'] as Map?)?.cast<String, dynamic>() ?? {},
       totalLessonsCompleted: json['totalLessonsCompleted'] as int? ?? 0,
       totalProjectsCompleted: json['totalProjectsCompleted'] as int? ?? 0,
       currentStreak: json['currentStreak'] as int? ?? 0,
@@ -223,17 +223,23 @@ class UserModel {
     );
   }
 
-  // ✅ NEW: Dynamic XP Level System
+  // ✅ FIXED: XP required for each level (your custom progression)
   static int getXPRequiredForLevel(int level) {
-    if (level <= 1) return 100;
-    if (level == 2) return 150;
-    if (level == 3) return 250;
-    if (level == 4) return 400;
-    if (level == 5) return 600;
-    if (level <= 10) return 1000 + ((level - 6) * 200);
-    if (level <= 20) return 2500 + ((level - 11) * 500);
-    if (level <= 30) return 7500 + ((level - 21) * 1000);
-    return 17500 + ((level - 31) * 2000);
+    switch (level) {
+      case 1: return 1000;      // Level 1: 0-1000 (need 1000 XP)
+      case 2: return 1000;      // Level 2: 1001-2000 (need 1000 more)
+      case 3: return 1500;      // Level 3: 2001-3500 (need 1500 more)
+      case 4: return 1500;      // Level 4: 3501-5000 (need 1500 more)
+      case 5: return 2000;      // Level 5: 5001-7000 (need 2000 more)
+      case 6: return 2500;      // Level 6: 7001-9500 (need 2500 more)
+      case 7: return 3000;      // Level 7: 9501-12500 (need 3000 more)
+      case 8: return 3500;      // Level 8: 12501-16000 (need 3500 more)
+      case 9: return 4000;      // Level 9: 16001-20000 (need 4000 more)
+      case 10: return 5000;     // Level 10: 20001-25000 (need 5000 more)
+      default:
+      // After level 10: each level needs 5000 + (level-10)*500 more XP
+        return 5000 + ((level - 10) * 500);
+    }
   }
 
   // ✅ FIXED: XP required for NEXT level (not total)
@@ -329,7 +335,6 @@ class UserModel {
 
   // Next Level Info
   int get xpNeededForNextLevel => xpForNextLevel - currentLevelXP;
-
   String get nextLevelTitle {
     final nextLevel = level + 1;
     if (nextLevel >= 50) return 'Legendary Hero';
@@ -373,5 +378,3 @@ class UserModel {
   @override
   int get hashCode => id.hashCode;
 }
-
-

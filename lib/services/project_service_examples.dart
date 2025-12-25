@@ -29,9 +29,9 @@ Future<void> createNewProject() async {
       bannerUrl: 'https://example.com/banner.png',
     );
 
-    print('✅ Project created: ${project!.title}');
+    //print('✅ Project created: ${project!.title}');
   } catch (e) {
-    print('❌ Failed to create project: $e');
+    //print('❌ Failed to create project: $e');
   }
 }
 

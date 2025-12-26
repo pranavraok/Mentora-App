@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
@@ -54,19 +55,85 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
   /// Pick PDF file and analyze with Gemini (pure client-side)
   Future<void> _pickAndUploadResume() async {
     try {
+      print('🔍 Starting file picker...');
+
       // Pick PDF file
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'],
+        withData: true, // ← CRITICAL: Force file_picker to return bytes
+        allowMultiple: false,
       );
 
-      if (result == null || result.files.isEmpty) return;
+      if (result == null || result.files.isEmpty) {
+        print('❌ File picker cancelled by user');
+        return;
+      }
 
       final file = result.files.single;
-      final bytes = file.bytes;
+      print('📄 File picked: ${file.name}');
+      print('   Path: ${file.path}');
+      print(
+        '   Bytes: ${file.bytes != null ? '${file.bytes!.length} bytes' : 'null'}',
+      );
+      print('   Size: ${file.size} bytes');
 
-      if (bytes == null) {
-        _showError('Could not read file');
+      Uint8List bytes;
+
+      // Strategy 1: Use bytes directly if available
+      if (file.bytes != null && file.bytes!.isNotEmpty) {
+        bytes = file.bytes!;
+        print('✓ Using bytes from file picker (${bytes.length} bytes)');
+      }
+      // Strategy 2: Read from file path
+      else if (file.path != null && file.path!.isNotEmpty) {
+        print('📖 Bytes not available, reading from path: ${file.path}');
+        try {
+          final fileObj = File(file.path!);
+          final exists = await fileObj.exists();
+          print('   File exists: $exists');
+
+          if (exists) {
+            bytes = await fileObj.readAsBytes();
+            print('✓ Successfully read ${bytes.length} bytes from path');
+          } else {
+            throw Exception('File does not exist at path: ${file.path}');
+          }
+        } catch (pathError) {
+          print('❌ Error reading from path: $pathError');
+          _showError(
+            'Could not read file from path. Try selecting from Downloads or Documents folder.',
+          );
+          setState(() => _isAnalyzing = false);
+          return;
+        }
+      }
+      // Strategy 3: Use file.size as fallback indicator
+      else if (file.size > 0) {
+        print(
+          '⚠️ File has size (${file.size}) but no bytes or path. Android permission issue.',
+        );
+        _showError(
+          'Permission denied: Cannot access file. Please check file permissions or try a different location.',
+        );
+        setState(() => _isAnalyzing = false);
+        return;
+      }
+      // No data available
+      else {
+        print('❌ No file data available - bytes null, path empty, size 0');
+        _showError(
+          'Could not read file: File data not accessible. Try selecting a local file (not cloud storage).',
+        );
+        setState(() => _isAnalyzing = false);
+        return;
+      }
+
+      // Validate bytes
+      if (bytes.isEmpty) {
+        print('❌ File is empty (0 bytes)');
+        _showError('File is empty. Please select a valid PDF file.');
+        setState(() => _isAnalyzing = false);
         return;
       }
 
@@ -81,7 +148,7 @@ class _ResumeCheckerPageState extends State<ResumeCheckerPage>
       print('📄 Selected file: ${file.name} (${bytes.length} bytes)');
 
       // Analyze resume using Gemini (client-side)
-      await _analyzeResumeWithGemini(Uint8List.fromList(bytes));
+      await _analyzeResumeWithGemini(bytes);
     } catch (e) {
       print('Error picking file: $e');
       _showError('Error selecting file: $e');

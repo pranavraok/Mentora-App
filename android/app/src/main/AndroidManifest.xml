@@ -3,9 +3,17 @@
     <!-- INTERNET: Required for Gemini API calls (resume analysis) -->
     <uses-permission android:name="android.permission.INTERNET" />
     
-    <!-- FILE ACCESS: Required by file_picker plugin for PDF selection (API 23+) -->
-    <!-- Note: file_picker handles runtime permission requests automatically -->
+    <!-- FILE ACCESS: Required by file_picker plugin for PDF selection -->
+    <!-- READ_EXTERNAL_STORAGE: For API < 30 (Android < 11) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
+    <!-- WRITE_EXTERNAL_STORAGE: For API < 29 (Android < 10) - for temporary file operations -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="29" />
+    
+    <!-- Android 13+ (API 33+): Granular media permissions instead of WRITE_EXTERNAL_STORAGE -->
+    <!-- READ_MEDIA_AUDIO, READ_MEDIA_IMAGES, READ_MEDIA_VIDEO are alternatives for targetSdk >= 31 -->
+    <!-- file_picker plugin handles runtime permission requests automatically -->
     
     <application
         android:label="MENTORA"

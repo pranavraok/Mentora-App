@@ -64,10 +64,21 @@ class GeminiResumeService {
     }
 
     try {
+      // Verify API key is loaded
+      print('🔑 Checking API key...');
+      final apiKey = GeminiConfig.apiKey;
+      if (apiKey.isEmpty) {
+        print('❌ ERROR: GEMINI_API_KEY not found in environment');
+        throw Exception(
+          'Gemini API key not configured. Add GEMINI_API_KEY to .env file',
+        );
+      }
+      print('✓ API key loaded (${apiKey.substring(0, 5)}...)');
+
       // Initialize Gemini model with JSON mode and schema
       final model = GenerativeModel(
         model: GeminiConfig.model,
-        apiKey: GeminiConfig.apiKey,
+        apiKey: apiKey,
         generationConfig: GenerationConfig(
           temperature: GeminiConfig.temperature,
           maxOutputTokens: 4096, // Increased to prevent truncation

@@ -25,7 +25,7 @@ android {
         applicationId = "com.example.mentora"
 
         // 🔥 Firebase plugins require at least minSdk 23
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
 
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

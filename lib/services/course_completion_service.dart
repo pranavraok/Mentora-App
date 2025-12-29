@@ -21,11 +21,14 @@ class CourseCompletionService {
           .map((json) => RoadmapNode.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      // 2. Find current node index
+      // 2. Find current node index and get node title
       final currentIndex = allNodes.indexWhere((n) => n.id == nodeId);
       if (currentIndex == -1) {
         throw Exception('Node not found');
       }
+
+      final currentNode = allNodes[currentIndex];
+      final nodeTitle = currentNode.title;
 
       // 3. Get user's current XP
       final userResponse = await SupabaseConfig.client
@@ -44,14 +47,17 @@ class CourseCompletionService {
         'completed_at': DateTime.now().toIso8601String(),
       }).eq('id', nodeId);
 
-      // 5. Update user XP AND last_activity to trigger stream refresh
+      // 🎯 5. LOG ACTIVITY FOR ROADMAP COMPLETION
+      await _logRoadmapCompletion(userId, nodeTitle, nodeId, xpReward);
+
+      // 6. Update user XP AND last_activity to trigger stream refresh
       await SupabaseConfig.client.from('users').update({
         'total_xp': newTotalXP,
         'last_activity': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', userId);
 
-      // 6. Unlock ONLY the next course (if exists and is locked)
+      // 7. Unlock ONLY the next course (if exists and is locked)
       String? unlockedCourseTitle;
       if (currentIndex < allNodes.length - 1) {
         final nextNode = allNodes[currentIndex + 1];
@@ -64,7 +70,6 @@ class CourseCompletionService {
       }
 
       debugPrint('✅ Course completed! XP: $currentXP → $newTotalXP (+$xpReward)');
-
       return {
         'success': true,
         'xpGained': xpReward,
@@ -78,6 +83,35 @@ class CourseCompletionService {
         'success': false,
         'error': e.toString(),
       };
+    }
+  }
+
+  // 🎯 NEW METHOD: Log roadmap completion activity
+  static Future<void> _logRoadmapCompletion(
+      String userId,
+      String nodeTitle,
+      String nodeId,
+      int xpReward,
+      ) async {
+    try {
+      await SupabaseConfig.client.from('user_activities').insert({
+        'user_id': userId,
+        'activity_type': 'roadmap_completion',
+        'title': 'Completed "$nodeTitle"',
+        'description': 'Finished learning $nodeTitle and earned $xpReward XP',
+        'xp_earned': xpReward,
+        'icon': 'check_circle_rounded',
+        'color': '0xFF43e97b',
+        'metadata': {
+          'node_id': nodeId,
+          'node_title': nodeTitle,
+          'xp_reward': xpReward,
+        },
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      debugPrint('✅ Logged roadmap completion activity for: $nodeTitle');
+    } catch (e) {
+      debugPrint('❌ Error logging roadmap completion: $e');
     }
   }
 

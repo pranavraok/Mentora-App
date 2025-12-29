@@ -1620,13 +1620,14 @@ class ProjectDetailSheet extends ConsumerWidget {
                       child: InkWell(
                         onTap: () async {
                           try {
-                            final projectService =
-                            ref.read(projectServiceProvider);
+                            final user = ref.read(currentUserProvider).value; // 🎯 ADD THIS LINE
+                            final projectService = ref.read(projectServiceProvider);
                             await projectService.updateProject(
                               project.copyWith(
                                 status: ProjectStatus.inProgress,
                                 startedAt: DateTime.now(),
                               ),
+                              userId: user?.id, // 🎯 ADD THIS PARAMETER
                             );
                             ref.invalidate(projectsProvider);
                             if (context.mounted) {

@@ -1,15 +1,27 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:mentora_app/models/user_model.dart';
+
 import 'package:mentora_app/models/roadmap_node.dart';
+
 import 'package:mentora_app/models/project.dart';
+
 import 'package:mentora_app/models/achievement.dart';
+
 import 'package:mentora_app/services/local_storage_service.dart';
+
 import 'package:mentora_app/services/user_service.dart';
+
 import 'package:mentora_app/services/roadmap_service.dart';
+
 import 'package:mentora_app/services/project_service.dart';
+
 import 'package:mentora_app/services/achievement_service.dart';
+
 import 'package:mentora_app/config/supabase_config.dart';
 
 final storageProvider = FutureProvider((ref) async {
@@ -37,7 +49,7 @@ final achievementServiceProvider = Provider((ref) {
 });
 
 // ✅ FIXED: Simple provider without auth state listener
-final currentUserProvider = FutureProvider<UserModel?>((ref) async {
+final currentUserProvider = FutureProvider((ref) async {
   try {
     final supabaseUser = SupabaseConfig.client.auth.currentUser;
 
@@ -168,6 +180,7 @@ final roadmapNodesSupabaseProvider = FutureProvider<List<Map<String, dynamic>>>(
       debugPrint('✅ Fetched ${response.length} roadmap nodes from Supabase');
 
       final nodesList = List<Map<String, dynamic>>.from(response);
+
       return nodesList;
     } on TimeoutException catch (e) {
       debugPrint('❌ Timeout fetching roadmap nodes: $e');
@@ -242,7 +255,6 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
         .from('projects')
         .select()
         .eq('user_id', userId)
-        .order('created_at', ascending: false)
         .timeout(const Duration(seconds: 15));
 
     final rows = response as List;
@@ -261,6 +273,9 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
     })
         .whereType<Project>()
         .toList();
+
+    // ✅ Sort by difficulty: Beginner → Intermediate → Advanced → Expert
+    projects.sort((a, b) => a.difficulty.index.compareTo(b.difficulty.index));
 
     debugPrint(
       '[ProjectsProvider] Successfully parsed ${projects.length} projects',
@@ -283,10 +298,10 @@ Future<List<Project>> _fetchGlobalProjects() async {
         .from('projects')
         .select()
         .isFilter('user_id', true)
-        .order('created_at', ascending: false)
         .timeout(const Duration(seconds: 15));
 
     final rows = response as List;
+
     final projects = rows
         .map((row) {
       try {
@@ -297,6 +312,9 @@ Future<List<Project>> _fetchGlobalProjects() async {
     })
         .whereType<Project>()
         .toList();
+
+    // ✅ Sort by difficulty: Beginner → Intermediate → Advanced → Expert
+    projects.sort((a, b) => a.difficulty.index.compareTo(b.difficulty.index));
 
     return projects;
   } catch (e) {
@@ -332,13 +350,12 @@ final achievementsProvider = FutureProvider<List<Achievement>>((ref) async {
   return await service.getAllAchievements();
 });
 
-
-// ✅ CORRECT - Matches service return type
 final userAchievementsProvider =
 FutureProvider.family<List<UserAchievement>, String>((ref, userId) async {
   final service = ref.watch(achievementServiceProvider);
   return await service.getUserAchievements(userId);
 });
+
 
 final leaderboardProvider = FutureProvider<List<Map<String, dynamic>>>(
       (ref) async {
@@ -352,6 +369,7 @@ final leaderboardProvider = FutureProvider<List<Map<String, dynamic>>>(
           .timeout(const Duration(seconds: 15));
 
       final rows = response as List;
+
       debugPrint(
         '[LeaderboardProvider] Fetched ${rows.length} total users from Supabase',
       );

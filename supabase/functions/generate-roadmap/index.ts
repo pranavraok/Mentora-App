@@ -419,6 +419,7 @@ Generate a highly personalized, gamified career roadmap for the following user p
 - Use real course URLs (Coursera, Udemy, freeCodeCamp, YouTube, etc.)
 - Make projects practical and portfolio-worthy
 - Balance theory (courses) with practice (projects)
+- Return 18-20 roadmap nodes in total and 5-10 project nodes in total
 - Ensure logical progression from beginner to advanced
 - Themes: grassland, forest, mountain, ocean, space (vary throughout roadmap)
 - XP rewards: Beginner (100-200), Intermediate (200-400), Advanced (400-800)

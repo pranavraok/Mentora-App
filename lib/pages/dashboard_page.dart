@@ -26,6 +26,7 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   int _selectedIndex = 0;
+
   final List<Widget> _pages = const [
     DashboardHome(),
     RoadmapPage(),
@@ -39,41 +40,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isAuthenticatedAsync = ref.watch(isAuthenticatedProvider);
     final userAsync = ref.watch(currentUserProvider);
+
     return Scaffold(
-      body: isAuthenticatedAsync.when(
-        data: (isAuthenticated) {
-          if (!isAuthenticated) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.lock_outline, size: 80, color: Colors.white54),
-                  SizedBox(height: 24),
-                  Text(
-                    'Please login first',
-                    style: TextStyle(color: Colors.white54, fontSize: 18),
-                  ),
-                ],
-              ),
-            );
+      body: userAsync.when(
+        data: (user) {
+          if (user == null) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          return userAsync.when(
-            data: (user) => user == null
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                    children: [
-                      Expanded(
-                        child: _pages[_selectedIndex] is DashboardHome
-                            ? DashboardHome(onNavigate: _navigateToPage)
-                            : _pages[_selectedIndex],
-                      ),
-                    ],
-                  ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+          return Column(
+            children: [
+              Expanded(
+                child: _selectedIndex == 0
+                    ? DashboardHome(onNavigate: _navigateToPage)
+                    : _pages[_selectedIndex],
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -81,10 +64,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Auth error: $e'),
+              Text('Error: $e', style: const TextStyle(color: Colors.white)),
+              const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Go Back'),
+                onPressed: () => ref.invalidate(currentUserProvider),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -138,8 +122,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                )
+            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+          )
               : null,
           borderRadius: BorderRadius.circular(16),
         ),
@@ -164,6 +148,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 }
+
 
 class DashboardHome extends ConsumerStatefulWidget {
   final Function(int)? onNavigate;

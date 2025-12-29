@@ -12,6 +12,7 @@ import 'dart:math' as math;
 
 class AuthPage extends ConsumerStatefulWidget {
   final bool isLogin;
+
   const AuthPage({super.key, this.isLogin = true});
 
   @override
@@ -26,6 +27,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
   final _nameController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
   late AnimationController _floatingController;
   late AnimationController _rotationController;
   late AnimationController _slideController;
@@ -37,10 +39,12 @@ class _AuthPageState extends ConsumerState<AuthPage>
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
+
     _rotationController = AnimationController(
       duration: const Duration(seconds: 20),
       vsync: this,
     )..repeat();
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -81,11 +85,15 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 
+  // ✅ FIXED: Direct navigation without popup or ref.invalidate
   Future<void> _handleAuth() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
+
     try {
       final authService = AuthService();
+
       if (widget.isLogin) {
         // LOGIN
         try {
@@ -93,8 +101,10 @@ class _AuthPageState extends ConsumerState<AuthPage>
             _emailController.text.trim(),
             _passwordController.text,
           );
+
           if (response.user != null) {
             final isEmailVerified = response.user!.emailConfirmedAt != null;
+
             if (!isEmailVerified) {
               if (!mounted) return;
               setState(() => _isLoading = false);
@@ -111,34 +121,30 @@ class _AuthPageState extends ConsumerState<AuthPage>
               await authService.signOut();
               return;
             }
+
+            // ✅ Wait for database sync
+            await Future.delayed(const Duration(milliseconds: 500));
+
             final isComplete =
             await authService.isOnboardingComplete(response.user!.id);
+
             if (!mounted) return;
-            setState(() => _isLoading = false);
-            await showAuthPopup(
-              context: context,
-              title: 'Login Successful! 🎉',
-              message: 'Welcome back! Let\'s continue your journey.',
-              icon: Icons.check_circle_rounded,
-              iconColor: const Color(0xFF43e97b),
-              onClose: () {
-                if (isComplete) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DashboardPage()),
-                  );
-                } else {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OnboardingPage()),
-                  );
-                }
-              },
+
+            // ✅ NO POPUP - Direct navigation with pushAndRemoveUntil
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (_) => isComplete
+                    ? const DashboardPage()
+                    : const OnboardingPage(),
+              ),
+                  (route) => false, // Remove all routes
             );
           }
         } on AuthException catch (e) {
           if (!mounted) return;
           setState(() => _isLoading = false);
+
           final errorMessage = e.message.toLowerCase();
           if (errorMessage.contains('email not confirmed')) {
             await showAuthPopup(
@@ -188,9 +194,11 @@ class _AuthPageState extends ConsumerState<AuthPage>
           _passwordController.text,
           name: _nameController.text.trim(),
         );
+
         if (response.user != null) {
           if (!mounted) return;
           setState(() => _isLoading = false);
+
           await showAuthPopup(
             context: context,
             title: '📧 Check Your Email!',
@@ -226,29 +234,35 @@ class _AuthPageState extends ConsumerState<AuthPage>
     }
   }
 
+  // ✅ FIXED: Direct navigation without ref.invalidate
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
+
     try {
       final authService = AuthService();
       final success = await authService.signInWithGoogle();
+
       if (success && mounted) {
-        await Future.delayed(const Duration(seconds: 2));
+        // ✅ Wait for database sync
+        await Future.delayed(const Duration(milliseconds: 800));
+
         final user = authService.currentUser;
         if (user != null) {
           final isComplete =
           await authService.isOnboardingComplete(user.id);
+
           if (!mounted) return;
-          if (isComplete) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const DashboardPage()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const OnboardingPage()),
-            );
-          }
+
+          // ✅ Direct navigation WITHOUT popup
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => isComplete
+                  ? const DashboardPage()
+                  : const OnboardingPage(),
+            ),
+                (route) => false,
+          );
         }
       }
     } catch (e) {
@@ -299,6 +313,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
               );
             },
           ),
+
           // Floating orbs
           ...List.generate(5, (index) {
             return AnimatedBuilder(
@@ -327,6 +342,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
               },
             );
           }),
+
           // Main content
           SafeArea(
             child: SingleChildScrollView(
@@ -334,6 +350,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
               child: Column(
                 children: [
                   const SizedBox(height: 20),
+
                   // Logo
                   AnimatedBuilder(
                     animation: _floatingController,
@@ -360,6 +377,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                     ),
                   ),
                   const SizedBox(height: 20),
+
                   // Title
                   Text(
                     widget.isLogin ? 'Welcome Back!' : 'Join the Quest',
@@ -378,6 +396,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                     ),
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
                   const SizedBox(height: 6),
+
                   // Subtitle
                   Text(
                     widget.isLogin
@@ -390,11 +409,12 @@ class _AuthPageState extends ConsumerState<AuthPage>
                     ),
                   ).animate().fadeIn(delay: 300.ms),
                   const SizedBox(height: 24),
-                  // Form card - FIXED HEIGHT
+
+                  // Form card
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 450),
                     child: GlassmorphicContainer(
-                      height: widget.isLogin ? 435 : 450, // REDUCED by 10px each
+                      height: widget.isLogin ? 435 : 450,
                       width: double.infinity,
                       borderRadius: 28,
                       blur: 20,
@@ -417,7 +437,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                         ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(20), // REDUCED from 24 to 20
+                        padding: const EdgeInsets.all(20),
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -428,7 +448,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   .animate()
                                   .fadeIn(delay: 400.ms)
                                   .slideY(begin: 0.2, end: 0),
-                              const SizedBox(height: 16), // REDUCED from 18 to 16
+                              const SizedBox(height: 16),
+
                               // Divider
                               Row(
                                 children: [
@@ -458,7 +479,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   ),
                                 ],
                               ).animate().fadeIn(delay: 500.ms),
-                              const SizedBox(height: 16), // REDUCED from 18 to 16
+                              const SizedBox(height: 16),
+
                               // Name field (for signup)
                               if (!widget.isLogin) ...[
                                 _buildTextField(
@@ -473,8 +495,9 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                     .animate()
                                     .fadeIn(delay: 600.ms)
                                     .slideX(begin: -0.2, end: 0),
-                                const SizedBox(height: 10), // REDUCED from 12 to 10
+                                const SizedBox(height: 10),
                               ],
+
                               // Email field
                               _buildTextField(
                                 controller: _emailController,
@@ -495,7 +518,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 ),
                               )
                                   .slideX(begin: -0.2, end: 0),
-                              const SizedBox(height: 10), // REDUCED from 12 to 10
+                              const SizedBox(height: 10),
+
                               // Password field
                               _buildTextField(
                                 controller: _passwordController,
@@ -516,7 +540,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   },
                                 ),
                                 validator: (v) {
-                                  if (v?.isEmpty ?? true) return 'Password required';
+                                  if (v?.isEmpty ?? true)
+                                    return 'Password required';
                                   if (v!.length < 6) return 'Min 6 characters';
                                   return null;
                                 },
@@ -529,8 +554,9 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                 ),
                               )
                                   .slideX(begin: -0.2, end: 0),
+
                               if (widget.isLogin) ...[
-                                const SizedBox(height: 2), // REDUCED from 4 to 2
+                                const SizedBox(height: 2),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
@@ -550,7 +576,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   ),
                                 ).animate().fadeIn(delay: 800.ms),
                               ],
-                              const SizedBox(height: 16), // REDUCED from 18 to 16
+                              const SizedBox(height: 16),
+
                               // Submit button
                               _buildSubmitButton()
                                   .animate()
@@ -562,7 +589,8 @@ class _AuthPageState extends ConsumerState<AuthPage>
                                   .slideY(begin: 0.2, end: 0)
                                   .then()
                                   .shimmer(delay: 1000.ms, duration: 2000.ms),
-                              const SizedBox(height: 10), // REDUCED from 12 to 10
+                              const SizedBox(height: 10),
+
                               // Toggle auth mode
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -603,6 +631,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
                         .scale(begin: const Offset(0.95, 0.95)),
                   ),
                   const SizedBox(height: 16),
+
                   // Trust badges
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -626,7 +655,6 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 
-  // Google button
   Widget _buildGoogleButton() {
     return GestureDetector(
       onTap: _handleGoogleSignIn,
@@ -712,7 +740,7 @@ class _AuthPageState extends ConsumerState<AuthPage>
           fontWeight: FontWeight.w600,
         ),
         contentPadding:
-        const EdgeInsets.symmetric(horizontal: 18, vertical: 13), // REDUCED from 14 to 13
+        const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
       ),
       validator: validator,
     );
@@ -800,4 +828,3 @@ class _AuthPageState extends ConsumerState<AuthPage>
     );
   }
 }
-

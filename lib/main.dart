@@ -6,28 +6,22 @@ import 'package:mentora_app/providers/app_providers.dart';
 import 'package:mentora_app/pages/landing_page.dart';
 import 'package:mentora_app/pages/onboarding_page.dart';
 import 'package:mentora_app/pages/dashboard_page.dart';
-import 'package:mentora_app/pages//splash_page.dart';
+import 'package:mentora_app/pages/splash_page.dart';
 import 'package:mentora_app/widgets/error_fallback_widget.dart';
 import 'package:mentora_app/config/supabase_config.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables from .env file
-  // Required for: Gemini API key, Supabase credentials, etc.
-  // Note: On web development, .env may not be loaded from assets.
-  // For Android APK, the .env file is bundled as an asset and will load correctly.
   try {
     await dotenv.load();
   } catch (e) {
-    // .env not found (common on web development)
-    // Values will be loaded from system environment or use defaults
     debugPrint(
       '⚠️  .env file not found, using environment variables or defaults',
     );
   }
 
-  // Initialize Supabase
   await SupabaseConfig.initialize();
 
   runApp(const ProviderScope(child: MyApp()));
@@ -44,38 +38,65 @@ class MyApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: ThemeMode.system,
-      home: const AuthWrapper(), // ✅ Changed to AuthWrapper
+      home: const AuthWrapper(),
     );
   }
 }
 
-// ✅ NEW: Handles all auth and loading states with error recovery
-class AuthWrapper extends ConsumerWidget {
+// ✅ CRITICAL FIX: Changed to StatefulWidget with auth listener
+class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends ConsumerState<AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ CRITICAL: Listen to Supabase auth changes
+    SupabaseConfig.client.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      debugPrint('🔔 Auth event detected: $event');
+
+      // Only invalidate on actual sign in/out events (not token refresh)
+      if (event == AuthChangeEvent.signedIn ||
+          event == AuthChangeEvent.signedOut) {
+        debugPrint('🔄 Refreshing user provider due to auth change');
+
+        // Small delay to let Supabase finish its work
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) {
+            ref.invalidate(currentUserProvider);
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
 
     return userAsync.when(
-      // Loading state - show splash screen
-      loading: () => const SplashPage(),
-
-      // Error state - show error fallback with recovery options
+      loading: () {
+        debugPrint('⏳ AuthWrapper: Loading user data...');
+        return const SplashPage();
+      },
       error: (error, stack) {
-        debugPrint('❌ Error in AuthWrapper: $error');
+        debugPrint('❌ AuthWrapper error: $error');
         return ErrorFallbackWidget(
           title: 'Unable to Load Profile',
           message: error.toString().contains('TimeoutException')
               ? 'Connection timed out. Please check your internet and try again.'
               : 'We couldn\'t load your profile. This might be a temporary issue.',
           onRetry: () {
-            // Refresh the provider to retry loading
             debugPrint('🔄 Retrying user profile load...');
             ref.invalidate(currentUserProvider);
           },
           onGoToLogin: () async {
-            // Sign out and navigate to landing page
             debugPrint('🚪 Signing out and going to login...');
             try {
               await SupabaseConfig.client.auth.signOut();
@@ -85,36 +106,31 @@ class AuthWrapper extends ConsumerWidget {
             }
 
             if (context.mounted) {
-              Navigator.of(context).pushReplacement(
+              Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const LandingPage()),
+                    (route) => false,
               );
             }
           },
         );
       },
-
-      // Success state - route based on user data
       data: (user) {
         if (user == null) {
-          // No user logged in - show landing page
-          debugPrint('ℹ️ No user found, showing landing page');
+          debugPrint('ℹ️  AuthWrapper: No user, showing landing page');
           return const LandingPage();
         }
 
-        debugPrint('✅ User found: ${user.name} (${user.email})');
+        debugPrint('✅ AuthWrapper: User found - ${user.name} (${user.email})');
 
-        // Check if onboarding is complete
-        // Note: Adjust this check based on your UserModel structure
         final hasCompletedOnboarding =
             user.careerGoal != null && user.careerGoal!.isNotEmpty;
 
         if (!hasCompletedOnboarding) {
-          debugPrint('ℹ️ Onboarding incomplete, showing onboarding page');
+          debugPrint('ℹ️  AuthWrapper: Onboarding incomplete');
           return const OnboardingPage();
         }
 
-        // User is logged in and onboarded - show dashboard
-        debugPrint('✅ User authenticated and onboarded, showing dashboard');
+        debugPrint('✅ AuthWrapper: Showing dashboard');
         return const DashboardPage();
       },
     );

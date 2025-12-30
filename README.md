@@ -2,7 +2,6 @@
 
 <img src="assets/images/logo.png" alt="Mentora Logo" width="200"/>
 
-# 🚀 Mentora
 ### AI-Powered Career Mentorship & Gamified Learning Platform
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.8.0+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
@@ -189,10 +188,10 @@ SQL: 40% Beginner (3/9 nodes) | Gap: Joins, Optimization
 
 <div align="center">
 
-| Platform | Download | Version | Size |
-|----------|----------|---------|------|
-| 🤖 **Android** | [**Download APK**](https://github.com/pranavraok/Mentora-App/releases/download/v1.0.0/mentora-v1.0.0.apk) | v1.0.0 | ~45 MB |
-| 🍎 **iOS** | [**Coming Soon**](https://github.com/pranavraok/Mentora-App/releases) | v1.0.0 | ~50 MB |
+| Platform | Download | Version | Size   |
+|----------|----------|---------|--------|
+| 🤖 **Android** | [**Download APK**](https://mentora-app-download-guide.vercel.app/) | v1.0.0 | ~80 MB |
+| 🍎 **iOS** | [**Coming Soon**](https://github.com/pranavraok/Mentora-App/releases) | v1.0.0 | ~80 MB |
 
 **Requirements:** Android 6.0+ (API 23+) • iOS 12.0+
 

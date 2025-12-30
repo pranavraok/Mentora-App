@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Mentora App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 35px 30px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 220px;
+            height: 80px;
+            margin: 0 auto 15px;
+            display: block;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .download-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .download-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .download-card:hover {
+            border-color: #2563eb;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.15);
+            background: white;
+        }
+
+        .download-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        .platform-info {
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #1e40af;
+            transform: scale(1.05);
+        }
+
+        .coming-soon {
+            display: inline-block;
+            background: #9ca3af;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: not-allowed;
+        }
+
+        .instructions {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .instructions h2 {
+            font-size: 1.4em;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 8px 20px;
+            border: 2px solid #2563eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #2563eb;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .step {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 3px solid #2563eb;
+        }
+
+        .step-num {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .step-desc {
+            color: #6b7280;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-left: 34px;
+        }
+
+        .note {
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #92400e;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f9fafb;
+            color: #6b7280;
+            font-size: 0.9em;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .footer a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .download-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.6em;
+            }
+
+            .logo {
+                width: 100px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img src="https://raw.githubusercontent.com/pranavraok/Mentora-App/main/assets/images/logo.png" alt="Mentora Logo" class="logo">
+        <p class="subtitle">AI-Powered Career Mentorship Platform</p>
+    </div>
+
+    <div class="content">
+        <div class="download-grid">
+            <div class="download-card">
+                <h3>Android</h3>
+                <p class="platform-info">~80 MB | Android 6.0+</p>
+                <a href="YOUR_ANDROID_DRIVE_LINK" class="download-btn">Download APK</a>
+            </div>
+
+            <div class="download-card">
+                <h3>iOS</h3>
+                <p class="platform-info">~80 MB | iOS 12.0+</p>
+                <a href="" class="coming-soon">Coming Soon</a>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h2>Installation Guide</h2>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('android')">Android</button>
+                <button class="tab-btn" onclick="showTab('ios')">iOS</button>
+            </div>
+
+            <div id="android-tab" class="tab-content active">
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">1</span>Download APK
+                    </div>
+                    <p class="step-desc">Click the Android download button above to get the APK file.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">2</span>Enable Installation
+                    </div>
+                    <p class="step-desc">Go to Settings → Security → Enable "Install from Unknown Sources" or allow when prompted.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">3</span>Install the App
+                    </div>
+                    <p class="step-desc">Open the downloaded APK file from your Downloads folder and tap Install.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">4</span>Launch Mentora
+                    </div>
+                    <p class="step-desc">Open the app from your home screen and start your career mentorship journey!</p>
+                </div>
+
+                <div class="note">
+                    <strong>Note:</strong> This app is not from Google Play Store. Make sure you download from the official link only.
+                </div>
+            </div>
+
+            <div id="ios-tab" class="tab-content">
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">1</span>Download IPA
+                    </div>
+                    <p class="step-desc">Click the iOS download button above to get the IPA file.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">2</span>Install AltStore or Sideloadly
+                    </div>
+                    <p class="step-desc">You'll need AltStore (free) or Sideloadly to install IPA files on iOS.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">3</span>Sideload the App
+                    </div>
+                    <p class="step-desc">Connect your iPhone to computer, open AltStore/Sideloadly, and install the IPA file.</p>
+                </div>
+
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-num">4</span>Trust Developer
+                    </div>
+                    <p class="step-desc">Go to Settings → General → Device Management → Trust the developer profile.</p>
+                </div>
+
+                <div class="note">
+                    <strong>Note:</strong> Sideloaded apps need to be refreshed every 7 days with free Apple ID (or yearly with paid developer account).
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Built for better career guidance | <a href="https://github.com/pranavraok/Mentora-App" target="_blank">GitHub</a></p>
+    </div>
+</div>
+
+<script>
+    function showTab(platform) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.getElementById(platform + '-tab').classList.add('active');
+        event.target.classList.add('active');
+    }
+</script>
+</body>
+</html>

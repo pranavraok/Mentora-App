@@ -18,7 +18,7 @@ void main() async {
     await dotenv.load();
   } catch (e) {
     debugPrint(
-      '⚠️  .env file not found, using environment variables or defaults',
+      '⚠️ .env file not found, using environment variables or defaults',
     );
   }
 
@@ -52,9 +52,20 @@ class AuthWrapper extends ConsumerStatefulWidget {
 }
 
 class _AuthWrapperState extends ConsumerState<AuthWrapper> {
+  bool _showSplash = true;
+
   @override
   void initState() {
     super.initState();
+
+    // ✅ FORCE splash screen to show for 7 seconds minimum
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _showSplash = false;
+        });
+      }
+    });
 
     // ✅ CRITICAL: Listen to Supabase auth changes
     SupabaseConfig.client.auth.onAuthStateChange.listen((data) {
@@ -78,6 +89,11 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Always show splash for first 7 seconds
+    if (_showSplash) {
+      return const SplashPage();
+    }
+
     final userAsync = ref.watch(currentUserProvider);
 
     return userAsync.when(
@@ -116,17 +132,16 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
       },
       data: (user) {
         if (user == null) {
-          debugPrint('ℹ️  AuthWrapper: No user, showing landing page');
+          debugPrint('ℹ️ AuthWrapper: No user, showing landing page');
           return const LandingPage();
         }
 
         debugPrint('✅ AuthWrapper: User found - ${user.name} (${user.email})');
-
         final hasCompletedOnboarding =
             user.careerGoal != null && user.careerGoal!.isNotEmpty;
 
         if (!hasCompletedOnboarding) {
-          debugPrint('ℹ️  AuthWrapper: Onboarding incomplete');
+          debugPrint('ℹ️ AuthWrapper: Onboarding incomplete');
           return const OnboardingPage();
         }
 

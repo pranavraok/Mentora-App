@@ -191,7 +191,7 @@ SQL: 40% Beginner (3/9 nodes) | Gap: Joins, Optimization
 | Platform | Download | Version | Size   |
 |----------|----------|---------|--------|
 | 🤖 **Android** | [**Download APK**](https://mentora-app-download-guide.vercel.app/) | v1.0.0 | ~80 MB |
-| 🍎 **iOS** | [**Coming Soon**](https://github.com/pranavraok/Mentora-App/releases) | v1.0.0 | ~80 MB |
+| 🍎 **iOS** | [**Coming Soon**](https://mentora-app-download-guide.vercel.app/) | v1.0.0 | ~80 MB |
 
 **Requirements:** Android 6.0+ (API 23+) • iOS 12.0+
 
@@ -203,9 +203,9 @@ SQL: 40% Beginner (3/9 nodes) | Gap: Joins, Optimization
 
 <div align="center">
 
-[![Mentora Demo Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Mentora Demo Video]](https://drive.google.com/file/d/1ujMYJ8-xBwWY6gDC12kRCXb0y0JlJv8k/view?usp=sharing)
 
-**Watch the full walkthrough** • *3 minutes*
+**Watch the full walkthrough** • *5 minutes*
 
 </div>
 
@@ -345,7 +345,7 @@ RV College of Engineering
 
 ## 📄 License
 
-This project is submitted for **DreamFlow Buildathon** (December 2025).
+This project is submitted for **DreamFlow Buildathon** (November 2025 - December 2025).
 
 ---
 

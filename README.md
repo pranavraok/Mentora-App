@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="assets/images/Mentora_M_logo.png" alt="Mentora Logo" width="200"/>
-
-# 🚀 Mentora
+<img src="assets/images/logo.png" alt="Mentora Logo" width="200"/>
 ### AI-Powered Career Mentorship & Gamified Learning Platform
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.8.0+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
@@ -24,14 +22,6 @@
 <tr>
 <td width="33%" align="center">
 
-### 📊 75%
-**Resume Rejection Rate**
-
-ATS systems reject resumes before human review
-
-</td>
-<td width="33%" align="center">
-
 ### 🎓 82%
 **Students Lack Guidance**
 
@@ -45,11 +35,19 @@ No personalized career mentorship available
 
 Students waste time finding quality learning content
 
+### 📊 75%
+**Resume Rejection Rate**
+
+ATS systems reject resumes before human review
+
+</td>
+<td width="33%" align="center">
+
 </td>
 </tr>
 </table>
 
-Students and early-career professionals face overwhelming career choices, fragmented learning resources, and zero feedback on resume quality. Traditional career counseling is expensive ($100-500/session), generic, and inaccessible to most.
+Students and early-career professionals face overwhelming career choices, fragmented learning resources, and zero feedback on resume quality. Traditional career counseling is expensive (₹5000-10000/session), generic, and inaccessible to most.
 
 ---
 
@@ -61,7 +59,7 @@ Students and early-career professionals face overwhelming career choices, fragme
 ✅ **ATS Resume Analyzer** - Instant 6-dimensional scoring with actionable improvements  
 ✅ **Gamification** - XP, levels, achievements, and leaderboards keep you motivated  
 ✅ **Progress Tracking** - Visual analytics and skill gap analysis  
-✅ **100% Free** - Powered by Google Gemini's free tier
+✅ **100% Free** - Powered by Google Gemini
 
 ---
 
@@ -323,7 +321,7 @@ M S Ramaiah University of Applied Sciences
 **Role**: Flutter Development, UI/UX Design, Gemini Integration
 
 [![GitHub](https://img.shields.io/badge/GitHub-@pranavraok-181717?style=flat&logo=github)](https://github.com/pranavraok)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/pranavraok)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/pranav-rao-k-487532312/)
 
 </td>
 <td align="center" width="50%">
@@ -336,7 +334,7 @@ RV College of Engineering
 **Role**: Supabase Backend, Edge Functions, Database Design
 
 [![GitHub](https://img.shields.io/badge/GitHub-@tung--programming-181717?style=flat&logo=github)](https://github.com/tung-programming)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/tushar-p)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/tushar-p2006/)
 
 </td>
 </tr>

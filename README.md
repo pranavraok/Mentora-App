@@ -332,7 +332,7 @@ M S Ramaiah University of Applied Sciences
 
 RV College of Engineering
 
-**Role**: Supabase Backend, Edge Functions, Database Design
+**Role**: Supabase Backend, Edge Functions, Database Design, Gemini Integration, Resume Analysis
 
 [![GitHub](https://img.shields.io/badge/GitHub-@tung--programming-181717?style=flat&logo=github)](https://github.com/tung-programming)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/tushar-p2006/)
